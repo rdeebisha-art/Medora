@@ -253,7 +253,7 @@ app.post('/api/ask', async (req, res) => {
       workflow: ['Patient Data', 'Medora AI', 'Health Record Agent', 'Medication Agent', 'Preventive Care Agent', 'Referral/Follow-Up Agent', 'Health Education Agent', 'Final Response'],
       patientId,
     });
-  } catch (error) {
+  } catch {
     const fallback = createFallbackResponse(req.body?.question || '', req.body?.relevantHealthData || {});
     return res.json({ mode: 'DEMO/FALLBACK', ...fallback, patientId: req.body?.patientId || '' });
   }

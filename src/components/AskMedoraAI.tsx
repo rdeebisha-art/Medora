@@ -277,6 +277,12 @@ export const AskMedoraAI: React.FC<AskMedoraAIProps> = ({
   const [isThinking, setIsThinking] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const messageSequenceRef = useRef(0);
+
+  const nextMessageId = (prefix: string) => {
+    messageSequenceRef.current += 1;
+    return `${prefix}-${messageSequenceRef.current}`;
+  };
 
   useEffect(() => {
     setMessages([
@@ -322,7 +328,7 @@ export const AskMedoraAI: React.FC<AskMedoraAIProps> = ({
     const trimmed = question.trim();
     if (!trimmed) return;
 
-    const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', text: trimmed };
+    const userMessage: Message = { id: nextMessageId('user'), role: 'user', text: trimmed };
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsThinking(true);
@@ -350,7 +356,7 @@ export const AskMedoraAI: React.FC<AskMedoraAIProps> = ({
       const mode = payload?.mode || 'DEMO/FALLBACK';
 
       const aiMessage: Message = {
-        id: `ai-${Date.now()}`,
+        id: nextMessageId('ai'),
         role: 'ai',
         text: aiText,
         workflow,
@@ -363,7 +369,7 @@ export const AskMedoraAI: React.FC<AskMedoraAIProps> = ({
     } catch (error) {
       const fallbackText = decideResponseText(trimmed, patientContext);
       const fallbackMessage: Message = {
-        id: `ai-fallback-${Date.now()}`,
+        id: nextMessageId('ai-fallback'),
         role: 'ai',
         text: fallbackText,
         workflow: ['Patient Data', 'Medora AI', 'Health Record Agent', 'Medication Agent', 'Preventive Care Agent', 'Referral/Follow-Up Agent', 'Health Education Agent', 'Final Response'],
