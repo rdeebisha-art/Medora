@@ -37,12 +37,25 @@ export function App() {
   const [currentLang, setCurrentLang] = useState<LanguageCode>('en');
   const [simpleMode, setSimpleMode] = useState<boolean>(false);
   const [lowDataMode, setLowDataMode] = useState<boolean>(false);
+  const [offlineDemoMode, setOfflineDemoMode] = useState<boolean>(false);
+  const [isOnline, setIsOnline] = useState<boolean>(typeof navigator === 'undefined' ? true : navigator.onLine);
 
   useEffect(() => {
     document.documentElement.lang = currentLang;
     document.documentElement.dataset.language = currentLang;
     void translatePage(currentLang, lowDataMode);
   }, [currentLang, lowDataMode]);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
   const [activeTab, setActiveTab] = useState<
     | 'dashboard'
     | 'children'
@@ -268,6 +281,12 @@ export function App() {
         onToggleSimpleMode={() => setSimpleMode(!simpleMode)}
         lowDataMode={lowDataMode}
         onToggleLowDataMode={() => setLowDataMode(!lowDataMode)}
+        offlineDemoMode={offlineDemoMode}
+        onToggleOfflineDemoMode={() => {
+          setOfflineDemoMode(!offlineDemoMode);
+          setSimpleMode(!offlineDemoMode);
+          setLowDataMode(!offlineDemoMode);
+        }}
         onOpenEmergency={() => setIsEmergencyOpen(true)}
         activeTab={activeTab}
         onSelectTab={(t: any) => setActiveTab(t)}
@@ -278,6 +297,11 @@ export function App() {
 
       {/* Main App Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-8">
+        {(offlineDemoMode || !isOnline) && (
+          <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs sm:text-sm text-amber-950" role="status">
+            <strong>{offlineDemoMode ? 'Offline Demo Mode' : 'Connection unavailable'}:</strong> Local demo navigation and saved-in-browser content can remain available. Live AI/API translation, camera permissions, SMS, and external hospital websites may require connectivity or device support. Medora does not claim complete offline functionality.
+          </div>
+        )}
         {simpleMode ? (
           /* Simple Mode View */
           <SimpleModeView

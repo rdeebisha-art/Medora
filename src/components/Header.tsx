@@ -11,6 +11,8 @@ interface HeaderProps {
   onToggleSimpleMode: () => void;
   lowDataMode: boolean;
   onToggleLowDataMode: () => void;
+  offlineDemoMode: boolean;
+  onToggleOfflineDemoMode: () => void;
   onOpenEmergency: () => void;
   activeTab: string;
   onSelectTab: (tab: string) => void;
@@ -26,6 +28,8 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleSimpleMode,
   lowDataMode,
   onToggleLowDataMode,
+  offlineDemoMode,
+  onToggleOfflineDemoMode,
   onOpenEmergency,
   activeTab,
   onSelectTab,
@@ -128,6 +132,15 @@ export const Header: React.FC<HeaderProps> = ({
                 }`}
               >
                 {t.simpleMode}
+              </button>
+              <button
+                onClick={onToggleOfflineDemoMode}
+                className={`text-xs px-2.5 py-1 rounded-lg font-semibold border ${
+                  offlineDemoMode ? 'bg-amber-600 text-white border-amber-700' : 'bg-slate-100 text-slate-700 border-slate-300'
+                }`}
+                title="Offline demo mode"
+              >
+                {offlineDemoMode ? 'Offline' : 'Demo'}
               </button>
             </div>
           </div>
@@ -352,6 +365,16 @@ export const Header: React.FC<HeaderProps> = ({
               title="Reduce network usage and use local AI fallback"
             >
               <span>{lowDataMode ? 'Low Data On' : 'Low Data'}</span>
+            </button>
+
+            <button
+              onClick={onToggleOfflineDemoMode}
+              className={`hidden sm:flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border transition-all ${
+                offlineDemoMode ? 'bg-amber-600 text-white border-amber-700' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+              }`}
+              title="Show the low-bandwidth local demo experience"
+            >
+              <span>{offlineDemoMode ? 'Offline Demo On' : 'Offline Demo'}</span>
             </button>
 
             {/* Simple Mode Toggle */}
