@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Building2, Activity, AlertTriangle, Bell, CheckCircle2, UserCheck, Send, Sparkles, Volume2, ShieldAlert, Users, MapPin, ArrowRight, Clock } from 'lucide-react';
 import { LanguageCode, FamilyMember, Doctor, Hospital } from '../types';
 import { voiceService } from '../services/voiceService';
+import { PresentationReadinessSections } from './PresentationReadinessSections';
 
 interface HospitalVillagePortalProps {
   currentLang: LanguageCode;
@@ -57,7 +58,7 @@ export const HospitalVillagePortal: React.FC<HospitalVillagePortalProps> = ({
       id: 'alt-1',
       villageName: 'Rampur Village',
       title: 'Vector-Borne Dengue/Malaria Cluster Detected ( 2 )',
-      detectedBy: 'Medora AI Neural Surveillance Algorithm',
+      detectedBy: 'Prototype AI risk-assessment workflow',
       timeline: '2 hours ago (Detected 48 hours before official hospital admission)',
       riskLevel: 'Immediate Warning',
       description: 'AI detected 4 patient reports presenting with sudden high fever (>102°F), retro-orbital pain, and borderline platelet decreases (1.4L) clustered in North Hamlet within 48 hours.',
@@ -69,7 +70,7 @@ export const HospitalVillagePortal: React.FC<HospitalVillagePortalProps> = ({
       id: 'alt-2',
       villageName: 'Belur Village',
       title: 'Maternal Iron Deficiency Anemia Spike (  )',
-      detectedBy: 'Medora AI Maternal Care-Gap Analyzer',
+      detectedBy: 'Prototype maternal care-gap analyzer',
       timeline: 'Yesterday',
       riskLevel: 'Moderate Concern',
       description: '3 pregnant women between 20-26 gestational weeks registered hemoglobin levels under 9.5 g/dL with missed IFA tablet adherence over the past 14 days.',
@@ -81,7 +82,7 @@ export const HospitalVillagePortal: React.FC<HospitalVillagePortalProps> = ({
       id: 'alt-3',
       villageName: 'Shivajinagar Village',
       title: 'Pediatric Waterborne Diarrhea & Dehydration Warning',
-      detectedBy: 'Medora AI Village Water-Health Correlator',
+      detectedBy: 'Prototype village water-health correlator',
       timeline: '3 days ago',
       riskLevel: 'Watchlist',
       description: 'Following monsoon runoff into the open well, 5 children under age 4 reported watery diarrhea within 36 hours.',
@@ -92,8 +93,8 @@ export const HospitalVillagePortal: React.FC<HospitalVillagePortalProps> = ({
   ]);
 
   const [dispatchLog, setDispatchLog] = useState<string[]>([
-    'System: Hospital-Village real-time telemetry connected to District Civil Hospital server.',
-    'Synced: 4 Family Health Summaries automatically uploaded from Village Rampur.',
+    'Demo: Hospital-village workflow shown with sample data; no live telemetry connection.',
+    'Demo: Sample family summaries are displayed for workflow illustration only.',
   ]);
 
   const villages: VillageProfile[] = [
@@ -155,7 +156,7 @@ export const HospitalVillagePortal: React.FC<HospitalVillagePortalProps> = ({
       setSpeaking(false);
       return;
     }
-    const text = `Hospital Village Portal. Currently monitoring ${activeVillage.name}, population ${activeVillage.population}. Early detection AI has flagged an active alert for ${alerts[0].title}. Doctors can notify patients and dispatch treatment immediately before disease spreads.`;
+    const text = `Hospital Village Portal. Currently viewing ${activeVillage.name}, population ${activeVillage.population}. This prototype displays sample risk signals for professional review.`;
     voiceService.speak(text, currentLang, () => setSpeaking(false));
     setSpeaking(true);
   };
@@ -174,7 +175,7 @@ export const HospitalVillagePortal: React.FC<HospitalVillagePortalProps> = ({
               Hospital Portal & Village Health Registry
             </h1>
             <p className="text-sm text-blue-100/90 leading-relaxed">
-              Every village health profile is synchronized with empanelled government hospitals in real-time. When early disease patterns or care-gaps are detected, hospital doctors can instantly notify the village patient and dispatch immediate treatment.
+              This prototype demonstrates how village health workflows could support authorized healthcare teams. It does not currently connect to government databases, live hospital systems, or real-time telemetry.
             </p>
           </div>
 
@@ -206,7 +207,7 @@ export const HospitalVillagePortal: React.FC<HospitalVillagePortalProps> = ({
             <MapPin className="w-5 h-5 text-blue-600" />
             <h3 className="text-base font-black text-slate-900">Select Village Health Registry Profile:</h3>
           </div>
-          <span className="text-xs font-bold text-slate-500">Live Hospital Telemetry Active</span>
+          <span className="text-xs font-bold text-amber-700">Prototype / Demonstration Data</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -273,13 +274,13 @@ export const HospitalVillagePortal: React.FC<HospitalVillagePortalProps> = ({
           <div>
             <div className="inline-flex items-center gap-1.5 bg-rose-100 text-rose-800 px-3 py-0.5 rounded-full text-xs font-bold mb-1">
               <Sparkles className="w-3.5 h-3.5 text-rose-600" />
-              <span>AI Early Diagnosis Algorithm (Predictive Outbreak Triage)</span>
+              <span>AI Risk Assessment Workflow (Prototype)</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-              Early Disease Detection Alerts Before Official Hospital Outbreak
+              Early Risk Signals for Professional Review
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              The AI algorithm aggregates symptoms, lab tests, and water reports across the village to predict outbreaks before patients become critical.
+              Sample alerts illustrate how aggregated signals could support prioritization. They are not diagnoses, outbreak confirmations, or validated predictions.
             </p>
           </div>
         </div>
@@ -352,14 +353,14 @@ export const HospitalVillagePortal: React.FC<HospitalVillagePortalProps> = ({
               {/* Action Button for Doctor */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
                 <span className="text-[11px] text-slate-500">
-                  Doctor Action: Instantly alert village patient and dispatch local ASHA worker with medicines.
+                  Recommended Next Step: Professional review and authorized local follow-up.
                 </span>
                 <button
                   onClick={() => handleDispatchDoctorAlert(alt.id)}
                   className="w-full sm:w-auto px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs rounded-xl shadow transition-all flex items-center justify-center gap-2 shrink-0"
                 >
                   <Send className="w-4 h-4 text-emerald-400" />
-                  <span>Notify Patient & Dispatch Treatment</span>
+                  <span>Record Demo Follow-Up</span>
                 </button>
               </div>
             </div>
@@ -367,11 +368,11 @@ export const HospitalVillagePortal: React.FC<HospitalVillagePortalProps> = ({
         </div>
       </div>
 
-      {/* Hospital-Village Live Telemetry Dispatch Log */}
+      {/* Hospital-Village Prototype Workflow Log */}
       <div className="bg-slate-950 text-white rounded-3xl p-6 sm:p-8 space-y-4">
         <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
           <Activity className="w-5 h-5 text-emerald-400" />
-          <h3 className="text-base font-black text-white">Live Hospital Dispatch & Telemetry Log</h3>
+          <h3 className="text-base font-black text-white">Prototype Workflow Log</h3>
         </div>
         <div className="space-y-2 font-mono text-xs">
           {dispatchLog.map((log, idx) => (
@@ -381,6 +382,8 @@ export const HospitalVillagePortal: React.FC<HospitalVillagePortalProps> = ({
           ))}
         </div>
       </div>
+
+      <PresentationReadinessSections />
     </div>
   );
 };

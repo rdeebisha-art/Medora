@@ -260,7 +260,7 @@ export const AICameraScanner: React.FC<AICameraScannerProps> = ({
       }
     } catch (err) {
       console.error('Camera access error:', err);
-      alert('Unable to access camera directly. You can use our high-accuracy Demo Presets or upload an image file from your device.');
+      alert('Unable to access camera directly. You can use the demonstration presets or upload an image file from your device.');
       setIsCameraActive(false);
     }
   };
@@ -379,13 +379,13 @@ export const AICameraScanner: React.FC<AICameraScannerProps> = ({
           <div className="space-y-3 max-w-2xl">
             <div className="inline-flex items-center gap-2 bg-cyan-400/20 border border-cyan-300/30 text-cyan-200 px-3 py-1 rounded-full text-xs font-bold">
               <Camera className="w-4 h-4 text-cyan-300" />
-              <span>Vision AI Trained for Frontline Rural Diagnostics</span>
+              <span>Vision AI Prototype for Frontline Rural Support</span>
             </div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight">
               AI Camera Disease & Symptom Scanner
             </h1>
             <p className="text-sm text-cyan-100/90 leading-relaxed">
-              Built for poor villagers who cannot visit distant doctors frequently: point your phone camera at skin rashes, eye redness, or wounds. The AI identifies the condition, provides safe home controls, and lists safe first-line PHC medicines.
+              Use the camera for a preliminary AI risk assessment of skin rashes, eye redness, or wounds. Results are informational and require professional medical evaluation.
             </p>
           </div>
 
@@ -440,7 +440,7 @@ export const AICameraScanner: React.FC<AICameraScannerProps> = ({
               <span>Visual Capture Viewfinder</span>
             </h3>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-50 text-cyan-800 border border-cyan-200">
-              Live Neural Vision
+              Prototype Vision Assessment
             </span>
           </div>
 
@@ -465,7 +465,7 @@ export const AICameraScanner: React.FC<AICameraScannerProps> = ({
                   <Camera className="w-8 h-8" />
                 </div>
                 <p className="text-xs text-slate-400 max-w-xs">
-                  Start phone camera to scan a rash, or pick a sample preset below to see the AI diagnostic breakdown.
+                  Start the camera for a preliminary risk assessment, or choose a sample preset to view the prototype workflow.
                 </p>
               </div>
             )}
@@ -546,7 +546,7 @@ export const AICameraScanner: React.FC<AICameraScannerProps> = ({
           </div>
         </div>
 
-        {/* Right 7 Cols: Detailed AI Diagnostic Breakdown */}
+        {/* Right 7 Cols: Detailed AI Risk Assessment */}
         <div className="lg:col-span-7 space-y-6">
           {activeAnalysis ? (
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6 animate-in fade-in">
@@ -593,7 +593,7 @@ export const AICameraScanner: React.FC<AICameraScannerProps> = ({
 
               {/* Visual Features Detected */}
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
-                <span className="font-black text-slate-900 block">AI Detected Visual Features:</span>
+                <span className="font-black text-slate-900 block">AI-Assessed Visual Features:</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {activeAnalysis.visualFeatures.map((f, idx) => (
                     <div key={idx} className="flex items-center gap-1.5 text-slate-700">

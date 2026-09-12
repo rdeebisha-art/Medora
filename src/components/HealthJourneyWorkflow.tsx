@@ -65,7 +65,7 @@ export const HealthJourneyWorkflow: React.FC<HealthJourneyWorkflowProps> = ({
       step: 6,
       title: 'Care Gap Detection',
       tag: 'Care Gap',
-      desc: 'AI detects BP elevation + missed anti-hypertensive + overdue microalbuminuria lab screening.',
+      desc: 'AI risk assessment flags BP elevation, missed antihypertensive doses, and overdue microalbuminuria screening for professional review.',
       actionLabel: 'View Gaps',
       icon: AlertTriangle,
     },

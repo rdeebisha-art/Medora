@@ -327,7 +327,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               📷 AI Camera Disease Scanner
             </h4>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Use phone camera to detect skin rashes, eye infections & wounds: says disease name, how to control, how to reduce, and medicines to take.
+              Use the phone camera for a preliminary risk assessment of skin rashes, eye redness, and wounds. Professional evaluation is recommended.
             </p>
           </div>
 
@@ -369,7 +369,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               🏥 Hospital Portal & Village Registry
             </h4>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Real-time village profiles given to hospitals: AI detects outbreaks before doctors see them, allowing instant patient alerts and mobile treatment dispatch.
+              Prototype village profiles and risk signals for authorized professional review. Live hospital integration is not currently claimed.
             </p>
           </div>
 
