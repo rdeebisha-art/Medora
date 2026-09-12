@@ -37,14 +37,21 @@ export function App() {
   const [currentLang, setCurrentLang] = useState<LanguageCode>('en');
   const [simpleMode, setSimpleMode] = useState<boolean>(false);
   const [lowDataMode, setLowDataMode] = useState<boolean>(false);
-  const [offlineDemoMode, setOfflineDemoMode] = useState<boolean>(false);
+  const [offlineDemoMode, setOfflineDemoMode] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem('medora-offline-demo') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [isOnline, setIsOnline] = useState<boolean>(typeof navigator === 'undefined' ? true : navigator.onLine);
+  const useOfflineMode = offlineDemoMode || !isOnline;
 
   useEffect(() => {
     document.documentElement.lang = currentLang;
     document.documentElement.dataset.language = currentLang;
-    void translatePage(currentLang, lowDataMode);
-  }, [currentLang, lowDataMode]);
+    void translatePage(currentLang, lowDataMode || useOfflineMode);
+  }, [currentLang, lowDataMode, useOfflineMode]);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -284,6 +291,11 @@ export function App() {
         offlineDemoMode={offlineDemoMode}
         onToggleOfflineDemoMode={() => {
           setOfflineDemoMode(!offlineDemoMode);
+          try {
+            window.localStorage.setItem('medora-offline-demo', String(!offlineDemoMode));
+          } catch {
+            // Offline mode still works when browser storage is unavailable.
+          }
           setSimpleMode(!offlineDemoMode);
           setLowDataMode(!offlineDemoMode);
         }}
@@ -506,7 +518,7 @@ export function App() {
                 onNavigateToReferral={() => setActiveTab('referrals')}
                 onNavigateToHandoff={() => setActiveTab('handoff')}
                 onOpenEmergency={() => setIsEmergencyOpen(true)}
-                lowDataMode={lowDataMode}
+                lowDataMode={lowDataMode || useOfflineMode}
               />
             )}
 
