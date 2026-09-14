@@ -54,6 +54,10 @@ const DEMO_PROMPTS = [
   'What do my BP readings show?',
   'Do I have a pending referral?',
   'What preventive tasks are due?',
+  'How can I prevent illness in an elderly person?',
+  'How can I prevent illness during pregnancy?',
+  'How can I prevent illness in a child?',
+  'How can I prevent illness in a newborn?',
 ];
 
 const languageMap: Record<LanguageCode, string> = {
@@ -244,6 +248,10 @@ const decideResponseText = (question: string, patient: ReturnType<typeof buildPa
   }
 
   const topicGuidance: { keywords: string[]; answer: string }[] = [
+    { keywords: ['elderly prevention', 'elder prevention', 'senior prevention', 'old age prevention', 'prevent illness for elderly'], answer: 'Elderly prevention plan: check blood pressure and blood sugar as advised, take prescribed medicines on schedule, keep vaccinations and checkups current, reduce excess salt and tobacco, eat balanced meals, stay hydrated, and reduce fall risks with good lighting and safe floors. Seek professional care for chest pain, sudden weakness, confusion, severe breathlessness, repeated falls, or rapidly worsening symptoms. Recommended next step: arrange a routine elderly-care review.' },
+    { keywords: ['pregnancy prevention', 'pregnant prevention', 'pregnancy care', 'prevent illness in pregnancy', 'pregnant woman'], answer: 'Pregnancy prevention and safety plan: attend antenatal checkups, take only clinician-approved supplements, monitor blood pressure and symptoms, use safe food and water, avoid tobacco and alcohol, and discuss every medicine before taking it. Urgent warning signs include heavy bleeding, severe headache or vision changes, seizures, severe abdominal pain, breathing difficulty, fluid leakage, or reduced fetal movement. Recommended next step: contact the maternity team or nearest facility.' },
+    { keywords: ['child prevention', 'children prevention', 'prevent illness in child', 'child health prevention', 'pediatric prevention'], answer: 'Child prevention plan: keep vaccinations current, use safe water and handwashing, provide age-appropriate nutrition, keep medicines locked away, prevent burns and falls, and seek care early for persistent fever, diarrhea, cough, or poor feeding. Emergency signs include breathing difficulty, convulsions, severe dehydration, unusual sleepiness, or inability to drink. Recommended next step: arrange a child-health checkup.' },
+    { keywords: ['newborn prevention', 'new born prevention', 'newborn care', 'prevent illness in newborn', 'baby prevention'], answer: 'Newborn prevention plan: keep the baby warm, support skin-to-skin care, start breastfeeding as advised, keep the cord clean and dry, attend newborn checkups and immunizations, and keep smoke away. A newborn who has fever or feels cold, breathes fast, cannot feed, becomes unusually sleepy, has convulsions, or develops worsening jaundice needs immediate professional medical care. Recommended next step: contact a newborn-care professional or emergency facility.' },
     { keywords: ['tablet', 'which medicine', 'what medicine', 'medicine for'], answer: 'The correct medicine depends on the confirmed condition, age, pregnancy status, allergies, kidney and liver function, current medicines, and test results. Common examples are paracetamol for selected fever or pain, prescribed antihypertensives for high blood pressure, metformin for some type 2 diabetes plans, and antibiotics only for a clinician-confirmed bacterial infection. Do not start a tablet or replace a medicine from an AI answer. Show the package and prescription to a pharmacist or doctor.' },
     { keywords: ['fever'], answer: 'For fever, rest, drink safe fluids, monitor temperature, and seek clinical advice if it is persistent or severe. Confusion, seizure, severe breathing difficulty, dehydration, or a very young baby with fever require urgent care.' },
     { keywords: ['cold', 'cough'], answer: 'For a common cold or mild cough, rest, drink warm fluids, avoid smoke, and wash hands. Seek medical advice for breathing difficulty, chest pain, dehydration, blue lips, or symptoms that do not improve.' },

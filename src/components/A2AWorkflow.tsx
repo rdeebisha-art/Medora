@@ -17,6 +17,8 @@ export const A2AWorkflow: React.FC<A2AWorkflowProps> = ({
   const [activeStep, setActiveStep] = useState<number>(4);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
   const [speaking, setSpeaking] = useState<boolean>(false);
+  const [taskInput, setTaskInput] = useState('Review an elderly patient with high blood pressure and diabetes and recommend safe next steps.');
+  const [completedTask, setCompletedTask] = useState('Review an elderly patient with high blood pressure and diabetes and recommend safe next steps.');
 
   const specialistAgents = [
     {
@@ -24,7 +26,7 @@ export const A2AWorkflow: React.FC<A2AWorkflowProps> = ({
       name: 'General Medicine Specialist Agent',
       domain: 'Physician Core',
       avatarBg: 'bg-blue-600',
-      dialogue: 'Patient Ramesh Kumar (Age 68) presents with Stage 2 Hypertension (158/92 mmHg) and Fasting Glucose 142 mg/dL. I propose continuing Telmisartan 40mg and adding Metformin 500mg. Requesting Pharmacist and Geriatric clearance.',
+      dialogue: `Task received: ${taskInput}. I will summarize the available case context, identify safety questions, and request professional review before any treatment change.`,
       status: 'Proposed Initial Plan',
     },
     {
@@ -32,7 +34,7 @@ export const A2AWorkflow: React.FC<A2AWorkflowProps> = ({
       name: 'Geriatric Specialist Agent',
       domain: 'Elderly Care Specialist',
       avatarBg: 'bg-amber-600',
-      dialogue: 'Reviewed patient age (68) and fall risk. Caution: blood pressure should not drop precipitously below 120/70 to avoid orthostatic dizziness and bathroom falls. Ensure morning administration after breakfast, never on empty stomach.',
+      dialogue: 'I reviewed age-related risks, falls, pregnancy or child-safety concerns where relevant. Missing history, vital signs, allergies, and urgent warning signs must be checked before any recommendation.',
       status: 'Fall Safety Verified',
     },
     {
@@ -40,7 +42,7 @@ export const A2AWorkflow: React.FC<A2AWorkflowProps> = ({
       name: 'Maternal & Family Health Agent',
       domain: 'Cross-Family Safety',
       avatarBg: 'bg-rose-600',
-      dialogue: 'Checked household cross-inventory. Household has 24-week pregnant mother Sunita and 4-year-old Aarav. Verified that no ACE/ARB medicines are accessible to Sunita (contraindicated in pregnancy). Medicine storage segregation confirmed.',
+      dialogue: 'I checked cross-family safety considerations related to the task. High-risk groups, pregnancy, newborn status, allergies, and medicine conflicts require professional confirmation.',
       status: 'Household Safety Cleared',
     },
     {
@@ -48,7 +50,7 @@ export const A2AWorkflow: React.FC<A2AWorkflowProps> = ({
       name: 'Clinical Pharmacist Agent',
       domain: 'Drug-Drug Interaction Specialist',
       avatarBg: 'bg-emerald-600',
-      dialogue: 'Cross-checked Telmisartan 40mg with Metformin 500mg: Zero dangerous interaction. Warned against simultaneous OTC Ibuprofen / Diclofenac painkiller use, which can induce acute kidney strain with Telmisartan. Prescribing Paracetamol for joint pain.',
+      dialogue: 'I checked medication-safety questions raised by the task. No medicine should be started, stopped, or substituted from this simulation; a pharmacist or clinician must verify the package, dose, interactions, and patient history.',
       status: 'Interactions Vetted',
     },
     {
@@ -56,12 +58,15 @@ export const A2AWorkflow: React.FC<A2AWorkflowProps> = ({
       name: 'Consensus Medical Report Agent',
       domain: 'Finalized Clinical Protocol',
       avatarBg: 'bg-purple-600',
-      dialogue: 'All 4 hospital specialists have reached consensus. Finalized clinical prescription formatted in simple village language with zero jargon, complete with emergency red flags and dietary salt limits.',
+      dialogue: 'The agents reached a safety consensus: document risk level, list missing information, identify emergency red flags, and provide a professional-care next step. This is decision support, not a diagnosis or prescription.',
       status: 'Consensus Finalized',
     },
   ];
 
   const runSimulation = () => {
+    const task = taskInput.trim();
+    if (!task) return;
+    setCompletedTask(task);
     setIsSimulating(true);
     setActiveStep(0);
 
@@ -77,15 +82,7 @@ export const A2AWorkflow: React.FC<A2AWorkflowProps> = ({
     }, 1200);
   };
 
-  const finalizedReports: Record<LanguageCode, string> = {
-    en: 'Finalized medical report for Ramesh Kumar. Take Telmisartan 40 milligrams after breakfast and Metformin 500 milligrams after dinner only as prescribed. Use Paracetamol for joint pain only after professional advice. Reduce salt and pickles. Contact a healthcare professional urgently for severe dizziness, chest pain, breathing difficulty, or persistently high blood pressure.',
-    hi: 'Finalized medical report for Ramesh Kumar. Take prescribed medicines only after professional advice. Reduce salt and seek urgent care for severe symptoms.',
-    te: 'Finalized medical report for Ramesh Kumar. Take prescribed medicines only after professional advice. Reduce salt and seek urgent care for severe symptoms.',
-    ml: 'Finalized medical report for Ramesh Kumar. Take prescribed medicines only after professional advice. Reduce salt and seek urgent care for severe symptoms.',
-    ta: 'Finalized medical report for Ramesh Kumar. Take prescribed medicines only after professional advice. Reduce salt and seek urgent care for severe symptoms.',
-    kn: 'Finalized medical report for Ramesh Kumar. Take prescribed medicines only after professional advice. Reduce salt and seek urgent care for severe symptoms.',
-  };
-  const finalizedReportText = finalizedReports[currentLang];
+  const finalizedReportText = `A2A consensus result for the task: ${completedTask}. Risk level: requires professional review. Recommended next step: verify symptoms, age, pregnancy or newborn status, allergies, current medicines, vital signs, and emergency warning signs with a qualified healthcare professional. Do not start, stop, or substitute medicine based only on this simulation.`;
 
   const readFinalReport = () => {
     if (speaking) {
@@ -113,11 +110,15 @@ export const A2AWorkflow: React.FC<A2AWorkflowProps> = ({
             <p className="text-sm text-purple-100/90 leading-relaxed">
               Just like doctors and specialists gather at a hospital case conference before finalizing complex treatments, Medora’s domain-specialist AI agents deliberate with each other, eliminate drug interactions, and produce an easily understandable final report.
             </p>
+            <label className="block space-y-1.5 pt-2">
+              <span className="text-xs font-black uppercase tracking-wide text-purple-200">Simulation Task</span>
+              <textarea value={taskInput} onChange={(event) => setTaskInput(event.target.value)} placeholder="Describe the patient-safety or healthcare task for the agents..." className="w-full min-h-20 rounded-xl border border-purple-300/30 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-purple-200/70 focus:outline-none focus:ring-2 focus:ring-purple-300" />
+            </label>
           </div>
 
           <button
             onClick={runSimulation}
-            disabled={isSimulating}
+            disabled={isSimulating || !taskInput.trim()}
             className="px-5 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow-lg transition-all flex items-center gap-2 shrink-0 disabled:opacity-50"
           >
             {isSimulating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
@@ -187,13 +188,13 @@ export const A2AWorkflow: React.FC<A2AWorkflowProps> = ({
           <div>
             <div className="inline-flex items-center gap-1.5 bg-emerald-400/20 text-emerald-300 px-3 py-0.5 rounded-full text-xs font-bold mb-1">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Consensus Medical Plan Finalized</span>
+              <span>Consensus Result Finalized</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-white">
-              Finalized Consensus Medical Report
+              A2A Result for: {completedTask}
             </h2>
             <p className="text-xs text-slate-300 mt-0.5">
-              Verified by all hospital specialists without confusing medical jargon so the family can understand clearly.
+              The simulation summarizes agent checks, risk level, missing information, escalation needs, and the recommended next step. It is not a diagnosis or prescription.
             </p>
           </div>
 
@@ -219,19 +220,19 @@ export const A2AWorkflow: React.FC<A2AWorkflowProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
           <div className="p-4 bg-white/5 rounded-2xl border border-emerald-500/30 space-y-2">
-            <h4 className="font-black text-emerald-300 text-sm">Daily Safe Medications:</h4>
+            <h4 className="font-black text-emerald-300 text-sm">Task-Specific Safety Checks:</h4>
             <ul className="space-y-1.5 text-slate-200">
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span><strong>Telmisartan 40mg:</strong> 1 tablet after breakfast as prescribed for blood pressure.</span>
+                <span><strong>Patient context:</strong> Confirm symptoms, age, pregnancy or newborn status, allergies, current medicines, and vital signs.</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span><strong>Metformin 500mg SR:</strong> 1 tablet after dinner as prescribed for blood sugar.</span>
+                <span><strong>Medicine review:</strong> Verify the package, dose, interactions, and indication with a pharmacist or clinician.</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span><strong>Paracetamol 650mg:</strong> For knee pain only after professional advice.</span>
+                <span><strong>Recommended next step:</strong> Arrange professional evaluation before changing treatment.</span>
               </li>
             </ul>
           </div>
