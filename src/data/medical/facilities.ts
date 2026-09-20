@@ -1,0 +1,52 @@
+import { HealthcareFacility } from '../../types';
+
+export const HEALTHCARE_FACILITIES: HealthcareFacility[] = [
+  {
+    facilityId: 'fac-phc-rampur',
+    name: 'Rampur Primary Health Centre (PHC)',
+    location: 'Gram Panchayat Road, Rampur Village (DEMO LOCATION)',
+    specialties: ['General Outpatient (OPD)', 'Maternal & Child Health (MCH)', 'Routine Immunization', 'Basic Emergency Triage', 'Anti-Snake Venom (ASV) First Dose'],
+    emergencyAvailable: true,
+    contactMethod: 'Phone / ASHA Dispatch',
+    availabilityStatus: 'Operational 24/7',
+    phone: '+91 82322 41108',
+    distanceKm: 1.4,
+    isDemo: true,
+  },
+  {
+    facilityId: 'fac-chc-mandya-rural',
+    name: 'Mandya Taluk Community Health Centre (CHC)',
+    location: 'Taluk Headquarter Highway Junction, Mandya (DEMO LOCATION)',
+    specialties: ['Obstetrics & Gynecology', 'Pediatrics', '24/7 Emergency Casualty', 'Minor Surgery', 'Anti-Snake Venom (ASV) Centre', 'X-Ray & Diagnostic Lab'],
+    emergencyAvailable: true,
+    contactMethod: 'Ambulance 108 / Direct Hotline',
+    availabilityStatus: 'Operational 24/7',
+    phone: '+91 82322 42200',
+    distanceKm: 8.5,
+    isDemo: true,
+  },
+  {
+    facilityId: 'fac-civil-hosp-mandya',
+    name: 'Mandya District Civil Hospital (Tertiary Referral)',
+    location: 'District Hospital Complex, Mandya City (DEMO LOCATION)',
+    specialties: ['Comprehensive Geriatric Medicine', 'ICU & Critical Care', 'Cardiology', 'Special Newborn Care Unit (SNCU)', 'Trauma Surgery', 'Blood Bank'],
+    emergencyAvailable: true,
+    contactMethod: 'State Emergency 108 / Casualty Reception',
+    availabilityStatus: 'Operational 24/7',
+    phone: '+91 82322 43300',
+    distanceKm: 18.2,
+    isDemo: true,
+  },
+  {
+    facilityId: 'fac-janani-maternity-centre',
+    name: 'Janani Shishu Mother & Child Care Wing',
+    location: 'Near Old Bus Stand, Mandya (DEMO LOCATION)',
+    specialties: ['High-Risk Pregnancy Delivery', 'Neonatal Intensive Care', 'Comprehensive Lactation Support', 'Preeclampsia Monitoring'],
+    emergencyAvailable: true,
+    contactMethod: 'Janani Express 102 / Mother Helpline',
+    availabilityStatus: 'Operational 24/7',
+    phone: '+91 82322 44400',
+    distanceKm: 16.0,
+    isDemo: true,
+  }
+];

@@ -90,9 +90,9 @@ export const DEMO_CREDENTIALS: Record<
     role: 'admin',
     title: 'Village Admin / ASHA',
     personaName: 'Sister Lakshmi Devi (ASHA #4402)',
-    acceptedUsernames: ['asha-4402', 'asha4402', 'admin', 'lakshmi', 'anm'],
-    defaultUsername: 'ASHA-4402',
-    password: 'admin123',
+    acceptedUsernames: ['admin', 'administrator', 'asha-4402', 'asha4402', 'lakshmi'],
+    defaultUsername: 'admin',
+    password: '',
     targetPatientId: 'P-1001',
     targetFamilyId: 'FAM-01',
     badgeText: 'Gram Panchayat Health Registry Desk',
@@ -107,7 +107,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   onLanguageChange,
   onOpenEmergency,
 }) => {
-  const { login } = useMedora();
+  const { login, adminPassword } = useMedora();
 
   const [selectedRole, setSelectedRole] = useState<UserRole>('patient');
   const [usernameInput, setUsernameInput] = useState<string>(DEMO_CREDENTIALS.patient.defaultUsername);
@@ -127,7 +127,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const handleRoleTabClick = (role: UserRole) => {
     setSelectedRole(role);
     setUsernameInput(DEMO_CREDENTIALS[role].defaultUsername);
-    setPasswordInput(DEMO_CREDENTIALS[role].password);
+    setPasswordInput(role === 'admin' ? adminPassword : DEMO_CREDENTIALS[role].password);
     setErrorMessage(null);
   };
 
@@ -140,7 +140,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
     // Check if username matches accepted list for selected role
     const isValidUser = cred.acceptedUsernames.some(u => u.toLowerCase() === cleanUser);
-    const isValidPass = passwordInput.trim() === cred.password;
+    const expectedPass = selectedRole === 'admin' ? adminPassword : cred.password;
+    const isValidPass = passwordInput.trim() === expectedPass;
 
     if (!isValidUser) {
       setErrorMessage(`Unrecognized ID for ${cred.title}. Hint: Use "${cred.defaultUsername}"`);
@@ -148,7 +149,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     }
 
     if (!isValidPass) {
-      setErrorMessage(`Incorrect password for ${cred.title}. Hint: Use "${cred.password}"`);
+      if (selectedRole === 'admin') {
+        setErrorMessage('Incorrect password for Village Administrator.');
+      } else {
+        setErrorMessage(`Incorrect password for ${cred.title}. Hint: Use "${cred.password}"`);
+      }
       return;
     }
 
@@ -304,10 +309,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               >
                 <div className="flex items-center justify-between font-bold text-emerald-300 text-xs">
                   <span>🛡️ Village Admin</span>
-                  <span className="font-mono text-[10px] bg-emerald-500/20 px-1.5 py-0.2 rounded">ASHA</span>
+                  <span className="font-mono text-[10px] bg-emerald-500/20 px-1.5 py-0.2 rounded">ADMIN</span>
                 </div>
-                <div className="text-[11px] text-slate-300 mt-1">ID: <code className="text-white font-mono">ASHA-4402</code></div>
-                <div className="text-[11px] text-slate-300">Pass: <code className="text-emerald-200 font-mono">admin123</code></div>
+                <div className="text-[11px] text-slate-300 mt-1">User: <code className="text-white font-mono">admin</code></div>
+                <div className="text-[11px] text-slate-300">Pass: <code className="text-emerald-300 font-mono">•••••••••••• (Demo)</code></div>
               </div>
             </div>
           </div>

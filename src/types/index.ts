@@ -313,6 +313,15 @@ export interface PatientProfile {
     mobilityAssistanceNeeded: boolean;
     polypharmacyAlert: boolean;
   };
+  // Contact & Demographic Extensions
+  contactPhone?: string;
+  emergencyContact?: string;
+  address?: string;
+
+  // Archival Status (Soft-Archive)
+  isArchived?: boolean;
+  archivedAt?: string;
+  archiveReason?: string;
 }
 
 export type UserRole = 'patient' | 'family' | 'doctor' | 'admin';
@@ -331,10 +340,119 @@ export type NetworkStatus = 'ONLINE' | 'LIMITED' | 'OFFLINE';
 export interface PendingSyncItem {
   id: string;
   timestamp: string;
-  actionType: 'ADD_VITAL' | 'UPDATE_MEDICINE' | 'ADD_MEDICINE' | 'CREATE_REFERRAL' | 'ADD_PATIENT' | 'REMOVE_PATIENT' | 'ADD_FAMILY' | 'ADD_CLINICAL_NOTE';
+  actionType: 'ADD_VITAL' | 'UPDATE_MEDICINE' | 'ADD_MEDICINE' | 'CREATE_REFERRAL' | 'ADD_PATIENT' | 'REMOVE_PATIENT' | 'ADD_FAMILY' | 'ADD_CLINICAL_NOTE' | 'ARCHIVE_PATIENT' | 'RESTORE_PATIENT' | 'EDIT_PATIENT';
   entityType: 'patient' | 'family' | 'referral' | 'vital';
   entityId: string;
   payload: any;
   status: 'pending' | 'synced' | 'conflict';
 }
+
+// Doctor Availability
+export type DoctorAvailabilityStatus = 
+  | 'AVAILABLE'
+  | 'ON_DUTY'
+  | 'BUSY'
+  | 'ON_LEAVE'
+  | 'SICK_LEAVE'
+  | 'IN_SURGERY'
+  | 'UNAVAILABLE';
+
+// Audit Logging
+export interface AuditLogItem {
+  id: string;
+  action: string;
+  user: string;
+  role: UserRole;
+  timestamp: string;
+  affectedPatientId?: string;
+  affectedFamilyId?: string;
+  previousValue?: string;
+  newValue?: string;
+  details?: string;
+}
+
+// Medical Knowledge Base: Disease
+export type DiseaseCategory =
+  | 'GENERAL_HEALTH'
+  | 'HEAD_NEUROLOGICAL'
+  | 'CARDIOVASCULAR_METABOLIC'
+  | 'RESPIRATORY_INFECTIOUS'
+  | 'VECTOR_ANIMAL'
+  | 'GERIATRIC'
+  | 'MATERNAL'
+  | 'NEWBORN_CHILD';
+
+export interface MedicalDisease {
+  id: string;
+  title: string;
+  category: DiseaseCategory;
+  simpleExplanation: string;
+  commonSymptoms: string[];
+  distinguishingFeatures: string;
+  warningSigns: string[];
+  prevention: string[];
+  whenToSeekCare: string;
+  missingInfoToClarify: string[];
+  relatedMedicines?: string[];
+  source: string;
+  reviewStatus: string;
+  lastReviewed: string;
+}
+
+// Medical Knowledge Base: Medicine
+export interface ApprovedAlternative {
+  genericName: string;
+  type: 'Generic Alternative' | 'Therapeutic Alternative';
+  reason: string;
+  restrictions: string;
+  requiresPrescription: boolean;
+  doctorConfirmationRequired: boolean;
+}
+
+export interface MedicalMedicine {
+  medicineId: string;
+  genericName: string;
+  commonBrandNames: string[];
+  drugClass: string;
+  indications: string[];
+  contraindications: string[];
+  majorWarnings: string[];
+  commonSideEffects: string[];
+  allergyWarnings: string[];
+  ageRestrictions: string;
+  pregnancyConsiderations: string;
+  drugInteractions: string[];
+  storageInformation: string;
+  availabilityStatus: 'Available' | 'Low Stock' | 'Unavailable';
+  approvedAlternatives: ApprovedAlternative[];
+  requiresPrescription: boolean;
+  source: string;
+  reviewStatus: string;
+  lastReviewed: string;
+}
+
+// Facility Registry
+export interface HealthcareFacility {
+  facilityId: string;
+  name: string;
+  location: string;
+  specialties: string[];
+  emergencyAvailable: boolean;
+  contactMethod: string;
+  availabilityStatus: 'Operational 24/7' | 'OPD Only' | 'Emergency Only';
+  phone: string;
+  distanceKm: number;
+  isDemo: boolean;
+}
+
+// Emergency Sound Event
+export interface EmergencySoundEvent {
+  id: string;
+  category: 'scream_distress' | 'help_call' | 'fall_impact' | 'glass_breaking' | 'loud_crash' | 'prolonged_distress' | 'normal_speech' | 'background_noise';
+  confidence: number;
+  detectedAt: string;
+  patientId?: string;
+  status: 'detected' | 'confirmed' | 'dismissed' | 'escalated';
+}
+
 

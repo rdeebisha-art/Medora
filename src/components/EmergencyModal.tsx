@@ -1,7 +1,8 @@
-﻿import React from 'react';
-import { X, PhoneCall, AlertTriangle, Ambulance, ShieldAlert, HeartPulse, Stethoscope, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, PhoneCall, AlertTriangle, Ambulance, ShieldAlert, HeartPulse, Stethoscope, ArrowRight, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 import { Hospital, LanguageCode } from '../types';
 import { TRANSLATIONS } from '../i18n/translations';
+import { HEALTHCARE_FACILITIES } from '../data/medical/facilities';
 
 interface EmergencyModalProps {
   isOpen: boolean;
@@ -18,10 +19,13 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
   currentLang,
   onSelectHospital,
 }) => {
+  const [showSnakeBite, setShowSnakeBite] = useState(false);
+  const [showFacilities, setShowFacilities] = useState(false);
   if (!isOpen) return null;
   const t = TRANSLATIONS[currentLang];
 
   const emergencyHospital = hospitals.find(h => h.type === 'Emergency Care') || hospitals[0];
+  const emergencyFacilities = HEALTHCARE_FACILITIES.filter(f => f.emergencyAvailable);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
@@ -181,6 +185,72 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Snake Bite Emergency Protocol (Collapsible) */}
+          <div className="border border-orange-300 rounded-xl overflow-hidden">
+            <button
+              onClick={() => setShowSnakeBite(!showSnakeBite)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-orange-50 hover:bg-orange-100 transition-colors text-orange-900 font-bold text-sm"
+            >
+              <span className="flex items-center gap-2">
+                🐍 Snake Bite Emergency Protocol
+                <span className="text-[10px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded uppercase">ASV Only</span>
+              </span>
+              {showSnakeBite ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            {showSnakeBite && (
+              <div className="px-4 pb-4 pt-2 bg-orange-50 text-xs space-y-2">
+                <div className="p-2.5 bg-green-50 border border-green-300 rounded-lg text-green-900">
+                  <strong className="block mb-1">✅ DO IMMEDIATELY:</strong>
+                  Move victim away from snake • Keep COMPLETELY STILL • Keep bitten limb BELOW heart • Remove rings/bangles • Call 108 now
+                </div>
+                <div className="p-2.5 bg-red-50 border border-red-300 rounded-lg text-red-900">
+                  <strong className="block mb-1">❌ DO NOT (Traditional Remedies that Cause Harm):</strong>
+                  Do NOT cut/suck/squeeze wound • No tourniquet or tight rope • No herbs, mud, cow dung, chili, or electrical shock • Do NOT give food/water/alcohol
+                </div>
+                <p className="text-orange-800 font-semibold">⚡ Anti-Snake Venom (ASV) is the ONLY treatment — available at Mandya CHC and District Hospital. Reach within 2 hours if possible.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Nearby DEMO Healthcare Facilities */}
+          <div className="border border-slate-200 rounded-xl overflow-hidden">
+            <button
+              onClick={() => setShowFacilities(!showFacilities)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-slate-800 font-bold text-sm"
+            >
+              <span className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-emerald-600" />
+                Nearby DEMO Healthcare Facilities
+                <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded border border-amber-300">DEMO DATA</span>
+              </span>
+              {showFacilities ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            {showFacilities && (
+              <div className="divide-y divide-slate-100">
+                {emergencyFacilities.map(fac => (
+                  <div key={fac.facilityId} className="px-4 py-3 text-xs">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold text-slate-900 text-sm">{fac.name}</span>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">{fac.distanceKm} km</span>
+                    </div>
+                    <p className="text-slate-500 mb-1">{fac.location}</p>
+                    <div className="flex flex-wrap gap-1 mb-1.5">
+                      {fac.specialties.slice(0, 3).map(s => (
+                        <span key={s} className="bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded text-[10px]">{s}</span>
+                      ))}
+                    </div>
+                    <a
+                      href={`tel:${fac.phone.replace(/[^0-9+]/g, '')}`}
+                      className="inline-flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white font-bold px-2.5 py-1 rounded text-[11px] transition-colors"
+                    >
+                      <PhoneCall className="w-3 h-3" /> {fac.phone}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Footer */}
@@ -193,3 +263,4 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
     </div>
   );
 };
+

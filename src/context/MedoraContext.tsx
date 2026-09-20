@@ -17,6 +17,8 @@ import {
   Specialization,
   LabTest,
   PreventiveAction,
+  DoctorAvailabilityStatus,
+  AuditLogItem,
 } from '../types';
 import { MOCK_REFERRALS } from '../data/mockData';
 
@@ -28,7 +30,12 @@ const STORAGE_KEYS = {
   AUTH: 'medora_auth_v2',
   SYNC: 'medora_pending_sync_v2',
   NETWORK: 'medora_network_status_v2',
+  ADMIN_PASSWORD: 'medora_admin_password_v2',
+  AUDIT_LOGS: 'medora_audit_logs_v2',
+  DOCTOR_STATUS: 'medora_doctor_status_v2',
 };
+
+export const DEFAULT_ADMIN_PASSWORD = 'MedoraAdmin@2026';
 
 // Initial Seed Data: Village
 const INITIAL_VILLAGE: Village = {
@@ -625,6 +632,40 @@ export interface MedoraContextType {
   addMedication: (patientId: string, med: Omit<Medication, 'id'>) => void;
   addClinicalNote: (patientId: string, note: string, author?: string, role?: 'doctor' | 'admin' | 'asha') => void;
   
+  // Admin & Population Extensions
+  adminPassword: string;
+  changeAdminPassword: (currentPass: string, newPass: string) => { success: boolean; message: string };
+  auditLogs: AuditLogItem[];
+  addAuditLog: (action: string, options?: { user?: string; role?: UserRole; affectedPatientId?: string; affectedFamilyId?: string; previousValue?: string; newValue?: string; details?: string }) => void;
+  archivePatient: (patientId: string, reason?: string) => boolean;
+  restorePatient: (patientId: string) => boolean;
+  permanentDeletePatient: (patientId: string) => boolean;
+  editPatient: (patientId: string, data: Partial<{
+    name: string;
+    age: number;
+    gender: 'Male' | 'Female' | 'Other';
+    relationship: string;
+    familyId: string;
+    bloodGroup: string;
+    allergies: string[];
+    chronicConditions: string[];
+    contactPhone: string;
+    emergencyContact: string;
+    address: string;
+  }>) => boolean;
+  editFamily: (familyId: string, data: Partial<{
+    familyName: string;
+    headOfFamily: string;
+    rationCardNumber: string;
+    rationCardType: 'BPL (Antyodaya)' | 'BPL (Priority)' | 'APL';
+    address: string;
+    primaryPhone: string;
+  }>) => boolean;
+
+  // Doctor Availability
+  primaryDoctorStatus: DoctorAvailabilityStatus;
+  setPrimaryDoctorStatus: (status: DoctorAvailabilityStatus) => void;
+
   referrals: Referral[];
   activeReferralId: string;
   setActiveReferralId: (id: string) => void;
@@ -718,6 +759,52 @@ export const MedoraProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [referrals, setReferrals] = useState<Referral[]>(MOCK_REFERRALS);
   const [activeReferralId, setActiveReferralId] = useState<string>(MOCK_REFERRALS[0]?.id || 'ref-101');
 
+  // Admin Credentials & Access State
+  const [adminPassword, setAdminPassword] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.ADMIN_PASSWORD);
+      return saved || DEFAULT_ADMIN_PASSWORD;
+    } catch {
+      return DEFAULT_ADMIN_PASSWORD;
+    }
+  });
+
+  // Audit Logs State
+  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS);
+      return saved ? JSON.parse(saved) : [
+        {
+          id: 'audit-init',
+          action: 'REGISTRY INITIALIZED',
+          user: 'Sister Lakshmi Devi (ASHA)',
+          role: 'admin',
+          timestamp: '2026-09-20 09:00:00',
+          details: 'Central Gram Panchayat Health Registry initialized with 9 active villagers across 3 households.',
+        }
+      ];
+    } catch {
+      return [];
+    }
+  });
+
+  // Doctor Availability Status
+  const [primaryDoctorStatus, setPrimaryDoctorStatusState] = useState<DoctorAvailabilityStatus>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.DOCTOR_STATUS);
+      return (saved as DoctorAvailabilityStatus) || 'AVAILABLE';
+    } catch {
+      return 'AVAILABLE';
+    }
+  });
+
+  const setPrimaryDoctorStatus = (status: DoctorAvailabilityStatus) => {
+    setPrimaryDoctorStatusState(status);
+    try {
+      localStorage.setItem(STORAGE_KEYS.DOCTOR_STATUS, status);
+    } catch {}
+  };
+
   // Authentication State (Login page control)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     try {
@@ -780,17 +867,26 @@ export const MedoraProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [networkStatus]);
 
   useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(auditLogs));
+    } catch {}
+  }, [auditLogs]);
+
+  // Dynamic Population Calculation (Strictly Active non-archived villagers)
+  useEffect(() => {
+    const activeCount = patients.filter(p => !p.isArchived).length;
     setVillage(prev => {
-      if (prev.population !== patients.length) {
-        return { ...prev, population: patients.length };
+      if (prev.population !== activeCount) {
+        return { ...prev, population: activeCount };
       }
       return prev;
     });
-  }, [patients.length]);
+  }, [patients]);
 
   const selectedPatient = useMemo(() => {
+    const activePatients = patients.filter(p => !p.isArchived);
     const found = patients.find(p => p.patientId === selectedPatientId);
-    return found || patients[0] || INITIAL_PATIENTS[0];
+    return found || activePatients[0] || patients[0] || INITIAL_PATIENTS[0];
   }, [patients, selectedPatientId]);
 
   const currentFamily = useMemo(() => {
@@ -798,12 +894,12 @@ export const MedoraProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [families, selectedPatient]);
 
   const accessibleFamilyMembers: FamilyMember[] = useMemo(() => {
-    let filteredPatients = patients;
+    let filteredPatients = patients.filter(p => !p.isArchived);
 
     if (authSession.role === 'patient') {
       filteredPatients = patients.filter(p => p.patientId === authSession.activePatientId);
     } else if (authSession.role === 'family') {
-      filteredPatients = patients.filter(p => p.familyId === authSession.activeFamilyId);
+      filteredPatients = patients.filter(p => !p.isArchived && p.familyId === authSession.activeFamilyId);
     }
 
     return filteredPatients.map(p => ({
@@ -1004,7 +1100,234 @@ export const MedoraProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
     }
 
+    addAuditLog(`ADMIN added patient ${newPatientId}`, {
+      affectedPatientId: newPatientId,
+      affectedFamilyId: data.familyId,
+      details: `Registered new villager: ${data.name} (${data.age}y, ${data.gender}). Category: ${data.category}.`,
+    });
+
     return newProfile;
+  };
+
+  const addAuditLog = (action: string, options?: {
+    user?: string;
+    role?: UserRole;
+    affectedPatientId?: string;
+    affectedFamilyId?: string;
+    previousValue?: string;
+    newValue?: string;
+    details?: string;
+  }) => {
+    const newLog: AuditLogItem = {
+      id: `audit-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      action,
+      user: options?.user || (authSession.role === 'admin' ? authSession.adminName || 'Sister Lakshmi (ASHA)' : authSession.role),
+      role: options?.role || authSession.role,
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+      affectedPatientId: options?.affectedPatientId,
+      affectedFamilyId: options?.affectedFamilyId,
+      previousValue: options?.previousValue,
+      newValue: options?.newValue,
+      details: options?.details,
+    };
+
+    setAuditLogs(prev => [newLog, ...prev]);
+  };
+
+  const changeAdminPassword = (currentPass: string, newPass: string): { success: boolean; message: string } => {
+    if (authSession.role !== 'admin') {
+      return { success: false, message: 'Unauthorized: Only administrator can change password.' };
+    }
+    if (currentPass !== adminPassword) {
+      return { success: false, message: 'Current password does not match.' };
+    }
+    if (!newPass || newPass.length < 6) {
+      return { success: false, message: 'New password must be at least 6 characters.' };
+    }
+
+    setAdminPassword(newPass);
+    try {
+      localStorage.setItem(STORAGE_KEYS.ADMIN_PASSWORD, newPass);
+    } catch {}
+
+    addAuditLog('ADMIN changed password', {
+      user: authSession.adminName || 'Admin',
+      details: 'Administrator prototype login password updated successfully.',
+    });
+
+    return { success: true, message: 'Admin password successfully updated.' };
+  };
+
+  const archivePatient = (patientId: string, reason?: string): boolean => {
+    if (authSession.role !== 'admin') return false;
+    const pat = patients.find(p => p.patientId === patientId);
+    if (!pat) return false;
+
+    const today = new Date().toISOString().split('T')[0];
+    const defaultReason = reason || 'Demographic record archived by Gram Panchayat Desk';
+
+    setPatients(prev => prev.map(p => {
+      if (p.patientId === patientId) {
+        return {
+          ...p,
+          isArchived: true,
+          archivedAt: today,
+          archiveReason: defaultReason,
+        };
+      }
+      return p;
+    }));
+
+    if (networkStatus !== 'ONLINE') {
+      queueSyncAction({
+        actionType: 'ARCHIVE_PATIENT',
+        entityType: 'patient',
+        entityId: patientId,
+        payload: { patientId, reason: defaultReason },
+      });
+    }
+
+    addAuditLog(`ADMIN archived patient ${patientId}`, {
+      affectedPatientId: patientId,
+      affectedFamilyId: pat.familyId,
+      details: `Patient ${pat.name} archived. Reason: ${defaultReason}`,
+    });
+
+    return true;
+  };
+
+  const restorePatient = (patientId: string): boolean => {
+    if (authSession.role !== 'admin') return false;
+    const pat = patients.find(p => p.patientId === patientId);
+    if (!pat) return false;
+
+    setPatients(prev => prev.map(p => {
+      if (p.patientId === patientId) {
+        return {
+          ...p,
+          isArchived: false,
+          archivedAt: undefined,
+          archiveReason: undefined,
+        };
+      }
+      return p;
+    }));
+
+    if (networkStatus !== 'ONLINE') {
+      queueSyncAction({
+        actionType: 'RESTORE_PATIENT',
+        entityType: 'patient',
+        entityId: patientId,
+        payload: { patientId },
+      });
+    }
+
+    addAuditLog(`ADMIN restored patient ${patientId}`, {
+      affectedPatientId: patientId,
+      affectedFamilyId: pat.familyId,
+      details: `Patient ${pat.name} restored to active village registry.`,
+    });
+
+    return true;
+  };
+
+  const permanentDeletePatient = (patientId: string): boolean => {
+    if (authSession.role !== 'admin') return false;
+    const pat = patients.find(p => p.patientId === patientId);
+    removePatient(patientId);
+
+    addAuditLog(`ADMIN permanently deleted patient ${patientId}`, {
+      affectedPatientId: patientId,
+      affectedFamilyId: pat?.familyId,
+      details: `Permanently removed ${pat?.name || patientId} from registry after explicit confirmation.`,
+    });
+
+    return true;
+  };
+
+  const editPatient = (patientId: string, data: Partial<{
+    name: string;
+    age: number;
+    gender: 'Male' | 'Female' | 'Other';
+    relationship: string;
+    familyId: string;
+    bloodGroup: string;
+    allergies: string[];
+    chronicConditions: string[];
+    contactPhone: string;
+    emergencyContact: string;
+    address: string;
+  }>): boolean => {
+    if (authSession.role !== 'admin') return false;
+
+    let previousProfile: PatientProfile | undefined;
+    setPatients(prev => prev.map(p => {
+      if (p.patientId === patientId) {
+        previousProfile = p;
+        const newFamId = data.familyId || p.familyId;
+        return {
+          ...p,
+          ...data,
+          familyId: newFamId,
+        };
+      }
+      return p;
+    }));
+
+    // Reassign family membership if familyId changed
+    if (data.familyId && previousProfile && previousProfile.familyId !== data.familyId) {
+      setFamilies(prev => prev.map(f => {
+        if (f.familyId === previousProfile?.familyId) {
+          return { ...f, memberIds: f.memberIds.filter(id => id !== patientId) };
+        }
+        if (f.familyId === data.familyId && !f.memberIds.includes(patientId)) {
+          return { ...f, memberIds: [...f.memberIds, patientId] };
+        }
+        return f;
+      }));
+    }
+
+    if (networkStatus !== 'ONLINE') {
+      queueSyncAction({
+        actionType: 'EDIT_PATIENT',
+        entityType: 'patient',
+        entityId: patientId,
+        payload: data,
+      });
+    }
+
+    addAuditLog(`ADMIN updated patient ${patientId}`, {
+      affectedPatientId: patientId,
+      affectedFamilyId: data.familyId || previousProfile?.familyId,
+      details: `Updated demographic records for ${data.name || previousProfile?.name || patientId}.`,
+    });
+
+    return true;
+  };
+
+  const editFamily = (familyId: string, data: Partial<{
+    familyName: string;
+    headOfFamily: string;
+    rationCardNumber: string;
+    rationCardType: 'BPL (Antyodaya)' | 'BPL (Priority)' | 'APL';
+    address: string;
+    primaryPhone: string;
+  }>): boolean => {
+    if (authSession.role !== 'admin') return false;
+
+    setFamilies(prev => prev.map(f => {
+      if (f.familyId === familyId) {
+        return { ...f, ...data };
+      }
+      return f;
+    }));
+
+    addAuditLog(`ADMIN updated family ${familyId}`, {
+      affectedFamilyId: familyId,
+      details: `Updated household information for ${data.familyName || familyId}.`,
+    });
+
+    return true;
   };
 
   const removePatient = (patientId: string) => {
@@ -1067,6 +1390,11 @@ export const MedoraProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
     }
 
+    addAuditLog(`ADMIN added family ${newFamilyId}`, {
+      affectedFamilyId: newFamilyId,
+      details: `Registered new household: ${data.familyName}. Head: ${data.headOfFamily}.`,
+    });
+
     return newFamily;
   };
 
@@ -1076,6 +1404,11 @@ export const MedoraProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     setPatients(prev => prev.filter(p => !familyToRemove.memberIds.includes(p.patientId)));
     setFamilies(prev => prev.filter(f => f.familyId !== familyId));
+
+    addAuditLog(`ADMIN removed family ${familyId}`, {
+      affectedFamilyId: familyId,
+      details: `Removed household ${familyToRemove.familyName} and ${familyToRemove.memberIds.length} associated member record(s).`,
+    });
   };
 
   const addVitalReading = (patientId: string, vital: VitalMeasurement) => {
@@ -1297,6 +1630,22 @@ export const MedoraProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         updateMedicationStatus,
         addMedication,
         addClinicalNote,
+        
+        // Admin & Demographic Registry Extensions
+        adminPassword,
+        changeAdminPassword,
+        auditLogs,
+        addAuditLog,
+        archivePatient,
+        restorePatient,
+        permanentDeletePatient,
+        editPatient,
+        editFamily,
+
+        // Doctor Availability Status
+        primaryDoctorStatus,
+        setPrimaryDoctorStatus,
+
         referrals,
         activeReferralId,
         setActiveReferralId,

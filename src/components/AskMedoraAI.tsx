@@ -21,6 +21,8 @@ import {
 import { FamilyMember, LanguageCode, PatientProfile } from '../types';
 import { useMedora } from '../context/MedoraContext';
 import { voiceService } from '../services/voiceService';
+import { MEDICAL_DISEASES } from '../data/medical/diseases';
+import { MEDICAL_MEDICINES } from '../data/medical/medicines';
 
 interface AskMedoraAIProps {
   familyMembers: FamilyMember[];
@@ -273,12 +275,113 @@ const decideResponseText = (question: string, patient: ReturnType<typeof buildPa
     }
   }
 
-  // 8. General Health Guidelines (First Aid & Rural Conditions)
+  // 8. Disease Differentiation: Headache vs Migraine
+  if (q.includes('headache') || q.includes('migraine') || q.includes('head pain') || q.includes('head ache')) {
+    const headacheInfo = MEDICAL_DISEASES.find(d => d.id === 'gen-headache');
+    const migraineInfo = MEDICAL_DISEASES.find(d => d.id === 'gen-migraine');
+    if (q.includes('migraine') || q.includes('one side') || q.includes('throbbing') || q.includes('light hurts') || q.includes('aura')) {
+      if (migraineInfo) {
+        return `📋 MIGRAINE — Neurological Headache (Medora Educational Guide)\n\n${migraineInfo.distinguishingFeatures}\n\n⚠️ Migraine differs from tension headache because:\n• It is typically ONE-SIDED and THROBBING\n• Worsens with physical movement\n• Accompanied by nausea, sensitivity to light/sound\n• May have visual aura (flashing lights before pain)\n\n🔴 Warning Signs requiring IMMEDIATE care:\n${migraineInfo.warningSigns.map(w => `• ${w}`).join('\n')}\n\n📍 Action: Medora does NOT diagnose migraines. Please consult a doctor at Rampur PHC for accurate evaluation and prescription.${DISCLAIMER_SUFFIX}`;
+      }
+    }
+    if (headacheInfo) {
+      return `📋 HEADACHE — Educational Information (Medora Health Guide)\n\n${headacheInfo.distinguishingFeatures}\n\nGeneral Tension Headache features:\n${headacheInfo.commonSymptoms.map(s => `• ${s}`).join('\n')}\n\n💊 Safe First Step: Paracetamol (500mg for adults, 10-15mg/kg for children) with adequate water. Rest in a quiet room.\n\n🔴 Warning Signs — Seek IMMEDIATE care if:\n${headacheInfo.warningSigns.map(w => `• ${w}`).join('\n')}\n\nIf headache is one-sided, throbbing, or with light/sound sensitivity — ask about MIGRAINE evaluation at your PHC.${DISCLAIMER_SUFFIX}`;
+    }
+  }
+
+  // 9. Disease Differentiation: Fever vs Chikungunya vs Typhoid vs TB
+  if (q.includes('fever') || q.includes('chikungunya') || q.includes('typhoid') || q.includes('tb') || q.includes('tuberculosis') || q.includes('malaria')) {
+    const feverInfo = MEDICAL_DISEASES.find(d => d.id === 'gen-fever');
+    if (q.includes('chikungunya') || (q.includes('joint pain') && q.includes('fever'))) {
+      const chikunInfo = MEDICAL_DISEASES.find(d => d.id === 'vec-chikungunya');
+      const info = chikunInfo || feverInfo;
+      return `📋 CHIKUNGUNYA — Differentiating Features (Medora Health Guide)\n\nChikungunya ≠ General Fever:\n• Chikungunya: Fever + SEVERE JOINT PAIN (ankles, wrists, knees) that may last weeks, possible rash, mosquito-borne (Aedes mosquito)\n• General Fever: Mild-to-moderate temperature, body aches, WITHOUT the severe localized joint agony\n\n🦟 Prevention: Use mosquito nets, eliminate water stagnation near the home, apply repellents\n\n⚠️ Chikungunya has NO specific antiviral drug. Treatment is supportive: Paracetamol for fever/pain, adequate hydration, rest.\n\n🔴 Visit PHC IMMEDIATELY if fever exceeds 103°F or joint pain is disabling.${DISCLAIMER_SUFFIX}`;
+    }
+    if (q.includes('typhoid') || (q.includes('stomach') && q.includes('fever')) || q.includes('step ladder')) {
+      return `📋 TYPHOID vs GENERAL FEVER — Differentiation Guide\n\nTyphoid Fever ≠ Common Fever:\n• Typhoid: STEP-LADDER pattern (temperature rises each day), severe abdominal pain/distension, "toxic look" (severely ill appearance), contaminated food/water source, may have rose spots on abdomen\n• General Fever: Short duration, no step-ladder pattern, no abdominal distension\n\n🧪 Typhoid REQUIRES a Widal Test or blood culture for diagnosis — Medora cannot diagnose typhoid.\n💊 Treatment: Antibiotics prescribed ONLY by a doctor (Azithromycin or Ceftriaxone — do NOT self-medicate)\n\n🔴 Seek PHC care immediately for suspected typhoid. Untreated typhoid can cause intestinal perforation.${DISCLAIMER_SUFFIX}`;
+    }
+    if (q.includes('tb') || q.includes('tuberculosis') || q.includes('cough blood') || q.includes('night sweat')) {
+      return `📋 TUBERCULOSIS (TB) vs GENERAL FEVER — Differentiation Guide\n\nTB ≠ General Fever:\n• TB: CHRONIC LOW-GRADE evening fever lasting MORE THAN 2 WEEKS, persistent cough (possibly with blood), night sweats, unintended weight loss, extreme fatigue\n• General Fever: Short-duration (days), self-resolving, without prolonged cough or weight loss\n\n🆓 TB diagnosis and treatment are FREE under RNTCP/PMTB program at any Government PHC.\n🔴 If cough has lasted more than 2 weeks, visit Rampur PHC immediately for a sputum test.${DISCLAIMER_SUFFIX}`;
+    }
+    if (feverInfo) {
+      return `📋 FEVER — Educational Guide (Medora Health)\n\n${feverInfo.simpleExplanation}\n\n${feverInfo.distinguishingFeatures}\n\n🌡️ Safe First Aid: Paracetamol (for adults 500mg, not exceeding 4 doses/day), adequate fluids, sponge cooling if temperature is very high.\n\n🔴 Warning Signs — Seek immediate care:\n${feverInfo.warningSigns.map(w => `• ${w}`).join('\n')}\n\nNote: Medora can NOT distinguish Malaria, Chikungunya, Dengue, or Typhoid without a lab test. Please visit your PHC for diagnosis.${DISCLAIMER_SUFFIX}`;
+    }
+  }
+
+  // 10. Disease Differentiation: Snake Bite vs Insect Bite
+  if (q.includes('snake') || q.includes('snakebite') || q.includes('venom') || q.includes('insect bite') || q.includes('scorpion') || q.includes('bee sting') || q.includes('insect sting')) {
+    if (q.includes('snake') || q.includes('snakebite') || q.includes('venom')) {
+      return `🚨 SNAKE BITE — EMERGENCY PROTOCOL (Medora)\n\nSnake Bite ≠ Insect Bite:\n• Snake Bite: Fang marks (1–2 deep punctures), immediate local swelling & bruising, possible numbness spreading from bite site, nausea/vomiting, vision changes, difficulty swallowing or breathing — MEDICAL EMERGENCY\n• Insect Bite: Small welt, localized redness/itching, rarely spreads beyond the bite area\n\n✅ DO IMMEDIATELY:\n• Move the person away from the snake\n• Keep the victim COMPLETELY STILL and CALM\n• Keep bitten limb BELOW heart level, supported\n• Remove tight rings, bangles, watches near bite\n• Call 108 or reach nearest hospital WITH Anti-Snake Venom (ASV)\n\n❌ DO NOT:\n• DO NOT cut, suck, or squeeze the wound\n• DO NOT apply tourniquet, rope, or rubber band\n• DO NOT apply herbs, mud, cow dung, turmeric, or electrical shock\n• DO NOT give food, water, or alcohol\n\n⚡ ASV (Anti-Snake Venom) is the ONLY proven treatment — only available at a hospital.${DISCLAIMER_SUFFIX}`;
+    }
+    return `🐝 INSECT BITE / STING PROTOCOL\n\nInsect Bite ≠ Snake Bite:\n• Insect bites: Small raised welt, localized redness/itching, no fang marks, bee/wasp stings may leave a visible stinger\n\n✅ First Aid for Insect Bite:\n• Remove stinger if visible (scrape gently, don't squeeze)\n• Wash the area with soap and water\n• Apply cold compress for 10 minutes to reduce swelling\n• Paracetamol for pain if needed\n\n🔴 Seek immediate care if:\n• Throat tightness, difficulty breathing (anaphylaxis — call 108)\n• Multiple stings (bee swarm)\n• Progressive swelling beyond the bite area\n• Scorpion sting — seek PHC immediately as antivenom may be needed${DISCLAIMER_SUFFIX}`;
+  }
+
+  // 11. High Blood Sugar vs Low Blood Sugar (Differentiation)
+  if (q.includes('sugar') || q.includes('glucose') || q.includes('diabetes') || q.includes('diabetic') || q.includes('hyperglycemia') || q.includes('hypoglycemia') || q.includes('blood glucose')) {
+    if (q.includes('low sugar') || q.includes('hypoglycemia') || q.includes('shaking') || q.includes('sweating') || (q.includes('low') && q.includes('sugar'))) {
+      return `📋 LOW BLOOD SUGAR (Hypoglycemia) — Emergency Response\n\nLow Sugar ≠ High Sugar:\n• Hypoglycemia (<70 mg/dL): Sudden onset shaking/trembling, cold sweats, dizziness, confusion, palpitations, extreme hunger, possible fainting\n• Hyperglycemia (>200 mg/dL): Gradual onset, frequent urination, extreme thirst, blurred vision, fatigue — rarely causes sudden collapse\n\n✅ IMMEDIATE Action for Low Sugar:\n1. Give 1 tablespoon of sugar/honey dissolved in water OR 2–3 glucose biscuits\n2. Wait 15 minutes, recheck symptoms\n3. Follow with a substantial meal (rice or roti)\n\n🔴 If the person is UNCONSCIOUS — do NOT give anything by mouth. Call 108 immediately.\n\nFor ${patient.name}'s current sugar level: ${vitals ? `Fasting ${vitals.bloodSugarFasting} mg/dL (Last recorded ${vitals.date})` : 'No vitals recorded in Medora — visit PHC for baseline screening'}.${DISCLAIMER_SUFFIX}`;
+    }
+    if (q.includes('high sugar') || q.includes('hyperglycemia') || (q.includes('high') && q.includes('sugar'))) {
+      return `📋 HIGH BLOOD SUGAR (Hyperglycemia) — Response Guide\n\nHigh Sugar ≠ Low Sugar:\n• Hyperglycemia (>200 mg/dL fasting, >140 mg/dL 2hr post-meal): Frequent urination, extreme thirst, blurred vision, fatigue, slow-healing wounds, gradual onset\n• Very High (>300 mg/dL): Risk of diabetic ketoacidosis — seek immediate care\n\n✅ For High Sugar:\n• Take your prescribed diabetes medicines as scheduled\n• Drink adequate water\n• Avoid sugary foods and refined carbohydrates\n• Check feet daily for wounds\n\n${vitals ? `Current records for ${patient.name}: Fasting ${vitals.bloodSugarFasting} mg/dL, Post-Prandial ${vitals.bloodSugarPostPrandial} mg/dL (${vitals.date}).\n${vitals.bloodSugarFasting > 200 ? '⚠️ Fasting sugar appears elevated. Please consult your doctor before modifying medication.' : '✅ Values within record range.'}` : 'No sugar readings recorded for this patient yet.'}\n\n🔴 Seek immediate care if blood sugar exceeds 300 mg/dL or if diabetic with uncontrolled vomiting.${DISCLAIMER_SUFFIX}`;
+    }
+    // Generic diabetes query
+    if (vitals) {
+      return `📋 Diabetes Records for ${patient.name} (${patient.patientId})\n\n• Fasting Blood Sugar: ${vitals.bloodSugarFasting} mg/dL ${vitals.bloodSugarFasting > 126 ? '⚠️ Above fasting threshold (>126 mg/dL)' : '✅ Within range'}\n• Post-Prandial (2hr): ${vitals.bloodSugarPostPrandial} mg/dL ${vitals.bloodSugarPostPrandial > 200 ? '⚠️ Elevated' : '✅ Within range'}\n• Date Recorded: ${vitals.date}\n\nLow sugar (<70): Shaking, sweating, dizziness — give sugar immediately\nHigh sugar (>200): Thirst, frequent urination — review medicines with doctor\n\nFor ${patient.name}'s full vitals history: ${patient.vitalTrends.length} reading(s) recorded.${DISCLAIMER_SUFFIX}`;
+    }
+    return `Not recorded in Medora: No blood sugar readings have been logged for ${patient.name} (ID: ${patient.patientId}). Please visit Rampur PHC for a baseline fasting blood glucose test.${DISCLAIMER_SUFFIX}`;
+  }
+
+  // 12. Medicine Safety Lookup
+  if (q.includes('paracetamol') || q.includes('amlodipine') || q.includes('telmisartan') || q.includes('metformin') || q.includes('ors') || q.includes('iron tablet') || q.includes('ifa') || q.includes('what medicine') || q.includes('safe medicine') || q.includes('medicine for')) {
+    const foundMedicine = MEDICAL_MEDICINES.find(med =>
+      med.genericName.toLowerCase().split(' ').some(part => q.includes(part.toLowerCase())) ||
+      med.commonBrandNames.some(brand => q.includes(brand.toLowerCase()))
+    );
+
+    if (foundMedicine) {
+      // Check patient-specific safety
+      const hasContraindication = foundMedicine.contraindications.some(ci =>
+        patient.conditions.some(cond => cond.toLowerCase().includes(ci.toLowerCase().split(' ')[0]))
+      );
+      const hasAllergyMatch = foundMedicine.allergyWarnings.some(aw =>
+        patient.allergies.some(a => a !== 'None reported' && aw.toLowerCase().includes(a.toLowerCase().split(' ')[0]))
+      );
+      const isPregnant = patient.category === 'maternity';
+
+      let safetyNote = '';
+      if (hasAllergyMatch) {
+        safetyNote = `\n\n⚠️ ALLERGY ALERT for ${patient.name}: Patient has a recorded allergy that may relate to this medicine. Confirm with your doctor before use.`;
+      }
+      if (isPregnant && foundMedicine.pregnancyConsiderations) {
+        safetyNote += `\n\n🤰 PREGNANCY GUIDANCE: ${foundMedicine.pregnancyConsiderations}`;
+      }
+      if (hasContraindication) {
+        safetyNote += `\n\n⛔ POTENTIAL CONTRAINDICATION for ${patient.name}'s recorded conditions. Please consult a doctor before taking this medicine.`;
+      }
+
+      return `💊 ${foundMedicine.genericName} — Medora Medicine Guide\n\n📋 Drug Class: ${foundMedicine.drugClass}\n\nIndications (What it treats):\n${foundMedicine.indications.map(i => `• ${i}`).join('\n')}\n\n⚠️ Major Warnings:\n${foundMedicine.majorWarnings.map(w => `• ${w}`).join('\n')}\n\nCommon Side Effects: ${foundMedicine.commonSideEffects.join(', ')}\n\n${foundMedicine.requiresPrescription ? '🔒 Prescription Required — Do NOT take without doctor\'s advice.' : '✅ Available over the counter — follow dosage instructions on label.'}${safetyNote}\n\nAlternatives (if unavailable):\n${foundMedicine.approvedAlternatives.map(a => `• ${a.genericName}: ${a.reason} ⚠️ Requires doctor confirmation.`).join('\n') || 'No documented alternatives.'}\n\nSource: ${foundMedicine.source}${DISCLAIMER_SUFFIX}`;
+    }
+  }
+
+  // 13. Pregnancy-specific queries
+  if (patient.category === 'maternity' && (q.includes('pregnancy') || q.includes('trimester') || q.includes('baby') || q.includes('delivery') || q.includes('hemoglobin') || q.includes('haemoglobin') || q.includes('maternity') || q.includes('anc') || q.includes('antenatal'))) {
+    const mat = patient.maternityDetails;
+    if (mat) {
+      const hbStatus = mat.hemoglobinLevel < 11.0 ? '⚠️ Below 11.0 g/dL — Anemia Risk. Ensure daily IFA (Iron-Folic Acid) supplementation and increase iron-rich foods.' : '✅ Adequate (>11.0 g/dL)';
+      return `🤰 Maternal Care Profile for ${patient.name} — Trimester ${mat.trimester}\n\n• Gestational Age: ${mat.gestationWeeks} weeks (Trimester ${mat.trimester})\n• Expected Delivery Date (EDD): ${mat.expectedDeliveryDate}\n• Hemoglobin Level: ${mat.hemoglobinLevel} g/dL — ${hbStatus}\n• ANC Visits Completed: ${mat.ancVisitsCompleted} of 4 (4 ANC visits are mandatory)\n• Folic Acid & Iron Supplementation: ${mat.folicAcidSupplemented ? '✅ Active' : '⚠️ Not recorded'}\n• Risk Category: ${mat.riskFactor}\n\n📌 Trimester ${mat.trimester} Guidance:\n${mat.trimester === 1 ? '• Folic acid daily to prevent neural tube defects\n• Avoid alcohol, tobacco, and uncooked food\n• First ANC visit — blood group, hemoglobin, HIV, BP check' : mat.trimester === 2 ? '• IFA tablets daily — target Hb >11 g/dL\n• Eat iron-rich foods: spinach, moringa, dates, jaggery\n• Tetanus toxoid vaccination (TT) due\n• Monitor blood pressure (pre-eclampsia risk)' : '• Danger signs: severe headache, blurred vision, swelling of face/hands — visit PHC immediately\n• Institutional delivery STRONGLY recommended\n• Arrange Janani Express (102) transport in advance'}\n\n🏥 If any danger sign appears, call 102 (Janani Express) or 108 (Ambulance) immediately.${DISCLAIMER_SUFFIX}`;
+    }
+  }
+
+  // 14. Pediatric Care
+  if (patient.category === 'child' && (q.includes('child') || q.includes('fever') || q.includes('vaccine') || q.includes('vaccination') || q.includes('paracetamol') || q.includes('weight') || q.includes('baby') || q.includes('immunization'))) {
+    const ch = patient.childDetails;
+    if (ch) {
+      return `👶 Pediatric Care Profile for ${patient.name} (${patient.age} yrs)\n\n• Weight: ${ch.weightKg} kg | Height: ${ch.heightCm} cm\n• Paracetamol Dose (Fever >100.5°F): ${ch.paracetamolMgPerDose} mg per dose (Max 4 doses in 24h, every 6 hours)\n• Syrup equivalent: ~${(ch.paracetamolMgPerDose / 24).toFixed(1)} mL of 120mg/5mL syrup\n• Immunization Status: ${ch.immunizationStatus}\n• Vaccines Received: ${ch.vaccinesReceived.join(', ')}\n• Vaccines Due/Pending: ${ch.vaccinesPending.join(', ')}\n\n⚠️ Danger signs in children requiring IMMEDIATE PHC visit:\n• Fever above 104°F (40°C)\n• Seizures or convulsions\n• Unable to drink or breastfeed\n• Breathing very fast or labored\n• Limp, unresponsive, or very drowsy${DISCLAIMER_SUFFIX}`;
+    }
+  }
+
+  // 15. General Health Guidelines (First Aid & Rural Conditions)
   const topicGuidance: { keywords: string[]; answer: string }[] = [
-    {
-      keywords: ['snake bite', 'snakebite', 'snake venom'],
-      answer: 'SNAKE BITE EMERGENCY PROTOCOL\nDo: Move away from the snake immediately, keep the victim calm and completely still to slow venom absorption, keep the bitten limb supported and BELOW heart level, remove tight rings or bangles, and call 108 or reach the nearest hospital with anti-snake venom (ASV) immediately.\nDo NOT: Do NOT cut, slice, or suck the wound. Do NOT apply a tourniquet or tight rope. Do NOT apply herbs, mud, cow dung, or electrical shocks. ASV is the only proven medical antidote.'
-    },
     {
       keywords: ['dog bite', 'dogbite', 'rabies', 'animal bite'],
       answer: 'DOG & ANIMAL BITE PROTOCOL\nDo: Wash the wound immediately under running tap water with laundry or bath soap for a full 15 MINUTES. Apply povidone iodine or antiseptic if available. Head immediately to Rampur PHC or District Hospital for Anti-Rabies Vaccine (ARV) and Immunoglobulin (RIG).\nDo NOT: Do NOT apply red chili powder, turmeric, kerosene, or lime paste. Do NOT bandage tightly without washing. Rabies is 100% fatal but 100% preventable with timely vaccination.'
@@ -287,14 +390,23 @@ const decideResponseText = (question: string, patient: ReturnType<typeof buildPa
       keywords: ['elderly prevention', 'elder care', 'fall prevention', 'senior'],
       answer: 'ELDERLY CARE & FALL PREVENTION\n1. Fall Prevention: Ensure adequate lighting in village corridors, remove loose mats, install grab rails near the toilet, and encourage a walking stick for unsteady gait.\n2. Hydration & Nutrition: Ensure adequate boiled drinking water, dal/pulses, and dairy to preserve muscle mass.\n3. Medication Continuity: Never abruptly stop blood pressure or diabetes tablets. Record morning readings regularly.'
     },
+    {
+      keywords: ['diarrhea', 'loose motion', 'loose stool', 'watery stool', 'ors'],
+      answer: 'DIARRHEA & DEHYDRATION FIRST AID\n1. Immediate Action: Start ORS (Oral Rehydration Salts) — dissolve 1 ORS packet in 1 litre clean boiled water. Give sips every few minutes.\n2. Continue food — do NOT starve. Give khichdi, curd rice, banana.\n3. Warning Signs requiring PHC visit: Blood in stool, sunken eyes, no urination for 6+ hours, very weak or confused child.\n4. Children: Give ORS 50-100mL after each loose stool. Zinc tablet (20mg/day) for 14 days as per doctor.'
+    },
+    {
+      keywords: ['wound', 'cut', 'bleeding', 'injury', 'laceration'],
+      answer: 'WOUND & BLEEDING FIRST AID\n1. Apply firm, direct pressure with a clean cloth. Do not remove the cloth — add more on top if soaked.\n2. Elevate the injured part above heart level if possible.\n3. Clean minor cuts with clean boiled water, apply antiseptic if available.\n⚠️ Seek PHC immediately for: Deep cuts needing stitches, puncture wounds, wounds with embedded objects, or any animal bite wound.'
+    },
   ];
 
   const matched = topicGuidance.find(t => t.keywords.some(k => q.includes(k)));
   if (matched) return `${matched.answer}${DISCLAIMER_SUFFIX}`;
 
   // Default Context-Aware Answer
-  return `Based on Medora's verified longitudinal record for ${patient.name} (ID: ${patient.patientId}, Age: ${patient.age}):\n• Active Conditions: ${patient.conditions.join(', ') || 'None recorded'}\n• Known Allergies: ${patient.allergies.join(', ')}\n• Active Medications: ${patient.medicines.length} prescribed\n• Pending Care Gaps: ${patient.careGaps.length}\n\nYou can ask about specific medicines, recent BP/sugar measurements, upcoming checkups, or specific lab test results.${DISCLAIMER_SUFFIX}`;
+  return `Based on Medora's verified longitudinal record for ${patient.name} (ID: ${patient.patientId}, Age: ${patient.age}):\n• Active Conditions: ${patient.conditions.join(', ') || 'None recorded'}\n• Known Allergies: ${patient.allergies.join(', ')}\n• Active Medications: ${patient.medicines.length} prescribed\n• Pending Care Gaps: ${patient.careGaps.length}\n\nYou can ask about:\n• "What medicines do I take today?" — medicine reminders\n• "Headache vs migraine — what's the difference?"\n• "Fever vs typhoid — how to tell?"\n• "Snake bite first aid"\n• "High sugar vs low sugar — what to do?"\n• "Is paracetamol safe for me?"\n• Upcoming checkups, lab tests, referrals${DISCLAIMER_SUFFIX}`;
 };
+
 
 export const AskMedoraAI: React.FC<AskMedoraAIProps> = ({
   currentLang,
