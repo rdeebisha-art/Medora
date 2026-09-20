@@ -224,3 +224,117 @@ export interface CareGap {
   status: 'Open' | 'Referral Created' | 'Resolved';
   severity: 'Moderate' | 'High' | 'Immediate';
 }
+
+export interface Village {
+  villageId: string;
+  name: string;
+  subDistrict: string;
+  district: string;
+  state: string;
+  population: number;
+  phcName: string;
+  ashaWorker: string;
+  anmWorker: string;
+  emergencyContacts: { service: string; number: string }[];
+}
+
+export interface VillageFamily {
+  familyId: string;
+  villageId: string;
+  familyName: string;
+  headOfFamily: string;
+  rationCardNumber: string;
+  rationCardType: 'BPL (Antyodaya)' | 'BPL (Priority)' | 'APL';
+  address: string;
+  primaryPhone: string;
+  memberIds: string[];
+  createdAt: string;
+}
+
+export type PatientCategory = 'child' | 'maternity' | 'adult' | 'elderly';
+
+export interface ClinicalNote {
+  id: string;
+  date: string;
+  author: string;
+  role: 'doctor' | 'admin' | 'asha' | 'anm';
+  note: string;
+}
+
+export interface PatientProfile {
+  patientId: string;
+  familyId: string;
+  villageId: string;
+  name: string;
+  age: number;
+  gender: 'Male' | 'Female' | 'Other';
+  category: PatientCategory;
+  relationship: string;
+  healthId: string;
+  bloodGroup: string;
+  allergies: string[];
+  chronicConditions: string[];
+  primaryCategory: Specialization;
+  avatarBg: string;
+  hasCareGap: boolean;
+  
+  // Longitudinal Records
+  vitals: VitalMeasurement[];
+  medicines: Medication[];
+  labTests: LabTest[];
+  preventiveTasks: PreventiveAction[];
+  careGaps: CareGap[];
+  referrals: Referral[];
+  clinicalNotes: ClinicalNote[];
+
+  // Category Specifics
+  maternityDetails?: {
+    gestationWeeks: number;
+    expectedDeliveryDate: string;
+    trimester: 1 | 2 | 3;
+    hemoglobinLevel: number;
+    riskFactor: 'Standard' | 'High Risk';
+    ancVisitsCompleted: number;
+    folicAcidSupplemented: boolean;
+  };
+  childDetails?: {
+    weightKg: number;
+    heightCm: number;
+    repeatedFeversCount: number;
+    paracetamolMgPerDose: number;
+    immunizationStatus: string;
+    vaccinesReceived: string[];
+    vaccinesPending: string[];
+  };
+  elderlyDetails?: {
+    fallRiskScore: 'Low' | 'Moderate' | 'High';
+    systolicAverage: number;
+    diastolicAverage: number;
+    mobilityAssistanceNeeded: boolean;
+    polypharmacyAlert: boolean;
+  };
+}
+
+export type UserRole = 'patient' | 'family' | 'doctor' | 'admin';
+
+export interface AuthSession {
+  role: UserRole;
+  activePatientId: string;
+  activeFamilyId: string;
+  doctorId?: string;
+  doctorName?: string;
+  adminName?: string;
+}
+
+export type NetworkStatus = 'ONLINE' | 'LIMITED' | 'OFFLINE';
+
+export interface PendingSyncItem {
+  id: string;
+  timestamp: string;
+  actionType: 'ADD_VITAL' | 'UPDATE_MEDICINE' | 'ADD_MEDICINE' | 'CREATE_REFERRAL' | 'ADD_PATIENT' | 'REMOVE_PATIENT' | 'ADD_FAMILY' | 'ADD_CLINICAL_NOTE';
+  entityType: 'patient' | 'family' | 'referral' | 'vital';
+  entityId: string;
+  payload: any;
+  status: 'pending' | 'synced' | 'conflict';
+}
+

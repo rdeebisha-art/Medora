@@ -27,13 +27,40 @@ import { HospitalVillagePortal } from './components/HospitalVillagePortal';
 import { GovernmentSchemesPage } from './components/GovernmentSchemesPage';
 import { EmergencyMapPage } from './components/EmergencyMapPage';
 import { AddNewReportModal } from './components/AddNewReportModal';
+import { AdminVillageDashboard } from './components/AdminVillageDashboard';
+import { RoleSwitcherModal } from './components/RoleSwitcherModal';
+import { NetworkSimulatorBar } from './components/NetworkSimulatorBar';
+import { LoginPage } from './components/LoginPage';
 
-import { MOCK_DOCTORS, MOCK_HOSPITALS, MOCK_REFERRALS, MOCK_HEALTH_SUMMARY, MOCK_FAMILY_MEMBERS, MOCK_CARE_GAPS } from './data/mockData';
-import { Doctor, Hospital, Referral, ReferralStatus, Specialization, LanguageCode, CareGap } from './types';
+import { MedoraProvider, useMedora } from './context/MedoraContext';
+import { MOCK_DOCTORS, MOCK_HOSPITALS } from './data/mockData';
+import { Doctor, Hospital, Referral, ReferralStatus, Specialization, LanguageCode, CareGap, HealthSummaryReport } from './types';
 import { ShieldCheck, Heart, Info, Check, Sparkles } from 'lucide-react';
 import { translatePage } from './i18n/pageTranslator';
 
-export function App() {
+function MedoraAppContent() {
+  const {
+    village,
+    families,
+    patients,
+    authSession,
+    activeRole,
+    switchRole,
+    selectedPatientId,
+    selectedPatient,
+    selectPatient,
+    accessibleFamilyMembers,
+    referrals,
+    activeReferralId,
+    setActiveReferralId,
+    createReferral,
+    updateReferralStatus,
+    networkStatus,
+    setNetworkStatus,
+    isAuthenticated,
+    logout,
+  } = useMedora();
+
   const [currentLang, setCurrentLang] = useState<LanguageCode>('en');
   const [simpleMode, setSimpleMode] = useState<boolean>(false);
   const [lowDataMode, setLowDataMode] = useState<boolean>(false);
@@ -45,7 +72,7 @@ export function App() {
     }
   });
   const [isOnline, setIsOnline] = useState<boolean>(typeof navigator === 'undefined' ? true : navigator.onLine);
-  const useOfflineMode = offlineDemoMode || !isOnline;
+  const useOfflineMode = offlineDemoMode || !isOnline || networkStatus === 'OFFLINE';
 
   useEffect(() => {
     document.documentElement.lang = currentLang;
@@ -63,8 +90,10 @@ export function App() {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
   const [activeTab, setActiveTab] = useState<
     | 'dashboard'
+    | 'admin'
     | 'children'
     | 'maternity'
     | 'elderly'
@@ -82,9 +111,17 @@ export function App() {
     | 'referrals'
     | 'journey'
   >('dashboard');
+
+  // Enforce RBAC boundary: If active role is not 'admin' and tab is 'admin', redirect to 'dashboard'
+  useEffect(() => {
+    if (activeRole !== 'admin' && activeTab === 'admin') {
+      setActiveTab('dashboard');
+    }
+  }, [activeRole, activeTab]);
+
   const [isAddReportModalOpen, setIsAddReportModalOpen] = useState<boolean>(false);
+  const [isRoleSwitcherOpen, setIsRoleSwitcherOpen] = useState<boolean>(false);
   const [customReports, setCustomReports] = useState<any[]>([]);
-  const [clinicalHealthSummary, setClinicalHealthSummary] = useState(MOCK_HEALTH_SUMMARY);
 
   // Directory Filter States
   const [filters, setFilters] = useState({
@@ -101,11 +138,6 @@ export function App() {
   // Data Collections (Reactive State)
   const [doctors] = useState<Doctor[]>(MOCK_DOCTORS);
   const [hospitals] = useState<Hospital[]>(MOCK_HOSPITALS);
-  const [referrals, setReferrals] = useState<Referral[]>(MOCK_REFERRALS);
-  const [activeReferralId, setActiveReferralId] = useState<string>(MOCK_REFERRALS[0].id);
-  const [familyMembers] = useState(MOCK_FAMILY_MEMBERS);
-  const [selectedFamilyId, setSelectedFamilyId] = useState<string>(MOCK_FAMILY_MEMBERS[0].id);
-  const [careGaps] = useState<CareGap[]>(MOCK_CARE_GAPS);
 
   // Active Modals State
   const [selectedDoctorForModal, setSelectedDoctorForModal] = useState<Doctor | null>(null);
@@ -118,6 +150,87 @@ export function App() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
+
+  // Dynamic Clinical Health Summary from centralized patient profile
+  const clinicalHealthSummary = useMemo<HealthSummaryReport>(() => {
+    const latestVital = selectedPatient.vitals[0] || {
+      date: '2026-09-09',
+      bloodPressureSys: 120,
+      bloodPressureDia: 80,
+      bloodSugarFasting: 100,
+      bloodSugarPostPrandial: 130,
+      pulseRate: 74,
+      weightKg: 64,
+      bmi: 23,
+      spo2: 98,
+    };
+
+    return {
+      patientInfo: {
+        name: selectedPatient.name,
+        age: selectedPatient.age,
+        gender: selectedPatient.gender,
+        healthId: selectedPatient.healthId,
+        village: village.name,
+        district: `${village.district}, ${village.state}`,
+        bloodGroup: selectedPatient.bloodGroup,
+        allergies: selectedPatient.allergies,
+        contactPhone: '+91 94481 00223',
+        emergencyContact: village.emergencyContacts[0] ? `${village.emergencyContacts[0].service} (${village.emergencyContacts[0].number})` : '+91 80298 76540',
+      },
+      medicalInfo: {
+        medicalHistory: selectedPatient.chronicConditions.map(c => `Diagnosed ${c}`),
+        existingConditions: selectedPatient.chronicConditions,
+        currentMedicines: selectedPatient.medicines,
+        overallAdherence: selectedPatient.medicines.length ? Math.round(selectedPatient.medicines.reduce((acc, m) => acc + m.adherenceRate, 0) / selectedPatient.medicines.length) : 90,
+        recentSymptoms: selectedPatient.category === 'elderly' ? ['Morning occipital headache', 'Right knee stiffness'] : ['None acutely reported'],
+        recentMeasurements: latestVital,
+      },
+      testInfo: {
+        recentTests: selectedPatient.labTests,
+        historicalTrendsSummary: `${selectedPatient.labTests.length} clinical laboratory evaluations documented in Medora registry.`,
+        importantFollowUpItems: selectedPatient.preventiveTasks.map(t => `${t.title} (${t.status})`),
+      },
+      preventiveHealthcare: {
+        vaccinationStatus: selectedPatient.category === 'child' ? (selectedPatient.childDetails?.immunizationStatus || 'Routine Schedule') : 'Up to date with seasonal guidelines.',
+        preventiveTasks: selectedPatient.preventiveTasks,
+        missedOverdueActions: selectedPatient.careGaps.map(g => g.title),
+      },
+      referralInfo: {
+        currentReferral: referrals.find(r => r.patientId === selectedPatient.patientId) || referrals[0],
+        previousReferrals: [],
+        referralStatus: selectedPatient.referrals[0]?.status || 'Standard Monitoring',
+        followUpRequirements: selectedPatient.careGaps[0]?.recommendedAction || 'Maintain regular rural PHC visits.',
+      },
+      healthAnalytics: {
+        vitalTrends: selectedPatient.vitals,
+        adherenceHistory: [
+          { month: 'May', rate: 94 },
+          { month: 'Jun', rate: 91 },
+          { month: 'Jul', rate: 88 },
+          { month: 'Aug', rate: 84 },
+          { month: 'Sep', rate: 82 },
+        ],
+        healthManagementScore: selectedPatient.hasCareGap ? 72 : 94,
+      },
+      aiSummary: {
+        keyObservations: selectedPatient.careGaps.map(g => g.description),
+        careGaps: selectedPatient.careGaps.map(g => g.title),
+        medicationAdherenceIssues: selectedPatient.medicines.filter(m => m.status === 'Missed Dosage').map(m => `Missed dosage reported for ${m.name}`),
+        preventiveCareGaps: selectedPatient.preventiveTasks.filter(t => t.status === 'Overdue').map(t => t.title),
+        suggestedDoctorQuestions: [
+          `What is the recommended next step for ${selectedPatient.name}'s ${selectedPatient.primaryCategory} care?`,
+          'Are there lifestyle adjustments suitable for rural conditions?',
+        ],
+        disclaimer: 'AI-GENERATED DECISION SUPPORT — NOT A MEDICAL DIAGNOSIS. The AI must never claim to diagnose the patient. Clinical evaluation by a qualified doctor is required.',
+      },
+    };
+  }, [selectedPatient, village, referrals]);
+
+  // Care gaps for journey workflow
+  const careGaps: CareGap[] = useMemo(() => {
+    return selectedPatient.careGaps;
+  }, [selectedPatient]);
 
   // Filtered Doctors
   const filteredDoctors = useMemo(() => {
@@ -163,68 +276,37 @@ export function App() {
 
   // Referral Handlers
   const handleConnectDoctorToReferral = (doctor: Doctor) => {
-    setReferrals(prev => prev.map(ref => {
-      if (ref.id === activeReferralId) {
-        return {
-          ...ref,
-          selectedDoctorId: doctor.id,
-          selectedDoctorName: doctor.name,
-          specialty: doctor.specialization,
-          contactInfo: doctor.contactPhone,
-          status: ref.status === 'Pending' ? 'Facility Selected' : ref.status,
-          lastUpdated: '2026-09-10'
-        };
-      }
-      return ref;
-    }));
+    updateReferralStatus(activeReferralId, 'Facility Selected');
     showToast(`Connected ${doctor.name} to referral for ${activeReferral?.patientName}!`);
   };
 
   const handleSelectHospitalForReferral = (hospital: Hospital) => {
-    setReferrals(prev => prev.map(ref => {
-      if (ref.id === activeReferralId) {
-        return {
-          ...ref,
-          selectedHospitalId: hospital.id,
-          selectedHospitalName: hospital.name,
-          status: 'Facility Selected',
-          lastUpdated: '2026-09-10'
-        };
-      }
-      return ref;
-    }));
+    updateReferralStatus(activeReferralId, 'Facility Selected');
     showToast(`Selected ${hospital.name} for referral!`);
   };
 
   const handleUpdateReferralStatus = (id: string, newStatus: ReferralStatus) => {
-    setReferrals(prev => prev.map(r => r.id === id ? { ...r, status: newStatus, lastUpdated: '2026-09-10' } : r));
+    updateReferralStatus(id, newStatus);
     showToast(`Referral status updated to: ${newStatus}`);
   };
 
   const handleCreateReferral = (newRef: Omit<Referral, 'id' | 'createdAt' | 'lastUpdated'>) => {
-    const id = `ref-${Date.now().toString().slice(-4)}`;
-    const created: Referral = {
-      ...newRef,
-      id,
-      createdAt: '2026-09-10',
-      lastUpdated: '2026-09-10'
-    };
-    setReferrals(prev => [created, ...prev]);
-    setActiveReferralId(id);
+    const created = createReferral(newRef);
+    setActiveReferralId(created.id);
     setActiveTab('referrals');
     showToast(`Created new referral for ${created.patientName}`);
   };
 
   // 1-Click Family Health Filter Trigger
   const handleFilterByFamilyCategory = (cat: Specialization, memberId: string) => {
-    setSelectedFamilyId(memberId);
+    selectPatient(memberId);
     setFilters(prev => ({ ...prev, specialty: cat, query: '' }));
     setActiveTab('dashboard');
     showToast(`Filtered doctors for ${cat}`);
   };
 
   const handleFindHospitalForFamilyMember = (memberId: string) => {
-    setSelectedFamilyId(memberId);
+    selectPatient(memberId);
     setActiveTab('hospitals');
     showToast('Browsing empanelled healthcare facilities');
   };
@@ -234,47 +316,52 @@ export function App() {
     handleCreateReferral({
       patientId: gap.patientId,
       patientName: gap.patientName,
-      patientAge: 68,
-      patientGender: 'Male',
+      patientAge: selectedPatient.age,
+      patientGender: selectedPatient.gender,
       reason: `${gap.title}: ${gap.description}`,
       specialty: gap.specialtyNeeded,
       priority: gap.severity === 'Immediate' ? 'Immediate' : 'Urgent',
       contactInfo: '+91 94481 00223',
       status: 'Pending',
       careGapId: gap.id,
-      notes: `Automated care gap conversion. Action required: ${gap.recommendedAction}`
+      notes: `Automated care gap conversion. Action required: ${gap.recommendedAction}`,
     });
   };
 
   const handleSaveReport = (report: any) => {
     setCustomReports(prev => [report, ...prev]);
-    showToast(`Diagnostic report "${report.title}" saved to ${report.patientName}'s profile!`);
+    showToast(`Diagnostic report "${report.title}" saved to ${report.patientName || selectedPatient.name}'s profile!`);
   };
 
   const handleSaveScanToProfile = (scan: any) => {
     setCustomReports(prev => [scan, ...prev]);
-    showToast(`AI Camera Scan for ${scan.diseaseName} added to ${scan.patientName}'s medical record!`);
+    showToast(`AI Camera Scan for ${scan.diseaseName} added to ${scan.patientName || selectedPatient.name}'s medical record!`);
   };
 
-  const handleUpdateDoctorSummaryWithReport = (report: any) => {
-    setClinicalHealthSummary(prev => ({
-      ...prev,
-      testInfo: {
-        ...prev.testInfo,
-        importantFollowUpItems: [
-          `Verified Recent Test: ${report.title} (${report.date}) at ${report.hospital}. No repeat scan needed.`,
-          ...prev.testInfo.importantFollowUpItems,
-        ]
-      }
-    }));
-    showToast(`Doctor Summary updated with ${report.title} to prevent repeat scan costs!`);
-  };
+  if (!isAuthenticated) {
+    return (
+      <>
+        <LoginPage
+          currentLang={currentLang}
+          onLanguageChange={setCurrentLang}
+          onOpenEmergency={() => setIsEmergencyOpen(true)}
+        />
+        <EmergencyModal
+          isOpen={isEmergencyOpen}
+          onClose={() => setIsEmergencyOpen(false)}
+          hospitals={hospitals}
+          currentLang={currentLang}
+          onSelectHospital={(hosp) => setSelectedHospitalForModal(hosp)}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col selection:bg-emerald-100 selection:text-emerald-900">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 text-xs sm:text-sm font-bold animate-in slide-in-from-bottom-4">
+        <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 text-xs sm:text-sm font-bold animate-in slide-in-from-bottom-4 border border-emerald-400/30">
           <Check className="w-4 h-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
@@ -293,27 +380,34 @@ export function App() {
           setOfflineDemoMode(!offlineDemoMode);
           try {
             window.localStorage.setItem('medora-offline-demo', String(!offlineDemoMode));
-          } catch {
-            // Offline mode still works when browser storage is unavailable.
-          }
+          } catch {}
           setSimpleMode(!offlineDemoMode);
           setLowDataMode(!offlineDemoMode);
         }}
         onOpenEmergency={() => setIsEmergencyOpen(true)}
         activeTab={activeTab}
         onSelectTab={(t: any) => setActiveTab(t)}
-        familyMembers={familyMembers}
-        selectedFamilyId={selectedFamilyId}
-        onSelectFamilyMember={setSelectedFamilyId}
+        familyMembers={accessibleFamilyMembers}
+        selectedFamilyId={selectedPatientId}
+        onSelectFamilyMember={selectPatient}
+        activeRole={activeRole}
+        onOpenRoleSwitcher={() => setIsRoleSwitcherOpen(true)}
+        onLogout={logout}
       />
+
+      {/* Network Simulator Bar */}
+      <NetworkSimulatorBar />
 
       {/* Main App Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-8">
-        {(offlineDemoMode || !isOnline) && (
-          <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs sm:text-sm text-amber-950" role="status">
-            <strong>{offlineDemoMode ? 'Offline Demo Mode' : 'Connection unavailable'}:</strong> Local demo navigation and saved-in-browser content can remain available. Live AI/API translation, camera permissions, SMS, and external hospital websites may require connectivity or device support. Medora does not claim complete offline functionality.
+        {(offlineDemoMode || !isOnline || networkStatus === 'OFFLINE') && (
+          <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs sm:text-sm text-amber-950 flex items-center justify-between" role="status">
+            <div>
+              <strong>{networkStatus === 'OFFLINE' ? 'Offline Storage Mode' : 'Connection unavailable'}:</strong> Local demo navigation and cached records in <code className="font-mono bg-amber-200/60 px-1 rounded">localStorage</code> are fully available. Actions will be queued in the pending sync queue.
+            </div>
           </div>
         )}
+
         {simpleMode ? (
           /* Simple Mode View */
           <SimpleModeView
@@ -344,6 +438,18 @@ export function App() {
         ) : (
           /* Standard Full Experience */
           <>
+            {/* 0. Admin Village Demographics & Population Command Center */}
+            {activeTab === 'admin' && activeRole === 'admin' && (
+              <AdminVillageDashboard
+                currentLang={currentLang}
+                onNavigateToAI={() => setActiveTab('ai')}
+                onSelectPatientFile={(pid) => {
+                  selectPatient(pid);
+                  setActiveTab('dashboard');
+                }}
+              />
+            )}
+
             {/* 1. Dedicated Master Dashboard Page (Includes All Contents) */}
             {activeTab === 'dashboard' && (
               <DashboardPage
@@ -355,9 +461,9 @@ export function App() {
                 onUpdateReferralStatus={handleUpdateReferralStatus}
                 onCreateReferral={handleCreateReferral}
                 healthSummary={clinicalHealthSummary}
-                familyMembers={familyMembers}
-                selectedFamilyId={selectedFamilyId}
-                onSelectFamilyMember={setSelectedFamilyId}
+                familyMembers={accessibleFamilyMembers}
+                selectedFamilyId={selectedPatientId}
+                onSelectFamilyMember={selectPatient}
                 onSelectDoctor={setSelectedDoctorForModal}
                 onSelectHospital={setSelectedHospitalForModal}
                 onOpenDirections={(hosp) => setHospitalForDirections(hosp)}
@@ -386,9 +492,9 @@ export function App() {
             {activeTab === 'children' && (
               <ChildrenCarePage
                 currentLang={currentLang}
-                familyMembers={familyMembers}
-                selectedFamilyId={selectedFamilyId}
-                onSelectFamilyMember={setSelectedFamilyId}
+                familyMembers={accessibleFamilyMembers}
+                selectedFamilyId={selectedPatientId}
+                onSelectFamilyMember={selectPatient}
                 onNavigateToAI={() => setActiveTab('ai')}
                 onNavigateToDoctorSummary={() => setActiveTab('handoff')}
                 onOpenReportScanner={() => setActiveTab('reports')}
@@ -399,9 +505,9 @@ export function App() {
             {activeTab === 'maternity' && (
               <MaternityCarePage
                 currentLang={currentLang}
-                familyMembers={familyMembers}
-                selectedFamilyId={selectedFamilyId}
-                onSelectFamilyMember={setSelectedFamilyId}
+                familyMembers={accessibleFamilyMembers}
+                selectedFamilyId={selectedPatientId}
+                onSelectFamilyMember={selectPatient}
                 onNavigateToAI={() => setActiveTab('ai')}
                 onNavigateToDoctorSummary={() => setActiveTab('handoff')}
                 onOpenReportScanner={() => setActiveTab('reports')}
@@ -412,9 +518,9 @@ export function App() {
             {activeTab === 'elderly' && (
               <ElderlyCarePage
                 currentLang={currentLang}
-                familyMembers={familyMembers}
-                selectedFamilyId={selectedFamilyId}
-                onSelectFamilyMember={setSelectedFamilyId}
+                familyMembers={accessibleFamilyMembers}
+                selectedFamilyId={selectedPatientId}
+                onSelectFamilyMember={selectPatient}
                 onNavigateToAI={() => setActiveTab('ai')}
                 onNavigateToDoctorSummary={() => setActiveTab('handoff')}
                 onOpenReportScanner={() => setActiveTab('reports')}
@@ -434,9 +540,9 @@ export function App() {
             {activeTab === 'camera' && (
               <AICameraScanner
                 currentLang={currentLang}
-                familyMembers={familyMembers}
-                selectedFamilyId={selectedFamilyId}
-                onSelectFamilyMember={setSelectedFamilyId}
+                familyMembers={accessibleFamilyMembers}
+                selectedFamilyId={selectedPatientId}
+                onSelectFamilyMember={selectPatient}
                 onSaveScanToProfile={handleSaveScanToProfile}
                 onNavigateToDoctorSummary={() => setActiveTab('handoff')}
                 onNavigateToAI={() => setActiveTab('ai')}
@@ -447,8 +553,8 @@ export function App() {
             {activeTab === 'medicine' && (
               <MedicineScanner
                 currentLang={currentLang}
-                familyMembers={familyMembers}
-                selectedFamilyId={selectedFamilyId}
+                familyMembers={accessibleFamilyMembers}
+                selectedFamilyId={selectedPatientId}
               />
             )}
 
@@ -456,11 +562,11 @@ export function App() {
             {activeTab === 'reports' && (
               <MedicalReportScanner
                 currentLang={currentLang}
-                familyMembers={familyMembers}
-                selectedFamilyId={selectedFamilyId}
-                onSelectFamilyMember={setSelectedFamilyId}
+                familyMembers={accessibleFamilyMembers}
+                selectedFamilyId={selectedPatientId}
+                onSelectFamilyMember={selectPatient}
                 onUpdatePatientProfile={handleSaveReport}
-                onUpdateDoctorSummary={handleUpdateDoctorSummaryWithReport}
+                onUpdateDoctorSummary={() => {}}
                 onNavigateToDoctorSummary={() => setActiveTab('handoff')}
                 onNavigateToAI={() => setActiveTab('ai')}
               />
@@ -470,9 +576,9 @@ export function App() {
             {activeTab === 'portal' && (
               <HospitalVillagePortal
                 currentLang={currentLang}
-                familyMembers={familyMembers}
-                selectedFamilyId={selectedFamilyId}
-                onSelectFamilyMember={setSelectedFamilyId}
+                familyMembers={accessibleFamilyMembers}
+                selectedFamilyId={selectedPatientId}
+                onSelectFamilyMember={selectPatient}
                 onNavigateToAI={() => setActiveTab('ai')}
                 onNavigateToDoctorSummary={() => setActiveTab('handoff')}
               />
@@ -498,7 +604,7 @@ export function App() {
               />
             )}
 
-            {/* 2. A2A (Agent-to-Agent) Multi-Agent Workflow Tab */}
+            {/* A2A (Agent-to-Agent) Multi-Agent Workflow Tab */}
             {activeTab === 'a2a' && (
               <A2AWorkflow
                 onNavigateToReferral={() => setActiveTab('referrals')}
@@ -510,8 +616,8 @@ export function App() {
             {/* Ask Medora AI Tab */}
             {activeTab === 'ai' && (
               <AskMedoraAI
-                familyMembers={familyMembers}
-                selectedFamilyId={selectedFamilyId}
+                familyMembers={accessibleFamilyMembers}
+                selectedFamilyId={selectedPatientId}
                 currentLang={currentLang}
                 onNavigateToDoctor={() => setActiveTab('dashboard')}
                 onNavigateToHospital={() => setActiveTab('hospitals')}
@@ -550,7 +656,7 @@ export function App() {
                 onOpenDoctorHandoff={() => setActiveTab('handoff')}
                 doctors={doctors}
                 hospitals={hospitals}
-                familyMembers={familyMembers}
+                familyMembers={accessibleFamilyMembers}
                 currentLang={currentLang}
               />
             )}
@@ -566,17 +672,15 @@ export function App() {
             {/* Hospitals Directory Tab */}
             {activeTab === 'hospitals' && (
               <div className="space-y-6">
-                {/* Family Health Selector Quick-Navigation Strip */}
                 <FamilyHealthSelector
-                  familyMembers={familyMembers}
-                  selectedFamilyId={selectedFamilyId}
-                  onSelectFamilyMember={setSelectedFamilyId}
+                  familyMembers={accessibleFamilyMembers}
+                  selectedFamilyId={selectedPatientId}
+                  onSelectFamilyMember={selectPatient}
                   onFilterByMemberCategory={handleFilterByFamilyCategory}
                   onFindHospitalForMember={handleFindHospitalForFamilyMember}
                   currentLang={currentLang}
                 />
 
-                {/* Search & Multi-Filter Component */}
                 <DirectorySearchFilter
                   filters={filters}
                   onFilterChange={(updated) => setFilters(prev => ({ ...prev, ...updated }))}
@@ -597,7 +701,6 @@ export function App() {
                   onSelectTab={(tab: any) => setActiveTab(tab)}
                 />
 
-                {/* Directory Content: Hospitals */}
                 <HospitalDirectory
                   hospitals={filteredHospitals}
                   onSelectHospital={setSelectedHospitalForModal}
@@ -614,7 +717,6 @@ export function App() {
                   selectedReferralHospitalId={activeReferral?.selectedHospitalId}
                 />
 
-                {/* Hospital Contact Center Hub */}
                 <HospitalContactCenter
                   onCallHospitalQuick={() => {
                     window.location.href = 'tel:+918029876540';
@@ -658,15 +760,15 @@ export function App() {
               <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
               <div>
                 <strong className="text-slate-900 font-bold block mb-0.5">
-                  Privacy, Medical Disclaimer & Data Architecture Notice
+                  Privacy, Medical Disclaimer & Strict ID Data Architecture Notice
                 </strong>
                 <p className="text-slate-500 leading-relaxed text-[11px]">
-                  Medora helps users organize healthcare information and connect with healthcare resources. It does not replace doctors, provide medical diagnosis, or prescribe treatment. Use verified healthcare-provider information when contacting real doctors or hospitals. All demonstration records are labeled <strong>DEMO DATA</strong>.
+                  Medora helps users organize healthcare continuity and connect with verified medical resources. All records are indexed by unique Patient IDs (P-XXXX) and Family IDs (FAM-XX). All emergency dispatches, notifications, and telemetry are simulated demonstrations labeled <strong>DEMO / SIMULATION DATA</strong>.
                 </p>
               </div>
             </div>
             <span className="text-[10px] font-mono bg-slate-200 text-slate-700 px-2.5 py-1 rounded font-bold shrink-0">
-              MEDORA v2.4 RURAL
+              MEDORA v2.5 ENTERPRISE
             </span>
           </div>
 
@@ -695,6 +797,12 @@ export function App() {
         onSelectHospital={(hosp) => {
           setSelectedHospitalForModal(hosp);
         }}
+      />
+
+      <RoleSwitcherModal
+        isOpen={isRoleSwitcherOpen}
+        onClose={() => setIsRoleSwitcherOpen(false)}
+        onShowToast={showToast}
       />
 
       <DoctorProfileModal
@@ -730,11 +838,19 @@ export function App() {
       <AddNewReportModal
         isOpen={isAddReportModalOpen}
         onClose={() => setIsAddReportModalOpen(false)}
-        familyMembers={familyMembers}
-        selectedFamilyId={selectedFamilyId}
+        familyMembers={accessibleFamilyMembers}
+        selectedFamilyId={selectedPatientId}
         onSaveReport={handleSaveReport}
       />
     </div>
+  );
+}
+
+export function App() {
+  return (
+    <MedoraProvider>
+      <MedoraAppContent />
+    </MedoraProvider>
   );
 }
 

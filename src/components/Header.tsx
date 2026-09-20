@@ -1,6 +1,6 @@
 import React from 'react';
-import { PhoneCall, Volume2, Globe, Heart, ShieldAlert, Sparkles, UserCheck, Pill } from 'lucide-react';
-import { LanguageCode, FamilyMember } from '../types';
+import { PhoneCall, Volume2, Globe, Heart, ShieldAlert, Sparkles, UserCheck, Pill, KeyRound, Shield, LogOut } from 'lucide-react';
+import { LanguageCode, FamilyMember, UserRole } from '../types';
 import { TRANSLATIONS } from '../i18n/translations';
 import { voiceService } from '../services/voiceService';
 
@@ -19,6 +19,9 @@ interface HeaderProps {
   familyMembers: FamilyMember[];
   selectedFamilyId: string;
   onSelectFamilyMember: (id: string) => void;
+  activeRole?: UserRole;
+  onOpenRoleSwitcher?: () => void;
+  onLogout?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -36,6 +39,9 @@ export const Header: React.FC<HeaderProps> = ({
   familyMembers,
   selectedFamilyId,
   onSelectFamilyMember,
+  activeRole = 'patient',
+  onOpenRoleSwitcher,
+  onLogout,
 }) => {
   const [speaking, setSpeaking] = React.useState(false);
   const t = TRANSLATIONS[currentLang];
@@ -75,6 +81,16 @@ export const Header: React.FC<HeaderProps> = ({
           <span>Rural Medical Emergency? Dial <strong>108</strong> (Ambulance) or <strong>112</strong> (National) immediately.</span>
         </div>
         <div className="flex items-center gap-3">
+          {onOpenRoleSwitcher && (
+            <button
+              onClick={onOpenRoleSwitcher}
+              className="bg-amber-400 hover:bg-amber-300 text-amber-950 font-black px-3 py-1 rounded-full text-xs shadow-sm flex items-center gap-1.5 transition-all border border-amber-500"
+              title="Switch user role (Patient, Family, Doctor, Admin)"
+            >
+              <KeyRound className="w-3.5 h-3.5 text-amber-900" />
+              <span>ROLE: <span className="uppercase">{activeRole}</span></span>
+            </button>
+          )}
           <button
             onClick={onOpenEmergency}
             className="bg-white text-red-700 hover:bg-red-50 font-bold px-3 py-1 rounded-full text-xs shadow-sm flex items-center gap-1.5 transition-all"
@@ -302,11 +318,35 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 🗺️ Emergency & Maps
               </button>
+
+              {activeRole === 'admin' && (
+                <button
+                  onClick={() => onSelectTab('admin')}
+                  className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-black transition-colors whitespace-nowrap flex items-center gap-1 shadow-sm ${
+                    activeTab === 'admin'
+                      ? 'bg-emerald-800 text-white ring-2 ring-emerald-400'
+                      : 'bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100'
+                  }`}
+                >
+                  <Shield className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>🏛️ Village Admin</span>
+                </button>
+              )}
             </nav>
           )}
 
           {/* Right Controls: Family Member, Language, Voice & Simple Mode */}
           <div className="flex items-center gap-2 self-end md:self-center">
+            {onOpenRoleSwitcher && (
+              <button
+                onClick={onOpenRoleSwitcher}
+                className="hidden xl:flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 px-2.5 py-1 rounded-lg text-xs font-bold text-slate-800 transition-colors"
+                title="Switch Persona / Role"
+              >
+                <KeyRound className="w-3.5 h-3.5 text-amber-600" />
+                <span className="uppercase text-[11px]">{activeRole} Persona</span>
+              </button>
+            )}
             {/* Active Family Member Selector */}
             <div className="hidden lg:flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
               <span className="text-xs font-medium text-slate-500 px-2 flex items-center gap-1">
@@ -390,6 +430,18 @@ export const Header: React.FC<HeaderProps> = ({
               <span>{t.simpleMode}</span>
               <span className={`w-2 h-2 rounded-full ${simpleMode ? 'bg-white' : 'bg-slate-300'}`} />
             </button>
+
+            {/* Sign Out / Switch Account Button */}
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-red-50 hover:text-red-700 hover:border-red-300 text-slate-700 transition-colors shadow-sm"
+                title="Sign out and return to Login Screen"
+              >
+                <LogOut className="w-3.5 h-3.5 text-slate-500" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
