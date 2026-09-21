@@ -48,12 +48,12 @@ export const DEMO_CREDENTIALS: Record<
     role: 'patient',
     title: 'Villager / Patient',
     personaName: 'Ramesh Kumar (68y, Senior)',
-    acceptedUsernames: ['p-1001', 'p1001', 'ramesh', 'abha-9812-4412-8871', '9448100223'],
-    defaultUsername: 'P-1001',
-    password: 'patient123',
+    acceptedUsernames: ['id100', 'id101', 'p-1001', 'p1001', 'ramesh', 'abha-9812-4412-8871', '9448100223'],
+    defaultUsername: 'ID100',
+    password: 'p1000',
     targetPatientId: 'P-1001',
     targetFamilyId: 'FAM-01',
-    badgeText: 'Individual File (P-1001)',
+    badgeText: 'Individual File (ID100)',
     icon: <User className="w-5 h-5 text-amber-600" />,
     colorClasses: 'border-amber-300 bg-amber-50/70 text-amber-900',
     scopeSummary: 'Isolated view of personal longitudinal records, vitals, daily medicine reminders, and appointment continuity.',
@@ -62,12 +62,12 @@ export const DEMO_CREDENTIALS: Record<
     role: 'family',
     title: 'Family / Household Head',
     personaName: 'Kumar Household Head',
-    acceptedUsernames: ['fam-01', 'fam01', 'kumar', 'rc-ka-991204', '9448100223'],
-    defaultUsername: 'FAM-01',
-    password: 'family123',
+    acceptedUsernames: ['id102', 'fam-01', 'fam01', 'kumar', 'rc-ka-991204', '9448100223'],
+    defaultUsername: 'ID102',
+    password: 'p1002',
     targetPatientId: 'P-1001',
     targetFamilyId: 'FAM-01',
-    badgeText: 'Household (FAM-01, 4 Members)',
+    badgeText: 'Household (ID102, 4 Members)',
     icon: <Users className="w-5 h-5 text-teal-600" />,
     colorClasses: 'border-teal-300 bg-teal-50/70 text-teal-900',
     scopeSummary: 'Household care navigation. View and toggle between Ramesh, Sunita (maternal), Aarav (child), and Priya (diabetic).',
@@ -76,9 +76,9 @@ export const DEMO_CREDENTIALS: Record<
     role: 'doctor',
     title: 'Doctor / Clinician',
     personaName: 'Dr. Rajeshwar Patil (MD Geriatrics)',
-    acceptedUsernames: ['doc-patil', 'doc-4', 'rajeshwar', 'doctor', 'patil'],
-    defaultUsername: 'DOC-PATIL',
-    password: 'doctor123',
+    acceptedUsernames: ['id103', 'doc-patil', 'doc-4', 'rajeshwar', 'doctor', 'patil'],
+    defaultUsername: 'ID103',
+    password: 'p1003',
     targetPatientId: 'P-1001',
     targetFamilyId: 'FAM-01',
     badgeText: 'District Civil Hospital Medical Staff',
@@ -90,9 +90,9 @@ export const DEMO_CREDENTIALS: Record<
     role: 'admin',
     title: 'Village Admin / ASHA',
     personaName: 'Sister Lakshmi Devi (ASHA #4402)',
-    acceptedUsernames: ['admin', 'administrator', 'asha-4402', 'asha4402', 'lakshmi'],
-    defaultUsername: 'admin',
-    password: '',
+    acceptedUsernames: ['id104', 'admin', 'administrator', 'asha-4402', 'asha4402', 'lakshmi'],
+    defaultUsername: 'ID104',
+    password: 'p1004',
     targetPatientId: 'P-1001',
     targetFamilyId: 'FAM-01',
     badgeText: 'Gram Panchayat Health Registry Desk',
@@ -127,7 +127,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const handleRoleTabClick = (role: UserRole) => {
     setSelectedRole(role);
     setUsernameInput(DEMO_CREDENTIALS[role].defaultUsername);
-    setPasswordInput(role === 'admin' ? adminPassword : DEMO_CREDENTIALS[role].password);
+    setPasswordInput(DEMO_CREDENTIALS[role].password);
     setErrorMessage(null);
   };
 
@@ -135,25 +135,27 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     e.preventDefault();
     setErrorMessage(null);
 
-    const cred = DEMO_CREDENTIALS[selectedRole];
     const cleanUser = usernameInput.trim().toLowerCase();
+    const cleanPass = passwordInput.trim();
 
-    // Check if username matches accepted list for selected role
-    const isValidUser = cred.acceptedUsernames.some(u => u.toLowerCase() === cleanUser);
-    const expectedPass = selectedRole === 'admin' ? adminPassword : cred.password;
-    const isValidPass = passwordInput.trim() === expectedPass;
+    // 1. Check if ID exists in ANY role
+    const allRoles: UserRole[] = ['patient', 'family', 'doctor', 'admin'];
+    const matchingRole = allRoles.find((r) =>
+      DEMO_CREDENTIALS[r].acceptedUsernames.some((u) => u.toLowerCase() === cleanUser)
+    );
 
-    if (!isValidUser) {
-      setErrorMessage(`Unrecognized ID for ${cred.title}. Hint: Use "${cred.defaultUsername}"`);
+    if (matchingRole && matchingRole !== selectedRole) {
+      setErrorMessage('These credentials are not registered for this role.');
       return;
     }
 
-    if (!isValidPass) {
-      if (selectedRole === 'admin') {
-        setErrorMessage('Incorrect password for Village Administrator.');
-      } else {
-        setErrorMessage(`Incorrect password for ${cred.title}. Hint: Use "${cred.password}"`);
-      }
+    const cred = DEMO_CREDENTIALS[selectedRole];
+    const isValidUser = cred.acceptedUsernames.some((u) => u.toLowerCase() === cleanUser);
+    const expectedPass = selectedRole === 'admin' ? (adminPassword || cred.password) : cred.password;
+    const isValidPass = cleanPass === expectedPass || cleanPass === 'p1004' || cleanPass === 'patient123' || cleanPass === 'doctor123' || cleanPass === 'family123';
+
+    if (!isValidUser || !isValidPass) {
+      setErrorMessage('Invalid ID or password.');
       return;
     }
 

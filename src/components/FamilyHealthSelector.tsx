@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Users, AlertTriangle, Stethoscope, Building2, ChevronRight, HeartPulse } from 'lucide-react';
 import { FamilyMember, Specialization, LanguageCode } from '../types';
 
@@ -6,8 +6,8 @@ interface FamilyHealthSelectorProps {
   familyMembers: FamilyMember[];
   selectedFamilyId: string;
   onSelectFamilyMember: (id: string) => void;
-  onFilterByMemberCategory: (category: Specialization, memberId: string) => void;
-  onFindHospitalForMember: (memberId: string) => void;
+  onFilterByMemberCategory?: (category: Specialization, memberId: string) => void;
+  onFindHospitalForMember?: (memberId: string) => void;
   currentLang: LanguageCode;
 }
 
@@ -104,7 +104,7 @@ export const FamilyHealthSelector: React.FC<FamilyHealthSelectorProps> = ({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onFilterByMemberCategory(member.primaryCategory, member.id);
+                    onFilterByMemberCategory?.(member.primaryCategory, member.id);
                   }}
                   className="py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 transition-colors"
                 >
@@ -115,7 +115,7 @@ export const FamilyHealthSelector: React.FC<FamilyHealthSelectorProps> = ({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onFindHospitalForMember(member.id);
+                    onFindHospitalForMember?.(member.id);
                   }}
                   className="py-1.5 px-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 transition-colors"
                 >

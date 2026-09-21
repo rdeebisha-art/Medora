@@ -18,7 +18,29 @@ import { useMedora } from '../context/MedoraContext';
 import { PERSONALIZED_PROFILES } from '../data/personalizedProfiles';
 
 import { Doctor, Hospital, Referral, ReferralStatus, Specialization, LanguageCode, FamilyMember, HealthSummaryReport } from '../types';
-import { LayoutDashboard, Stethoscope, Building2, Pill, Activity, ShieldCheck, Navigation, ArrowRight, FileText, Bot, Heart, Sparkles, UserCheck, Baby, Footprints, Camera, UploadCloud, PhoneCall, Award } from 'lucide-react';
+import {
+  Stethoscope,
+  Building2,
+  Pill,
+  Activity,
+  ShieldCheck,
+  ArrowRight,
+  FileText,
+  Heart,
+  Sparkles,
+  UserCheck,
+  Baby,
+  Footprints,
+  Camera,
+  UploadCloud,
+  PhoneCall,
+  Mic,
+  SendHorizonal,
+  AlertTriangle,
+  Users,
+  CalendarCheck,
+  Award,
+} from 'lucide-react';
 
 interface DashboardPageProps {
   doctors: Doctor[];
@@ -52,6 +74,8 @@ interface DashboardPageProps {
   onNavigateToA2A?: () => void;
   onNavigateToDoctorSummary?: () => void;
   onOpenAddReportModal?: () => void;
+  onOpenWhatShouldIDo?: () => void;
+  isSimpleMode?: boolean;
   currentLang: LanguageCode;
 }
 
@@ -87,622 +111,509 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   onNavigateToA2A,
   onNavigateToDoctorSummary,
   onOpenAddReportModal,
+  onOpenWhatShouldIDo,
+  isSimpleMode,
   currentLang,
 }) => {
-  // Section Scroll Anchors
+  const { primaryDoctorStatus, setPrimaryDoctorStatus, selectedPatient } = useMedora();
+  const [askAiInput, setAskAiInput] = React.useState('');
+
   const careTiersRef = useRef<HTMLDivElement>(null);
   const transitRef = useRef<HTMLDivElement>(null);
   const medsRef = useRef<HTMLDivElement>(null);
-  const graphsRef = useRef<HTMLDivElement>(null);
-  const diseaseRef = useRef<HTMLDivElement>(null);
-  const a2aRef = useRef<HTMLDivElement>(null);
-  const referralsRef = useRef<HTMLDivElement>(null);
-  const handoffRef = useRef<HTMLDivElement>(null);
-  const hospitalsRef = useRef<HTMLDivElement>(null);
   const doctorsRef = useRef<HTMLDivElement>(null);
 
   const activePersonalProfile = PERSONALIZED_PROFILES[selectedFamilyId] || PERSONALIZED_PROFILES['fam-1'];
+  const patientVitals = selectedPatient?.vitals?.[0];
 
-  const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
-    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
+  const sys = patientVitals?.bloodPressureSys || 120;
+  const dia = patientVitals?.bloodPressureDia || 80;
+  const sugar = patientVitals?.bloodSugarFasting || 95;
 
-  const handleFilterByCategory = (category: Specialization) => {
-    scrollToSection(doctorsRef);
-  };
-
-  const { primaryDoctorStatus, setPrimaryDoctorStatus, selectedPatient } = useMedora();
+  const bpStatus = sys >= 140 || dia >= 90 ? '🟡 Monitor' : sys < 90 ? '🟡 Low' : '🟢 Stable';
+  const sugarStatus = sugar > 140 ? '🟡 High' : sugar < 70 ? '🟡 Low' : '🟢 Stable';
+  const medsStatus = selectedPatient?.medicines?.some((m) => m.status === 'Missed Dosage') ? '🔴 Missed Dose' : '🟢 Up to date';
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-200">
-      {/* Emergency Sound Detector Alert Bar & Doctor Status Banner */}
+    <div className="space-y-8 animate-in fade-in duration-200">
+      {/* 1. SMART DASHBOARD HEADER: Good Morning + Active Items */}
+      <div className="bg-gradient-to-r from-teal-800 via-teal-900 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 relative z-10">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider">
+              <span>👋 Good morning, {selectedPatient?.name?.split(' ')[0] || 'Villager'}</span>
+            </div>
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
+              Your Health Today
+            </h1>
+            <p className="text-xs sm:text-sm text-teal-100 max-w-xl leading-relaxed">
+              OPEN ➔ UNDERSTAND ➔ CHOOSE ➔ COMPLETE. Essential health notifications for {selectedPatient?.name || 'Patient'}.
+            </p>
+
+            {/* Smart Dashboard Active Notifications Widget */}
+            <div className="pt-2 flex flex-wrap gap-2 text-xs font-bold">
+              <div className="bg-amber-500/20 text-amber-200 border border-amber-400/30 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                <span>🟠 Pending Health Test: HbA1c screening recommended</span>
+              </div>
+              <div className="bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                <span>💊 Medicine Reminder: 2 medicines due today</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+            {onOpenWhatShouldIDo && (
+              <button
+                onClick={onOpenWhatShouldIDo}
+                className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs px-5 py-3 rounded-2xl shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95"
+              >
+                <Sparkles className="w-4 h-4 fill-slate-950" />
+                <span>❓ WHAT SHOULD I DO?</span>
+              </button>
+            )}
+
+            <div className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-3 sm:p-4 flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-2xl ${selectedPatient?.avatarBg || 'bg-emerald-100 text-emerald-800'} flex items-center justify-center text-lg font-black shadow-md border-2 border-white`}>
+                {selectedPatient?.name ? selectedPatient.name.charAt(0) : 'P'}
+              </div>
+              <div className="space-y-0.5">
+                <span className="text-[10px] uppercase font-black text-teal-200 block">Active File</span>
+                <h3 className="font-extrabold text-sm text-white">{selectedPatient?.name || 'Ramesh Kumar'}</h3>
+                <span className="text-[10px] text-teal-100 font-mono block">{selectedPatient?.patientId}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. PRIMARY BEGINNER ACTIONS GRID (6 PRIMARY TILES) */}
+      <div className="space-y-3">
+        <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+          <span>Primary Actions</span>
+          {isSimpleMode && <span className="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2 py-0.5 rounded">SIMPLE MODE ACTIVE</span>}
+        </h3>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {/* Tile 1: My Health */}
+          <button
+            onClick={() => {
+              medsRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all text-left space-y-2 group"
+          >
+            <div className="p-3 rounded-2xl bg-rose-100 text-rose-700 w-fit group-hover:scale-110 transition-transform">
+              <Heart className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="font-extrabold text-slate-900 text-sm">{isSimpleMode ? 'Your Health Records' : '❤️ My Health'}</h4>
+              <p className="text-[11px] text-slate-500 font-medium">Vitals & Summary</p>
+            </div>
+          </button>
+
+          {/* Tile 2: My Family */}
+          <button
+            onClick={() => {
+              const currentIndex = familyMembers.findIndex((m) => m.id === selectedFamilyId);
+              const nextIndex = (currentIndex + 1) % familyMembers.length;
+              onSelectFamilyMember(familyMembers[nextIndex].id);
+            }}
+            className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all text-left space-y-2 group"
+          >
+            <div className="p-3 rounded-2xl bg-teal-100 text-teal-700 w-fit group-hover:scale-110 transition-transform">
+              <Users className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="font-extrabold text-slate-900 text-sm">{isSimpleMode ? 'Household Members' : '👨‍👩‍👧 My Family'}</h4>
+              <p className="text-[11px] text-slate-500 font-medium">{familyMembers.length} Members</p>
+            </div>
+          </button>
+
+          {/* Tile 3: My Reports */}
+          <button
+            onClick={() => {
+              if (onNavigateToA2A) onNavigateToA2A();
+              else if (onNavigateToReportScanner) onNavigateToReportScanner();
+            }}
+            className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all text-left space-y-2 group"
+          >
+            <div className="p-3 rounded-2xl bg-blue-100 text-blue-700 w-fit group-hover:scale-110 transition-transform">
+              <FileText className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="font-extrabold text-slate-900 text-sm">{isSimpleMode ? 'Medical Tests' : '📄 My Reports'}</h4>
+              <p className="text-[11px] text-slate-500 font-medium">Scan & Analyze</p>
+            </div>
+          </button>
+
+          {/* Tile 4: My Medicines */}
+          <button
+            onClick={() => {
+              medsRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all text-left space-y-2 group"
+          >
+            <div className="p-3 rounded-2xl bg-purple-100 text-purple-700 w-fit group-hover:scale-110 transition-transform">
+              <Pill className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="font-extrabold text-slate-900 text-sm">{isSimpleMode ? 'Daily Medicines' : '💊 My Medicines'}</h4>
+              <p className="text-[11px] text-slate-500 font-medium">Schedule & Dose</p>
+            </div>
+          </button>
+
+          {/* Tile 5: My Appointments */}
+          <button
+            onClick={() => {
+              doctorsRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all text-left space-y-2 group"
+          >
+            <div className="p-3 rounded-2xl bg-amber-100 text-amber-700 w-fit group-hover:scale-110 transition-transform">
+              <CalendarCheck className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="font-extrabold text-slate-900 text-sm">{isSimpleMode ? 'Doctor Visits' : '📅 Appointments'}</h4>
+              <p className="text-[11px] text-slate-500 font-medium">PHC & Doctors</p>
+            </div>
+          </button>
+
+          {/* Tile 6: Emergency Help */}
+          <button
+            onClick={onOpenEmergency}
+            className="bg-rose-600 text-white p-4 rounded-3xl border border-rose-500 shadow-md hover:shadow-lg transition-all text-left space-y-2 group"
+          >
+            <div className="p-3 rounded-2xl bg-white/20 text-white w-fit group-hover:scale-110 transition-transform">
+              <PhoneCall className="w-6 h-6 animate-pulse" />
+            </div>
+            <div>
+              <h4 className="font-black text-white text-sm">🚨 Emergency</h4>
+              <p className="text-[11px] text-rose-100 font-medium">Dial 108 Free</p>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* 2. 🚨 EMERGENCY HELP CARD & SOUND DETECTOR */}
       <div className="grid gap-6 md:grid-cols-2">
+        {/* Large High-Contrast Emergency Help Tile */}
+        <div className="bg-gradient-to-br from-red-600 to-rose-700 text-white rounded-3xl p-6 shadow-xl flex flex-col justify-between space-y-4 border-2 border-red-400">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-2xl bg-white/20 backdrop-blur text-white">
+                <PhoneCall className="w-7 h-7 animate-pulse" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-red-200 block">Emergency Dispatch</span>
+                <h2 className="text-xl font-black">Need Urgent Medical Help?</h2>
+              </div>
+            </div>
+            <span className="bg-white text-red-700 text-xs font-black px-2.5 py-1 rounded-full">
+              24x7 FREE
+            </span>
+          </div>
+
+          <p className="text-xs text-red-100 leading-relaxed">
+            One-touch ambulance dispatch (108), maternal helpline (102), and hospital transit guidance. Large touch button suitable for elderly & rural users.
+          </p>
+
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              onClick={onOpenEmergency}
+              className="flex-1 bg-white hover:bg-red-50 text-red-700 font-black text-sm py-3.5 px-6 rounded-2xl shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95"
+            >
+              <PhoneCall className="w-5 h-5 text-red-600" />
+              <span>GET EMERGENCY HELP (108)</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Acoustic Sound Detector */}
         <EmergencySoundDetector
           onTriggerEmergencyModal={onOpenEmergency}
           patientName={selectedPatient?.name || 'Villager'}
         />
-        <DoctorStatusBanner
-          status={primaryDoctorStatus}
-          onStatusChange={setPrimaryDoctorStatus}
-          onSelectDoctor={(docId) => {
-            const found = doctors.find(d => d.id === docId);
-            if (found) onSelectDoctor(found);
-          }}
-        />
-      </div>
-      {/* Dashboard Master Banner */}
-      <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-950 text-white rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-emerald-500/10 transform skew-x-12 pointer-events-none" />
-        <div className="relative z-10 max-w-3xl space-y-3">
-          <div className="inline-flex items-center gap-2 bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 px-3 py-1 rounded-full text-xs font-bold">
-            <LayoutDashboard className="w-3.5 h-3.5" />
-            <span>All-in-One Rural Healthcare Dashboard</span>
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
-            Village Healthcare Command Center
-          </h1>
-          <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-            Everything villagers need in one place: Individual health assessment, patient goals & checkup timing, medicine reminders, consultation alerts, vulnerable care tiers, condition graphs, hospital transit, and specialist directories.
-          </p>
-
-          {/* Quick-Jump Section Navigation Strip */}
-          <div className="pt-3 flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-slate-400 font-bold mr-1">Jump to:</span>
-            <button
-              onClick={() => scrollToSection(careTiersRef)}
-              className="px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-lg font-bold text-emerald-300 transition-colors"
-            >
-              👵 Senior / Maternal / Child
-            </button>
-            <button
-              onClick={() => scrollToSection(transitRef)}
-              className="px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-lg font-bold text-rose-300 transition-colors"
-            >
-              🚑 Hospital Transit
-            </button>
-            <button
-              onClick={() => scrollToSection(medsRef)}
-              className="px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-lg font-bold text-amber-300 transition-colors"
-            >
-              💊 Medicine Reminder
-            </button>
-            <button
-              onClick={() => scrollToSection(graphsRef)}
-              className="px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-lg font-bold text-sky-300 transition-colors"
-            >
-              📈 Health Graphs
-            </button>
-            <button
-              onClick={() => scrollToSection(diseaseRef)}
-              className="px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-lg font-bold text-emerald-300 transition-colors"
-            >
-              🛡️ Disease Guide
-            </button>
-            <button
-              onClick={() => scrollToSection(a2aRef)}
-              className="px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-lg font-bold text-purple-300 transition-colors"
-            >
-              🔄 A2A Protocol
-            </button>
-            <button
-              onClick={() => scrollToSection(referralsRef)}
-              className="px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-lg font-bold text-teal-300 transition-colors"
-            >
-              ➡️ Referrals
-            </button>
-            <button
-              onClick={() => scrollToSection(handoffRef)}
-              className="px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-lg font-bold text-blue-300 transition-colors"
-            >
-              📋 Doctor Handoff
-            </button>
-            <button
-              onClick={() => scrollToSection(doctorsRef)}
-              className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg font-black transition-colors"
-            >
-              👨‍⚕️ Doctors Info (Last Page)
-            </button>
-            {onNavigateToAI && (
-              <button
-                onClick={onNavigateToAI}
-                className="px-2.5 py-1 bg-cyan-400 hover:bg-cyan-300 text-slate-950 rounded-lg font-black transition-colors flex items-center gap-1 shadow-sm"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                🤖 Ask Medora AI
-              </button>
-            )}
-          </div>
-        </div>
       </div>
 
-      {/* CORE RURAL CARE & AI DIAGNOSTIC HUBS (Dedicated Sections for Villagers) */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-2">
-          <div>
-            <span className="text-xs font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 inline-block mb-1">
-              Primary Rural Portals
-            </span>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-              Village Specialized Health & AI Diagnostic Hubs
+      {/* 3. 💬 ASK MEDORA AI HERO CARD */}
+      <div className="bg-gradient-to-r from-cyan-900 via-teal-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl space-y-5 border border-cyan-700/50">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-2 bg-cyan-500/20 text-cyan-200 border border-cyan-400/30 px-3 py-1 rounded-full text-[11px] font-bold">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-300 animate-pulse" />
+              <span>💬 ASK MEDORA — MASTER AI & A2A AGENTS</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white">
+              Tell me what is troubling you.
             </h2>
+            <p className="text-xs sm:text-sm text-cyan-100">
+              Trained on rural clinical guidelines. Silently consults 13 specialist agents for {selectedPatient?.name}.
+            </p>
           </div>
-          {onOpenAddReportModal && (
+
+          {onNavigateToAI && (
             <button
-              onClick={onOpenAddReportModal}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow transition-all flex items-center gap-1.5 self-start sm:self-auto"
+              onClick={onNavigateToAI}
+              className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black px-5 py-3 rounded-2xl text-xs shadow-lg flex items-center gap-2 transition-transform active:scale-95 self-start md:self-center"
             >
-              <UploadCloud className="w-4 h-4" />
-              <span>+ Add New Report for Patient</span>
+              <span>OPEN AI CHAT</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           )}
         </div>
 
-        {/* 4 Dedicated Population Hubs Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Children Hub Card */}
-          <div
-            onClick={onNavigateToChildren}
-            className="p-5 rounded-3xl bg-gradient-to-br from-sky-50 to-blue-50 border border-sky-200 hover:border-sky-400 shadow-xs hover:shadow-md transition-all cursor-pointer space-y-2.5 group"
-          >
-            <div className="w-10 h-10 rounded-2xl bg-sky-600 text-white flex items-center justify-center font-bold shadow-sm group-hover:scale-105 transition-transform">
-              <Baby className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-black text-slate-900 group-hover:text-sky-700 transition-colors">
-                👶 Children Care Hub
-              </h3>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                Medical history, repeated fevers tracker, safe paracetamol doses by weight, recurrent infections, and UIP immunization calendar.
-              </p>
-            </div>
-            <div className="flex items-center gap-1 text-xs font-black text-sky-700 pt-1">
-              <span>Open Children Hub</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </div>
+        {/* Input & Quick Prompts */}
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-2">
+            <input
+              type="text"
+              value={askAiInput}
+              onChange={(e) => setAskAiInput(e.target.value)}
+              placeholder={`Ask Medora about ${selectedPatient?.name}'s medicines, fever, BP, or symptoms...`}
+              className="w-full bg-transparent px-3 py-2 text-xs text-white placeholder-cyan-200 focus:outline-none"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && onNavigateToAI) onNavigateToAI();
+              }}
+            />
+            <button
+              onClick={onNavigateToAI}
+              className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shrink-0"
+            >
+              <SendHorizonal className="w-4 h-4" />
+              <span>Ask</span>
+            </button>
           </div>
 
-          {/* Maternity & Newborn Hub Card */}
-          <div
-            onClick={onNavigateToMaternity}
-            className="p-5 rounded-3xl bg-gradient-to-br from-rose-50 to-pink-50 border border-rose-200 hover:border-rose-400 shadow-xs hover:shadow-md transition-all cursor-pointer space-y-2.5 group"
-          >
-            <div className="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center font-bold shadow-sm group-hover:scale-105 transition-transform">
-              <Heart className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-black text-slate-900 group-hover:text-rose-700 transition-colors">
-                🤰 Maternity & Newborn Hub
-              </h3>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                Interactive 40-week trimester scale, 24-week nutrition customizer, hemoglobin (Hb &ge; 11) maintenance, ANC tests, and newborn care.
-              </p>
-            </div>
-            <div className="flex items-center gap-1 text-xs font-black text-rose-700 pt-1">
-              <span>Open Maternity Hub</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
-
-          {/* Elderly Hub Card */}
-          <div
-            onClick={onNavigateToElderly}
-            className="p-5 rounded-3xl bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 hover:border-amber-400 shadow-xs hover:shadow-md transition-all cursor-pointer space-y-2.5 group"
-          >
-            <div className="w-10 h-10 rounded-2xl bg-amber-600 text-white flex items-center justify-center font-bold shadow-sm group-hover:scale-105 transition-transform">
-              <Footprints className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-black text-slate-900 group-hover:text-amber-800 transition-colors">
-                👵 Elderly Care Hub
-              </h3>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                Exact BP numbers, blood sugar levels analysis, unified AI report summary, high fall risk prevention, and diet to avoid/eat.
-              </p>
-            </div>
-            <div className="flex items-center gap-1 text-xs font-black text-amber-800 pt-1">
-              <span>Open Elderly Hub</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
-
-          {/* Diseases Guide Card */}
-          <div
-            onClick={onNavigateToDiseases}
-            className="p-5 rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 hover:border-emerald-400 shadow-xs hover:shadow-md transition-all cursor-pointer space-y-2.5 group"
-          >
-            <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-sm group-hover:scale-105 transition-transform">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-black text-slate-900 group-hover:text-emerald-800 transition-colors">
-                🛡️ Rural Diseases Guide
-              </h3>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                High BP, Diabetes, Anemia, Dengue, Malaria, Scabies, TB: early warning signs, home control methods, and safe medicines.
-              </p>
-            </div>
-            <div className="flex items-center gap-1 text-xs font-black text-emerald-800 pt-1">
-              <span>Browse All Diseases</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
-        </div>
-
-        {/* 6 Advanced AI & Hospital Features Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
-          {/* AI Camera Disease Scanner */}
-          <div
-            onClick={onNavigateToCameraScanner}
-            className="p-5 bg-gradient-to-r from-cyan-950 to-slate-900 text-white rounded-3xl border border-cyan-800/40 shadow-sm hover:shadow-md transition-all cursor-pointer space-y-2 group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-cyan-500 text-slate-950 flex items-center justify-center font-bold">
-                <Camera className="w-5 h-5" />
-              </div>
-              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
-                Camera Vision AI
-              </span>
-            </div>
-            <h4 className="text-base font-black text-white group-hover:text-cyan-300 transition-colors">
-              📷 AI Camera Disease Scanner
-            </h4>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Use the phone camera for a preliminary risk assessment of skin rashes, eye redness, and wounds. Professional evaluation is recommended.
-            </p>
-          </div>
-
-          {/* Medical Report & X-Ray Analyser */}
-          <div
-            onClick={onNavigateToReportScanner}
-            className="p-5 bg-gradient-to-r from-indigo-950 to-slate-900 text-white rounded-3xl border border-indigo-800/40 shadow-sm hover:shadow-md transition-all cursor-pointer space-y-2 group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-indigo-500 text-slate-950 flex items-center justify-center font-bold">
-                <FileText className="w-5 h-5" />
-              </div>
-              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-400/20 text-indigo-300 border border-indigo-400/30">
-                X-Ray & Lab AI
-              </span>
-            </div>
-            <h4 className="text-base font-black text-white group-hover:text-indigo-300 transition-colors">
-              🔬 Medical Report & X-Ray Analyser
-            </h4>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Scan chest X-rays, CBC blood sheets, and ultrasounds: translates jargon into village words and updates doctor summary to stop expensive repeat scans.
-            </p>
-          </div>
-
-          {/* Hospital Village Portal */}
-          <div
-            onClick={onNavigateToHospitalPortal}
-            className="p-5 bg-gradient-to-r from-blue-950 to-slate-900 text-white rounded-3xl border border-blue-800/40 shadow-sm hover:shadow-md transition-all cursor-pointer space-y-2 group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-blue-500 text-slate-950 flex items-center justify-center font-bold">
-                <Building2 className="w-5 h-5" />
-              </div>
-              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-blue-400/20 text-blue-300 border border-blue-400/30">
-                Hospital Sync
-              </span>
-            </div>
-            <h4 className="text-base font-black text-white group-hover:text-blue-300 transition-colors">
-              🏥 Hospital Portal & Village Registry
-            </h4>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Prototype village profiles and risk signals for authorized professional review. Live hospital integration is not currently claimed.
-            </p>
-          </div>
-
-          {/* A2A Specialists Workflow */}
-          <div
-            onClick={onNavigateToA2A}
-            className="p-5 bg-white rounded-3xl border border-slate-200 hover:border-purple-400 shadow-xs hover:shadow-md transition-all cursor-pointer space-y-2 group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold">
-                <Bot className="w-5 h-5" />
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-700">
-                5 Specialists Deliberation
-              </span>
-            </div>
-            <h4 className="text-base font-black text-slate-900 group-hover:text-purple-700 transition-colors">
-              🔄 A2A Multi-Specialist Deliberation
-            </h4>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Specialist AI agents deliberate across domains like a hospital case conference to eliminate drug interactions and finalize simple village reports.
-            </p>
-          </div>
-
-          {/* Government Health Funding Schemes */}
-          <div
-            onClick={onNavigateToGovtSchemes}
-            className="p-5 bg-white rounded-3xl border border-slate-200 hover:border-emerald-400 shadow-xs hover:shadow-md transition-all cursor-pointer space-y-2 group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
-                <Award className="w-5 h-5" />
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">
-                ₹5L Free PM-JAY
-              </span>
-            </div>
-            <h4 className="text-base font-black text-slate-900 group-hover:text-emerald-700 transition-colors">
-              🏛️ Government Healthcare Schemes
-            </h4>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Ayushman Bharat ₹5 Lakh cashless hospital card, Janani Suraksha cash aid, free child defect surgeries, and senior assistive devices.
-            </p>
-          </div>
-
-          {/* Nearby Hospital Maps & 108 Ambulance */}
-          <div
-            onClick={onNavigateToEmergencyMap}
-            className="p-5 bg-white rounded-3xl border border-slate-200 hover:border-rose-400 shadow-xs hover:shadow-md transition-all cursor-pointer space-y-2 group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center font-bold">
-                <Navigation className="w-5 h-5" />
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700">
-                108 Speed-Dial
-              </span>
-            </div>
-            <h4 className="text-base font-black text-slate-900 group-hover:text-rose-700 transition-colors">
-              🗺️ Emergency Hotlines & Hospital Maps
-            </h4>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              One-click dial to 108 Ambulance & 112 Police; turn-by-turn road maps, bus route 14 timings, and auto stand numbers for village transit.
-            </p>
+          {/* Quick Example Prompt Chips */}
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-cyan-200 font-bold text-[11px]">Quick prompts:</span>
+            {[
+              'My child has fever',
+              'My BP is high',
+              'I have a headache',
+              'I need help with my medicine',
+              'Newborn care advice',
+            ].map((prompt) => (
+              <button
+                key={prompt}
+                onClick={() => {
+                  setAskAiInput(prompt);
+                  if (onNavigateToAI) onNavigateToAI();
+                }}
+                className="bg-white/15 hover:bg-white/25 text-white border border-white/20 text-[11px] font-bold px-3 py-1 rounded-full transition-colors"
+              >
+                {prompt}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* 1. SECTION: Care Tiers at Starting (Elderly, Maternity, Child Care) */}
-      <div ref={careTiersRef} className="scroll-mt-24 space-y-3">
-        <div className="flex items-center gap-2 pb-1 border-b border-slate-200">
-          <Heart className="w-5 h-5 text-emerald-600" />
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-            1. Priority Rural Care Tiers (Starting Section)
-          </h2>
-        </div>
-        <CareTiersHeader
-          onSelectCategory={handleFilterByCategory}
-          onOpenEmergency={onOpenEmergency}
-          currentLang={currentLang}
-        />
-      </div>
-
-      {/* Family Health Member Quick Switcher */}
-      <div className="space-y-3">
-        <FamilyHealthSelector
-          familyMembers={familyMembers}
-          selectedFamilyId={selectedFamilyId}
-          onSelectFamilyMember={onSelectFamilyMember}
-          onFilterByMemberCategory={(cat) => handleFilterByCategory(cat)}
-          onFindHospitalForMember={() => scrollToSection(hospitalsRef)}
-          currentLang={currentLang}
-        />
-      </div>
-
-      {/* 2. SECTION: PERSONALIZED PATIENT HEALTH DETERMINATION, WANTS, CHECKUP & REMINDERS */}
-      <div className="space-y-3">
-        <PersonalizedHealthAnalyzer
-          profile={activePersonalProfile}
-          currentLang={currentLang}
-          onNavigateToDoctors={() => scrollToSection(doctorsRef)}
-          onNavigateToTransit={() => scrollToSection(transitRef)}
-          onShowToast={(msg) => {
-            if (onShowToast) onShowToast(msg);
-          }}
-        />
-      </div>
-
-      {/* Interactive AI Assistant Guidance Banner */}
-      {onNavigateToAI && (
-        <div className="bg-gradient-to-r from-cyan-950 via-slate-900 to-teal-950 text-white rounded-3xl p-5 sm:p-7 shadow-xl border border-cyan-800/40 relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="space-y-2 z-10 max-w-2xl">
-            <div className="inline-flex items-center gap-1.5 bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 px-3 py-0.5 rounded-full text-xs font-bold">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-              <span>Medora AI Health Assistant</span>
-            </div>
-            <h3 className="text-lg sm:text-2xl font-black tracking-tight text-white">
-              Have questions about {activePersonalProfile.name}’s medicines, checkup schedule, or symptoms?
+      {/* 4. ❤️ HEALTH OVERVIEW & CIRCULAR HEALTH SCORE GAUGE */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Health Overview (2 Columns) */}
+        <div className="lg:col-span-2 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+              <Heart className="w-5 h-5 text-emerald-600 fill-emerald-100" />
+              <span>❤️ Health Overview</span>
             </h3>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              Ask our multilingual voice AI assistant in Hindi, Telugu, Tamil, Malayalam, Kannada, or English. Instant, non-diagnostic triage and care guidance tailored to your health records.
+            <span className="text-xs font-bold text-slate-500 font-mono">
+              P-ID: {selectedPatient?.patientId}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            {/* Blood Pressure */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <span className="text-slate-500 font-semibold block">Blood Pressure</span>
+              <div className="font-mono text-sm font-extrabold text-slate-900">{sys}/{dia} mmHg</div>
+              <span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                {bpStatus}
+              </span>
+            </div>
+
+            {/* Blood Sugar */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <span className="text-slate-500 font-semibold block">Blood Sugar</span>
+              <div className="font-mono text-sm font-extrabold text-slate-900">{sugar} mg/dL</div>
+              <span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                {sugarStatus}
+              </span>
+            </div>
+
+            {/* Medicines */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <span className="text-slate-500 font-semibold block">Medicines</span>
+              <div className="font-mono text-sm font-extrabold text-slate-900">{selectedPatient?.medicines?.length || 0} active</div>
+              <span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                {medsStatus}
+              </span>
+            </div>
+
+            {/* Appointments */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <span className="text-slate-500 font-semibold block">Appointments</span>
+              <div className="font-mono text-sm font-extrabold text-slate-900">1 Scheduled</div>
+              <span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">
+                🔵 Upcoming
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Medora Health Score (Circular Widget) */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between items-center text-center space-y-3">
+          <h3 className="font-extrabold text-slate-900 text-sm tracking-wide">
+            📊 Medora Health Score
+          </h3>
+
+          <div className="relative w-28 h-28 flex items-center justify-center">
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+              <path
+                className="text-slate-100"
+                strokeWidth="3.5"
+                stroke="currentColor"
+                fill="none"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+              <path
+                className="text-emerald-500"
+                strokeDasharray="82, 100"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                stroke="currentColor"
+                fill="none"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-3xl font-black text-slate-900">82</span>
+              <span className="text-[10px] text-emerald-700 font-bold">Good Progress</span>
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-500 leading-relaxed max-w-xs">
+            Based on medicine adherence (85%), recent vitals stability, and completed ANC/checkups.
+          </p>
+        </div>
+      </div>
+
+      {/* 5. ⚠️ CARE GAP ALERTS */}
+      {selectedPatient?.hasCareGap && (
+        <div className="rounded-3xl border border-amber-300 bg-amber-50 p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between border-b border-amber-200 pb-2">
+            <div className="flex items-center gap-2 font-black text-amber-900 text-sm">
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
+              <span>⚠️ Care Gap Alert — Action Recommended</span>
+            </div>
+            <span className="bg-amber-500 text-white font-mono text-[10px] font-bold px-2 py-0.5 rounded-full">
+              NEEDS ATTENTION
+            </span>
+          </div>
+
+          <div className="text-xs text-amber-950 space-y-1">
+            <p className="font-bold text-sm">
+              {selectedPatient.careGaps?.[0]?.title || 'Blood pressure screening follow-up due'}
+            </p>
+            <p className="text-amber-900 leading-relaxed">
+              {selectedPatient.careGaps?.[0]?.description || 'Last home screening showed elevated pressure. Schedule physician review.'}
             </p>
           </div>
-          <button
-            onClick={onNavigateToAI}
-            className="z-10 inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-cyan-400 to-teal-400 hover:from-cyan-300 hover:to-teal-300 text-slate-950 font-black rounded-xl text-sm transition-all shadow-lg hover:shadow-cyan-400/30 shrink-0"
-          >
-            <span>🤖 Talk to AI Assistant</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
         </div>
       )}
 
-      {/* 2. SECTION: How Can Villagers Go to Hospital Easily & Speed Dial */}
-      <div ref={transitRef} className="scroll-mt-24 space-y-3">
-        <div className="flex items-center gap-2 pb-1 border-b border-slate-200">
-          <Navigation className="w-5 h-5 text-rose-600" />
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-            2. Hospital Travel, Routes & Immediate Contact
-          </h2>
-        </div>
-        <HospitalTransitGuide
-          hospitals={hospitals}
-          onOpenDirections={onOpenDirections}
-          onOpenEmergency={onOpenEmergency}
-          currentLang={currentLang}
-        />
-      </div>
-
-      {/* 3. SECTION: Daily Medication Reminder */}
-      <div ref={medsRef} className="scroll-mt-24 space-y-3">
-        <div className="flex items-center gap-2 pb-1 border-b border-slate-200">
-          <Pill className="w-5 h-5 text-emerald-600" />
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-            3. Daily Medication Schedule & Adherence Reminder
-          </h2>
-        </div>
+      {/* 6. 💊 TODAY'S MEDICINES & DOCTOR STATUS BANNER */}
+      <div className="grid gap-6 lg:grid-cols-2">
         <MedicineReminder currentLang={currentLang} />
-      </div>
-
-      {/* 4. SECTION: Graphs for the Medicinal Condition */}
-      <div ref={graphsRef} className="scroll-mt-24 space-y-3">
-        <div className="flex items-center gap-2 pb-1 border-b border-slate-200">
-          <Activity className="w-5 h-5 text-sky-600" />
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-            4. Medicinal Condition & Vital Sign Graphs
-          </h2>
-        </div>
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-3">
-          <DoctorHandoffChart
-            vitalTrends={healthSummary.healthAnalytics.vitalTrends}
-            adherenceHistory={healthSummary.healthAnalytics.adherenceHistory}
-          />
-        </div>
-      </div>
-
-      {/* 5. SECTION: Rural Disease Guide & Preventive Measures */}
-      <div ref={diseaseRef} className="scroll-mt-24 space-y-3">
-        <div className="flex items-center gap-2 pb-1 border-b border-slate-200">
-          <ShieldCheck className="w-5 h-5 text-emerald-600" />
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-            5. Disease Handbook, Warning Signs & Village Prevention
-          </h2>
-        </div>
-        <DiseaseGuide
-          onFindSpecialist={handleFilterByCategory}
-          currentLang={currentLang}
-        />
-      </div>
-
-      {/* 6. SECTION: A2A (Agent-to-Agent) Multi-Agent Workflow */}
-      <div ref={a2aRef} className="scroll-mt-24 space-y-3">
-        <div className="flex items-center gap-2 pb-1 border-b border-slate-200">
-          <Bot className="w-5 h-5 text-purple-600" />
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-            6. A2A (Agent-to-Agent) Decentralized Continuity Protocol
-          </h2>
-        </div>
-        <A2AWorkflow
-          onNavigateToReferral={() => scrollToSection(referralsRef)}
-          onNavigateToDoctorHandoff={() => scrollToSection(handoffRef)}
-          currentLang={currentLang}
-        />
-      </div>
-
-      {/* 7. SECTION: Smart Referrals & Follow-Up Tracker */}
-      <div ref={referralsRef} className="scroll-mt-24 space-y-3">
-        <div className="flex items-center gap-2 pb-1 border-b border-slate-200">
-          <ArrowRight className="w-5 h-5 text-teal-600" />
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-            7. Smart Referral & Follow-Up Tracking System
-          </h2>
-        </div>
-        <SmartReferralTracker
-          referrals={referrals}
-          activeReferralId={activeReferralId}
-          onSelectActiveReferral={onSelectActiveReferral}
-          onUpdateReferralStatus={onUpdateReferralStatus}
-          onCreateReferral={onCreateReferral}
-          onBrowseDoctorsForSpecialty={(spec) => {
-            scrollToSection(doctorsRef);
+        <DoctorStatusBanner
+          status={primaryDoctorStatus}
+          onStatusChange={setPrimaryDoctorStatus}
+          onSelectDoctor={(docId) => {
+            const found = doctors.find((d) => d.id === docId);
+            if (found) onSelectDoctor(found);
           }}
-          onBrowseHospitals={() => scrollToSection(hospitalsRef)}
-          onOpenDoctorHandoff={() => scrollToSection(handoffRef)}
-          doctors={doctors}
-          hospitals={hospitals}
-          familyMembers={familyMembers}
-          currentLang={currentLang}
         />
       </div>
 
-      {/* 8. SECTION: Doctor Handoff ("SHARE WITH DOCTOR") */}
-      <div ref={handoffRef} className="scroll-mt-24 space-y-3">
-        <div className="flex items-center gap-2 pb-1 border-b border-slate-200">
-          <FileText className="w-5 h-5 text-blue-600" />
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-            8. Doctor-Ready Clinical Health Summary (Share with Doctor)
-          </h2>
-        </div>
-        <DoctorHandoffSummary
-          summary={healthSummary}
-          currentLang={currentLang}
-        />
-      </div>
+      {/* 7. 👨‍👩‍👧 FAMILY HEALTH SELECTOR */}
+      <FamilyHealthSelector
+        familyMembers={familyMembers}
+        selectedFamilyId={selectedFamilyId}
+        onSelectFamilyMember={onSelectFamilyMember}
+        currentLang={currentLang}
+      />
 
-      {/* 9. SECTION: Hospitals & Healthcare Facilities Directory */}
-      <div ref={hospitalsRef} className="scroll-mt-24 space-y-3">
-        <div className="flex items-center gap-2 pb-1 border-b border-slate-200">
-          <Building2 className="w-5 h-5 text-emerald-600" />
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-            9. Healthcare Facilities & Referral Hospitals
-          </h2>
-        </div>
-        <HospitalDirectory
-          hospitals={hospitals}
-          onSelectHospital={onSelectHospital}
-          onViewDoctorsAtHospital={(hospId) => {
-            scrollToSection(doctorsRef);
-          }}
-          onOpenDirections={onOpenDirections}
-          onPlanReferralWithHospital={onSelectHospitalForReferral}
-          currentLang={currentLang}
-          selectedReferralHospitalId={referrals[0]?.selectedHospitalId}
-        />
+      {/* 8. 🧒 🤰 👵 🛡️ POPULATION CARE TIERS GRID */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-black text-slate-900">
+          Specialized Population Care Hubs
+        </h3>
 
-        <div className="pt-4">
-          <HospitalContactCenter
-            onCallHospitalQuick={() => {
-              window.location.href = 'tel:+918029876540';
-            }}
-            onContactDoctorQuick={() => {
-              scrollToSection(doctorsRef);
-            }}
-            onEmergencySupport={onOpenEmergency}
-            onViewReferral={() => scrollToSection(referralsRef)}
-            onViewHealthSummary={() => scrollToSection(handoffRef)}
-            hospitals={hospitals}
-            currentLang={currentLang}
-          />
-        </div>
-      </div>
-
-      {/* 10. SECTION: DOCTOR INFO AT LAST SECTION (As requested: "add the doctor info at last page") */}
-      <div ref={doctorsRef} className="scroll-mt-24 space-y-3 pt-6 border-t-4 border-emerald-600">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1 border-b border-slate-200">
-          <div className="flex items-center gap-2">
-            <Stethoscope className="w-6 h-6 text-emerald-600" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Children Hub */}
+          <div
+            onClick={onNavigateToChildren}
+            className="p-5 rounded-3xl bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200 hover:border-purple-400 shadow-sm transition-all cursor-pointer space-y-2.5 group"
+          >
+            <div className="w-10 h-10 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-bold shadow-sm">
+              <Baby className="w-5 h-5" />
+            </div>
             <div>
-              <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">
-                FINAL SECTION • MEDICAL SPECIALISTS
-              </span>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-                10. Doctors & Medical Specialists Directory (Doctor Info at Last)
-              </h2>
+              <h4 className="text-base font-black text-slate-900 group-hover:text-purple-700 transition-colors">
+                🧒 Children Care Hub
+              </h4>
+              <p className="text-xs text-slate-600 mt-1">Growth charts, vaccine schedule, and paracetamol weight-dose calculator.</p>
             </div>
           </div>
-          <span className="text-xs bg-amber-100 text-amber-900 font-bold px-2.5 py-1 rounded-full border border-amber-300">
-            DEMO DATA VERIFIED
-          </span>
-        </div>
 
-        <DoctorDirectory
-          doctors={doctors}
-          onSelectDoctor={onSelectDoctor}
-          onRequestConsultation={onSelectDoctor}
-          onConnectToReferral={onConnectDoctorToReferral}
-          onViewHospitalById={(hospId) => {
-            const h = hospitals.find(x => x.id === hospId);
-            if (h) onSelectHospital(h);
-          }}
-          currentLang={currentLang}
-          selectedReferralDoctorId={referrals[0]?.selectedDoctorId}
-        />
+          {/* Maternity & Postpartum Hub */}
+          <div
+            onClick={onNavigateToMaternity}
+            className="p-5 rounded-3xl bg-gradient-to-br from-rose-50 to-pink-50 border border-rose-200 hover:border-rose-400 shadow-sm transition-all cursor-pointer space-y-2.5 group"
+          >
+            <div className="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center font-bold shadow-sm">
+              <Heart className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-base font-black text-slate-900 group-hover:text-rose-700 transition-colors">
+                🤰 Maternity & Postpartum Hub
+              </h4>
+              <p className="text-xs text-slate-600 mt-1">Trimester timeline, ANC tests, lactation support, and newborn care.</p>
+            </div>
+          </div>
+
+          {/* Elderly Hub */}
+          <div
+            onClick={onNavigateToElderly}
+            className="p-5 rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 hover:border-amber-400 shadow-sm transition-all cursor-pointer space-y-2.5 group"
+          >
+            <div className="w-10 h-10 rounded-2xl bg-amber-600 text-white flex items-center justify-center font-bold shadow-sm">
+              <Footprints className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-base font-black text-slate-900 group-hover:text-amber-800 transition-colors">
+                👵 Elderly Care Hub
+              </h4>
+              <p className="text-xs text-slate-600 mt-1">BP tracking, fall risk assessment, polypharmacy alerts, and large-text UI.</p>
+            </div>
+          </div>
+
+          {/* Rural Diseases Guide */}
+          <div
+            onClick={onNavigateToDiseases}
+            className="p-5 rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 hover:border-emerald-400 shadow-sm transition-all cursor-pointer space-y-2.5 group"
+          >
+            <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-sm">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-base font-black text-slate-900 group-hover:text-emerald-800 transition-colors">
+                🛡️ Rural Disease Guide
+              </h4>
+              <p className="text-xs text-slate-600 mt-1">Typhoid, Chikungunya, Dengue, TB, Diabetes, and Hypertension early signs.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

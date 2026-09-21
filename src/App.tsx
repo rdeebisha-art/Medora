@@ -13,6 +13,7 @@ import { FamilyHealthSelector } from './components/FamilyHealthSelector';
 import { HealthJourneyWorkflow } from './components/HealthJourneyWorkflow';
 import { SimpleModeView } from './components/SimpleModeView';
 import { EmergencyModal } from './components/EmergencyModal';
+import { MobileBottomBar } from './components/MobileBottomBar';
 import { DashboardPage } from './components/DashboardPage';
 import { A2AWorkflow } from './components/A2AWorkflow';
 import { AskMedoraAI } from './components/AskMedoraAI';
@@ -31,6 +32,15 @@ import { AdminVillageDashboard } from './components/AdminVillageDashboard';
 import { RoleSwitcherModal } from './components/RoleSwitcherModal';
 import { NetworkSimulatorBar } from './components/NetworkSimulatorBar';
 import { LoginPage } from './components/LoginPage';
+import { FirstTimeOnboarding } from './components/FirstTimeOnboarding';
+import { WhatShouldIDoGuideModal } from './components/WhatShouldIDoGuideModal';
+import { HelpModal } from './components/HelpModal';
+import { USSDSimulatorModal } from './components/USSDSimulatorModal';
+import { VoiceIVRModal } from './components/VoiceIVRModal';
+import { TwoWayDoctorChatModal } from './components/TwoWayDoctorChatModal';
+import { CommunicationCenterModal } from './components/CommunicationCenterModal';
+import { OutboxNetworkMonitorBar } from './components/OutboxNetworkMonitorBar';
+import { FamilyPage } from './components/FamilyPage';
 
 import { MedoraProvider, useMedora } from './context/MedoraContext';
 import { MOCK_DOCTORS, MOCK_HOSPITALS } from './data/mockData';
@@ -93,6 +103,7 @@ function MedoraAppContent() {
 
   const [activeTab, setActiveTab] = useState<
     | 'dashboard'
+    | 'family'
     | 'admin'
     | 'children'
     | 'maternity'
@@ -121,7 +132,23 @@ function MedoraAppContent() {
 
   const [isAddReportModalOpen, setIsAddReportModalOpen] = useState<boolean>(false);
   const [isRoleSwitcherOpen, setIsRoleSwitcherOpen] = useState<boolean>(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState<boolean>(false);
   const [customReports, setCustomReports] = useState<any[]>([]);
+
+  // Guided Workflow & Simulator Modals
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('medora_has_onboarded') !== 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [isWhatShouldIDoOpen, setIsWhatShouldIDoOpen] = useState<boolean>(false);
+  const [isHelpOpen, setIsHelpOpen] = useState<boolean>(false);
+  const [isUSSDOpen, setIsUSSDOpen] = useState<boolean>(false);
+  const [isVoiceIVROpen, setIsVoiceIVROpen] = useState<boolean>(false);
+  const [isDoctorChatOpen, setIsDoctorChatOpen] = useState<boolean>(false);
+  const [isCommunicationCenterOpen, setIsCommunicationCenterOpen] = useState<boolean>(false);
 
   // Directory Filter States
   const [filters, setFilters] = useState({
@@ -393,6 +420,19 @@ function MedoraAppContent() {
         activeRole={activeRole}
         onOpenRoleSwitcher={() => setIsRoleSwitcherOpen(true)}
         onLogout={logout}
+        isMoreMenuOpen={isMoreMenuOpen}
+        setIsMoreMenuOpen={setIsMoreMenuOpen}
+        onOpenUSSD={() => setIsUSSDOpen(true)}
+        onOpenVoiceIVR={() => setIsVoiceIVROpen(true)}
+        onOpenHelp={() => setIsHelpOpen(true)}
+        onOpenDoctorChat={() => setIsDoctorChatOpen(true)}
+        onOpenCommunicationCenter={() => setIsCommunicationCenterOpen(true)}
+      />
+
+      {/* Outbox & Network Delivery Monitor Bar */}
+      <OutboxNetworkMonitorBar
+        isOffline={useOfflineMode}
+        onOpenCommunicationCenter={() => setIsCommunicationCenterOpen(true)}
       />
 
       {/* Network Simulator Bar */}
@@ -484,7 +524,24 @@ function MedoraAppContent() {
                 onNavigateToA2A={() => setActiveTab('a2a')}
                 onNavigateToDoctorSummary={() => setActiveTab('handoff')}
                 onOpenAddReportModal={() => setIsAddReportModalOpen(true)}
+                onOpenWhatShouldIDo={() => setIsWhatShouldIDoOpen(true)}
+                isSimpleMode={simpleMode}
                 currentLang={currentLang}
+              />
+            )}
+
+            {/* Dedicated Family Page */}
+            {activeTab === 'family' && (
+              <FamilyPage
+                currentLang={currentLang}
+                familyMembers={accessibleFamilyMembers}
+                selectedFamilyId={selectedPatientId}
+                onSelectFamilyMember={selectPatient}
+                onNavigateToDashboard={() => setActiveTab('dashboard')}
+                onOpenCommunicationCenterForPatient={(pid) => {
+                  selectPatient(pid);
+                  setIsCommunicationCenterOpen(true);
+                }}
               />
             )}
 
@@ -569,6 +626,10 @@ function MedoraAppContent() {
                 onUpdateDoctorSummary={() => {}}
                 onNavigateToDoctorSummary={() => setActiveTab('handoff')}
                 onNavigateToAI={() => setActiveTab('ai')}
+                onOpenCommunicationCenterForPatient={(pid) => {
+                  selectPatient(pid);
+                  setIsCommunicationCenterOpen(true);
+                }}
               />
             )}
 
@@ -841,6 +902,82 @@ function MedoraAppContent() {
         familyMembers={accessibleFamilyMembers}
         selectedFamilyId={selectedPatientId}
         onSaveReport={handleSaveReport}
+      />
+
+      {/* 1. First-Time Onboarding Modal */}
+      {isOnboardingOpen && (
+        <FirstTimeOnboarding
+          currentLang={currentLang}
+          onLanguageChange={setCurrentLang}
+          onComplete={() => {
+            setIsOnboardingOpen(false);
+            try {
+              localStorage.setItem('medora_has_onboarded', 'true');
+            } catch {}
+          }}
+        />
+      )}
+
+      {/* 2. "What Should I Do?" Launcher Modal */}
+      <WhatShouldIDoGuideModal
+        isOpen={isWhatShouldIDoOpen}
+        onClose={() => setIsWhatShouldIDoOpen(false)}
+        onSelectAction={(tabKey, payload) => {
+          setActiveTab(tabKey as any);
+          if (payload?.initialQuery) {
+            // handle initial query if needed
+          }
+        }}
+      />
+
+      {/* 3. Rural Q&A Help Modal */}
+      <HelpModal
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
+      />
+
+      {/* 4. USSD Simulator (*123#) Modal */}
+      <USSDSimulatorModal
+        isOpen={isUSSDOpen}
+        onClose={() => setIsUSSDOpen(false)}
+        patientId={selectedPatientId}
+        patientContext={selectedPatient || {}}
+      />
+
+      {/* 5. Voice / IVR Phone Call Simulator Modal */}
+      <VoiceIVRModal
+        isOpen={isVoiceIVROpen}
+        onClose={() => setIsVoiceIVROpen(false)}
+        currentLang={currentLang}
+      />
+
+      {/* 6. Two-Way Doctor Communication Chat Modal */}
+      <TwoWayDoctorChatModal
+        isOpen={isDoctorChatOpen}
+        onClose={() => setIsDoctorChatOpen(false)}
+        patientId={selectedPatientId}
+        patientName={selectedPatient?.name || 'Ramesh Kumar'}
+        userRole={activeRole}
+      />
+
+      {/* 7. Central Communication Center Modal */}
+      <CommunicationCenterModal
+        isOpen={isCommunicationCenterOpen}
+        onClose={() => setIsCommunicationCenterOpen(false)}
+        patientId={selectedPatientId}
+        patientName={selectedPatient?.name || 'Ramesh Kumar'}
+        isOffline={useOfflineMode}
+      />
+
+      {/* Mobile Bottom Navigation Bar (<768px) */}
+      <MobileBottomBar
+        activeTab={activeTab}
+        onSelectTab={(tab) => {
+          setActiveTab(tab as any);
+          setIsMoreMenuOpen(false);
+        }}
+        onOpenEmergency={() => setIsEmergencyOpen(true)}
+        onOpenMoreMenu={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
       />
     </div>
   );

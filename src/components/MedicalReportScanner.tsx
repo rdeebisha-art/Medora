@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, UploadCloud, Sparkles, CheckCircle2, ArrowRight, Volume2, AlertTriangle, ShieldCheck, RefreshCw, UserCheck, Stethoscope, Eye, Clock, Check } from 'lucide-react';
+import { FileText, UploadCloud, Sparkles, CheckCircle2, ArrowRight, Volume2, AlertTriangle, ShieldCheck, RefreshCw, UserCheck, Stethoscope, Eye, Clock, Check, Send } from 'lucide-react';
 import { LanguageCode, FamilyMember } from '../types';
 import { voiceService } from '../services/voiceService';
 
@@ -12,6 +12,7 @@ interface MedicalReportScannerProps {
   onUpdateDoctorSummary: (reportData: any) => void;
   onNavigateToDoctorSummary: () => void;
   onNavigateToAI: () => void;
+  onOpenCommunicationCenterForPatient?: (patientId: string) => void;
 }
 
 interface ReportPreset {
@@ -36,6 +37,7 @@ export const MedicalReportScanner: React.FC<MedicalReportScannerProps> = ({
   onUpdateDoctorSummary,
   onNavigateToDoctorSummary,
   onNavigateToAI,
+  onOpenCommunicationCenterForPatient,
 }) => {
   const [speaking, setSpeaking] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -452,6 +454,16 @@ export const MedicalReportScanner: React.FC<MedicalReportScannerProps> = ({
                   <Stethoscope className="w-4 h-4" />
                   <span>{syncedToDoctorSummary ? 'Updated to Doctor Summary ✓' : '2. Update Doctor Summary'}</span>
                 </button>
+
+                {onOpenCommunicationCenterForPatient && (
+                  <button
+                    onClick={() => onOpenCommunicationCenterForPatient(activeMember.id)}
+                    className="flex-1 py-3 px-4 rounded-xl text-xs font-black bg-teal-600 hover:bg-teal-500 text-white transition-all flex items-center justify-center gap-2 shadow-md active:scale-95"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>Share Report</span>
+                  </button>
+                )}
               </div>
 
               <div className="flex justify-end pt-1">
