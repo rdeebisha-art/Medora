@@ -422,8 +422,8 @@ export interface MedicalMedicine {
   majorWarnings: string[];
   commonSideEffects: string[];
   allergyWarnings: string[];
-  ageRestrictions: string;
-  pregnancyConsiderations: string;
+  ageRestrictions: string | string[];
+  pregnancyConsiderations: string | string[];
   drugInteractions: string[];
   storageInformation: string;
   availabilityStatus: 'Available' | 'Low Stock' | 'Unavailable';

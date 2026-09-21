@@ -23,6 +23,7 @@ import { useMedora } from '../context/MedoraContext';
 import { voiceService } from '../services/voiceService';
 import { MEDICAL_DISEASES } from '../data/medical/diseases';
 import { MEDICAL_MEDICINES } from '../data/medical/medicines';
+import { processA2ARequest } from '../services/a2aOrchestrator';
 
 interface AskMedoraAIProps {
   familyMembers: FamilyMember[];
@@ -48,7 +49,7 @@ interface Message {
   text: string;
   quickActions?: QuickAction[];
   workflow?: string[];
-  mode?: 'AI' | 'DEMO/FALLBACK';
+  mode?: 'AI' | 'DEMO/FALLBACK' | 'EMERGENCY';
 }
 
 const DEMO_PROMPTS = [
@@ -417,7 +418,7 @@ export const AskMedoraAI: React.FC<AskMedoraAIProps> = ({
   onOpenEmergency,
   lowDataMode = false,
 }) => {
-  const { selectedPatient, networkStatus } = useMedora();
+  const { selectedPatient, networkStatus, authSession, activeRole } = useMedora();
   const patientContext = useMemo(() => buildPatientContextFromProfile(selectedPatient), [selectedPatient]);
 
   const [input, setInput] = useState('');
@@ -488,43 +489,26 @@ export const AskMedoraAI: React.FC<AskMedoraAIProps> = ({
     setIsThinking(true);
 
     try {
-      // If network is offline or lowDataMode is active, use local deterministic clinical rules
-      const useLocal = lowDataMode || networkStatus === 'OFFLINE' || networkStatus === 'LIMITED';
+      const a2aResult = processA2ARequest(trimmed, patientContext, {
+        patientId: patientContext.patientId,
+        familyId: patientContext.familyId,
+        userId: authSession.activePatientId || 'user-1',
+        userRole: activeRole,
+        language: currentLang,
+        networkStatus: networkStatus,
+      });
 
-      let aiText = '';
-      if (!useLocal) {
-        try {
-          const response = await fetch('/api/ask', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              patientId: patientContext.patientId,
-              question: trimmed,
-              language: currentLang,
-              relevantHealthData: patientContext,
-            }),
-          });
-          if (response.ok) {
-            const data = await response.json();
-            aiText = data.response;
-          }
-        } catch {}
-      }
-
-      if (!aiText) {
-        aiText = decideResponseText(trimmed, patientContext);
-      }
-
-      const workflow = ['Patient Registry (P-XXXX)', 'Medora AI Core', 'Clinical Record Inspector', 'Adherence Agent', 'Safety & Disclaimer Guard'];
+      const aiText = a2aResult.synthesizedResponse;
+      const workflow = a2aResult.agentsInvoked.map(a => `${a} Agent`);
       const quickActions = getQuickActions(trimmed);
 
       const aiMessage: Message = {
         id: nextMessageId('ai'),
         role: 'ai',
         text: aiText,
-        workflow,
+        workflow: ['A2A Dispatcher', ...workflow, 'Clinical Safety Guard'],
         quickActions,
-        mode: networkStatus === 'OFFLINE' ? 'DEMO/FALLBACK' : 'AI',
+        mode: a2aResult.isEmergency ? 'EMERGENCY' : networkStatus === 'OFFLINE' ? 'DEMO/FALLBACK' : 'AI',
       };
 
       setMessages(prev => [...prev, aiMessage]);

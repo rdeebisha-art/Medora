@@ -162,6 +162,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
   const handleQuickDemoLogin = (role: UserRole) => {
     const cred = DEMO_CREDENTIALS[role];
+    if (role === 'admin') {
+      setSelectedRole('admin');
+      setUsernameInput('admin');
+      setPasswordInput('');
+      setErrorMessage('🔒 Admin login requires password authentication. Please enter the password.');
+      return;
+    }
     login(cred.role, cred.targetPatientId, cred.targetFamilyId);
   };
 

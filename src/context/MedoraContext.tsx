@@ -79,7 +79,7 @@ const INITIAL_FAMILIES: VillageFamily[] = [
     rationCardType: 'BPL (Priority)',
     address: 'Farm Quarters, Sector 2, Rampur Village',
     primaryPhone: '+91 94482 11334',
-    memberIds: ['P-1005', 'P-1006', 'P-1007'],
+    memberIds: ['P-1005', 'P-1006', 'P-1007', 'P-1011'],
     createdAt: '2026-02-15',
   },
   {
@@ -91,7 +91,7 @@ const INITIAL_FAMILIES: VillageFamily[] = [
     rationCardType: 'APL',
     address: 'Temple Street, North Rampur Block',
     primaryPhone: '+91 94483 22445',
-    memberIds: ['P-1008', 'P-1009'],
+    memberIds: ['P-1008', 'P-1009', 'P-1010'],
     createdAt: '2026-03-01',
   },
 ];
@@ -581,6 +581,100 @@ const INITIAL_PATIENTS: PatientProfile[] = [
       riskFactor: 'Standard',
       ancVisitsCompleted: 1,
       folicAcidSupplemented: true,
+    },
+  },
+
+  // Family 3: Naik Household — Newborn (P-1010)
+  {
+    patientId: 'P-1010',
+    familyId: 'FAM-03',
+    villageId: 'VIL-01',
+    name: 'Baby Riya Naik',
+    age: 0,
+    gender: 'Female',
+    category: 'child',
+    relationship: 'Newborn / Daughter',
+    healthId: 'ABHA-6612-4412-1010',
+    bloodGroup: 'A Positive (A+)',
+    allergies: ['None'],
+    chronicConditions: ['Healthy Newborn — 12 Days Old'],
+    primaryCategory: 'Pediatric Care',
+    avatarBg: 'bg-pink-50 text-pink-700',
+    hasCareGap: false,
+    vitals: [
+      { date: '2026-09-18', bloodPressureSys: 72, bloodPressureDia: 44, bloodSugarFasting: 68, bloodSugarPostPrandial: 85, pulseRate: 138, weightKg: 3.1, bmi: 12.4, spo2: 99 },
+    ],
+    medicines: [
+      { id: 'med-riya1', name: 'Vitamin K1 (Phytomenadione) 1mg', dosage: 'Single IM injection at birth', frequency: 'Birth dose — completed', purpose: 'Newborn haemorrhagic disease prevention', adherenceRate: 100, status: 'Active', instructions: 'Given at birth — DEMO record only' },
+    ],
+    labTests: [],
+    preventiveTasks: [
+      { id: 'prev-riya1', title: 'BCG + OPV-0 + Hep B-0 (Birth vaccines)', category: 'Vaccination', dueDate: '2026-09-06', status: 'Completed', importance: 'High' },
+      { id: 'prev-riya2', title: 'Newborn Hearing Screen (NBHS)', category: 'Screening', dueDate: '2026-09-20', status: 'Upcoming', importance: 'Routine' },
+    ],
+    careGaps: [],
+    referrals: [],
+    clinicalNotes: [
+      { id: 'cn-riya1', date: '2026-09-06', author: 'Sister Kavitha (ANM)', role: 'anm', note: 'Normal institutional delivery. Birth weight 3.1 kg. APGAR score 9/10. Exclusive breastfeeding initiated within 1 hour of birth. BCG, OPV-0, Hep B-0 given. Umbilical cord clean and dry.' },
+    ],
+    childDetails: {
+      weightKg: 3.1,
+      heightCm: 50,
+      repeatedFeversCount: 0,
+      paracetamolMgPerDose: 0,
+      immunizationStatus: 'Birth vaccines complete — 6-week vaccines pending',
+      vaccinesReceived: ['BCG', 'OPV-0', 'Hep B-0', 'Vitamin K1'],
+      vaccinesPending: ['OPV-1 (6 weeks)', 'Pentavalent-1 (6 weeks)', 'Rotavirus-1 (6 weeks)', 'fIPV-1 (6 weeks)', 'PCV-1 (6 weeks)'],
+    },
+  },
+
+  // Family 2: Gowda Household — Postpartum New Mother (P-1011)
+  {
+    patientId: 'P-1011',
+    familyId: 'FAM-02',
+    villageId: 'VIL-01',
+    name: 'Kavitha Gowda',
+    age: 25,
+    gender: 'Female',
+    category: 'maternity',
+    relationship: 'Daughter-in-Law / New Mother',
+    healthId: 'ABHA-7712-4412-1011',
+    bloodGroup: 'B Positive (B+)',
+    allergies: ['None'],
+    chronicConditions: ['Postpartum Recovery — 18 Days Post-Delivery'],
+    primaryCategory: 'Maternal Care',
+    avatarBg: 'bg-rose-50 text-rose-700',
+    hasCareGap: false,
+    vitals: [
+      { date: '2026-09-18', bloodPressureSys: 118, bloodPressureDia: 76, bloodSugarFasting: 90, bloodSugarPostPrandial: 118, pulseRate: 80, weightKg: 55, bmi: 21.9, spo2: 99 },
+    ],
+    medicines: [
+      { id: 'med-kav1', name: 'Iron & Folic Acid (IFA) 100mg', dosage: '1 tablet daily', frequency: 'Once daily night', purpose: 'Postpartum anaemia prevention', adherenceRate: 90, status: 'Active', instructions: 'Take with lemon water, not with milk or tea' },
+      { id: 'med-kav2', name: 'Calcium Carbonate 500mg', dosage: '1 tablet daily', frequency: 'Post lunch', purpose: 'Lactation calcium support', adherenceRate: 88, status: 'Active', instructions: 'Take 2 hours apart from IFA' },
+    ],
+    labTests: [
+      { id: 'test-kav1', testName: 'Postpartum Haemoglobin Check', date: '2026-09-10', result: '11.4 g/dL', normalRange: '>= 11.0 g/dL', status: 'Normal', trend: 'Improving', hospitalOrLab: 'Rampur PHC Lab' },
+    ],
+    preventiveTasks: [
+      { id: 'prev-kav1', title: 'Postpartum Check-up (PNC-2 at 6 weeks)', category: 'Follow-up', dueDate: '2026-10-18', status: 'Upcoming', importance: 'High' },
+      { id: 'prev-kav2', title: 'Family Planning Counselling Session', category: 'Follow-up', dueDate: '2026-10-05', status: 'Upcoming', importance: 'Routine' },
+    ],
+    careGaps: [],
+    referrals: [],
+    clinicalNotes: [
+      { id: 'cn-kav1', date: '2026-09-06', author: 'Sister Lakshmi (ASHA)', role: 'asha', note: 'Normal vaginal delivery at District Hospital. Mother and baby discharged on day 2. Breastfeeding established. Advised IFA and calcium supplementation for 6 months. Postnatal home visit done on day 7.' },
+    ],
+    maternityDetails: {
+      gestationWeeks: 0,
+      expectedDeliveryDate: '2026-09-01',
+      trimester: 3,
+      hemoglobinLevel: 11.4,
+      riskFactor: 'Standard',
+      ancVisitsCompleted: 4,
+      folicAcidSupplemented: true,
+      isPostpartum: true,
+      postpartumDaysSinceDelivery: 18,
+      deliveryDate: '2026-09-01',
     },
   },
 ];

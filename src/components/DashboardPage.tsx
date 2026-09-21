@@ -12,6 +12,9 @@ import { DoctorDirectory } from './DoctorDirectory';
 import { HospitalContactCenter } from './HospitalContactCenter';
 import { FamilyHealthSelector } from './FamilyHealthSelector';
 import { PersonalizedHealthAnalyzer } from './PersonalizedHealthAnalyzer';
+import { EmergencySoundDetector } from './EmergencySoundDetector';
+import { DoctorStatusBanner } from './DoctorStatusBanner';
+import { useMedora } from '../context/MedoraContext';
 import { PERSONALIZED_PROFILES } from '../data/personalizedProfiles';
 
 import { Doctor, Hospital, Referral, ReferralStatus, Specialization, LanguageCode, FamilyMember, HealthSummaryReport } from '../types';
@@ -108,8 +111,25 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     scrollToSection(doctorsRef);
   };
 
+  const { primaryDoctorStatus, setPrimaryDoctorStatus, selectedPatient } = useMedora();
+
   return (
     <div className="space-y-10 animate-in fade-in duration-200">
+      {/* Emergency Sound Detector Alert Bar & Doctor Status Banner */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <EmergencySoundDetector
+          onTriggerEmergencyModal={onOpenEmergency}
+          patientName={selectedPatient?.name || 'Villager'}
+        />
+        <DoctorStatusBanner
+          status={primaryDoctorStatus}
+          onStatusChange={setPrimaryDoctorStatus}
+          onSelectDoctor={(docId) => {
+            const found = doctors.find(d => d.id === docId);
+            if (found) onSelectDoctor(found);
+          }}
+        />
+      </div>
       {/* Dashboard Master Banner */}
       <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-950 text-white rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
         <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-emerald-500/10 transform skew-x-12 pointer-events-none" />

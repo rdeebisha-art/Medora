@@ -1,4 +1,4 @@
-﻿import { Doctor, Hospital, Referral, HealthSummaryReport, FamilyMember, CareGap } from '../types';
+import { Doctor, Hospital, Referral, HealthSummaryReport, FamilyMember, CareGap } from '../types';
 
 export const MOCK_DOCTORS: Doctor[] = [
   {
@@ -200,6 +200,46 @@ export const MOCK_DOCTORS: Doctor[] = [
     opdTimings: '24 Hours Emergency Roster',
     consultationFee: 'Emergency Free Triage',
     education: 'MBBS, DNB (Cardiology), Armed Forces Medical College'
+  },
+  {
+    id: 'doc-8',
+    name: 'Dr. Sunita Rao',
+    photoUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400',
+    specialization: 'Geriatric Care',
+    hospitalId: 'hosp-1',
+    hospitalName: 'District Civil Hospital & Medical College',
+    experienceYears: 14,
+    languages: ['Hindi', 'English', 'Kannada'],
+    consultationType: 'Both',
+    availabilityStatus: 'Available Today',
+    location: 'Old District Court Road',
+    contactPhone: '+91 98765 43219',
+    isDemo: true,
+    about: 'Senior geriatric care specialist covering for Dr. Patil during leave/surgery periods. Specializes in polypharmacy management and fall prevention in rural elderly populations.',
+    services: ['Senior Health Assessments', 'Polypharmacy Review', 'Mobility Support', 'Hypertension Management in Elderly'],
+    opdTimings: 'Mon - Fri: 9:00 AM - 2:00 PM',
+    consultationFee: 'Free (Government District Hospital)',
+    education: 'MBBS, MD (Geriatrics), St. Johns Medical College Bangalore',
+  },
+  {
+    id: 'doc-9',
+    name: 'Dr. Meghana Iyer',
+    photoUrl: 'https://images.unsplash.com/photo-1614608682850-e0d6ed316d47?auto=format&fit=crop&q=80&w=400',
+    specialization: 'Pediatrician',
+    hospitalId: 'hosp-7',
+    hospitalName: 'Navjeevan Children & Maternity Hospital',
+    experienceYears: 8,
+    languages: ['English', 'Kannada', 'Tamil'],
+    consultationType: 'Both',
+    availabilityStatus: 'Available Today',
+    location: 'Station Road, Taluk Central',
+    contactPhone: '+91 98765 43220',
+    isDemo: true,
+    about: 'Pediatric specialist covering for Dr. Suresh Kumar. Expert in newborn care, NICU support, and childhood immunization catch-up programs.',
+    services: ['Newborn SNCU Care', 'Child Immunization Catch-Up', 'Neonatal Jaundice Management', 'Pediatric Growth Monitoring'],
+    opdTimings: 'Mon - Sat: 9:00 AM - 3:00 PM',
+    consultationFee: '₹150 (Subsidized)',
+    education: 'MBBS, DNB (Pediatrics), KMC Manipal',
   }
 ];
 
