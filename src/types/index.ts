@@ -296,6 +296,9 @@ export interface PatientProfile {
     riskFactor: 'Standard' | 'High Risk';
     ancVisitsCompleted: number;
     folicAcidSupplemented: boolean;
+    isPostpartum?: boolean;
+    postpartumDaysSinceDelivery?: number;
+    deliveryDate?: string;
   };
   childDetails?: {
     weightKg: number;
@@ -455,4 +458,88 @@ export interface EmergencySoundEvent {
   status: 'detected' | 'confirmed' | 'dismissed' | 'escalated';
 }
 
+// ============================================================
+// A2A ORCHESTRATOR TYPES
+// ============================================================
+
+export type AgentName =
+  | 'EmergencyTriageAI'
+  | 'GeneralHealthAI'
+  | 'ChildCareAI'
+  | 'NewbornCareAI'
+  | 'PregnancyAI'
+  | 'NewMotherAI'
+  | 'ElderlyAI'
+  | 'DiabetesAI'
+  | 'BloodPressureAI'
+  | 'NeurologyAI'
+  | 'InfectiousDiseaseAI'
+  | 'NutritionAI'
+  | 'MedicationAI';
+
+export type SeverityLevel = 'CRITICAL' | 'URGENT' | 'REVIEW' | 'STABLE' | 'INFO';
+
+export interface A2ARequest {
+  requestId: string;
+  patientId: string;
+  familyId: string;
+  userId: string;
+  userRole: UserRole;
+  language: LanguageCode;
+  topic: string;
+  query: string;
+  patientContext: Record<string, any>;
+  networkStatus: NetworkStatus;
+  timestamp: string;
+}
+
+export interface A2AAgentResponse {
+  agent: AgentName;
+  patientId: string;
+  topic: string;
+  severity: SeverityLevel;
+  summary: string;
+  whatThisMayMean: string[];
+  whatIKnowAboutYou: string[];
+  warningSigns: string[];
+  whatYouCanDoNow: string[];
+  whenToContactDoctor: string[];
+  generalInformation: string[];
+  questionsForPatient: string[];
+  clinicianReviewRecommended: boolean;
+  sources: string[];
+  missingData: string[];
+}
+
+export interface A2AOrchestratorResult {
+  requestId: string;
+  patientId: string;
+  query: string;
+  agentsInvoked: AgentName[];
+  severity: SeverityLevel;
+  isEmergency: boolean;
+  synthesizedResponse: string;
+  structuredSections: {
+    whatThisMayMean: string[];
+    whatIKnowAboutYou: string[];
+    warningSigns: string[];
+    whatYouCanDoNow: string[];
+    whenToContactDoctor: string[];
+    missingData: string[];
+  };
+  clinicianReviewRecommended: boolean;
+  timestamp: string;
+}
+
+export interface A2AAuditEntry {
+  requestId: string;
+  timestamp: string;
+  patientId: string;
+  familyId: string;
+  agents: AgentName[];
+  topic: string;
+  severity: SeverityLevel;
+  status: 'completed' | 'failed' | 'partial';
+  escalationRequired: boolean;
+}
 
