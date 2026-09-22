@@ -71,7 +71,23 @@ function MedoraAppContent() {
     logout,
   } = useMedora();
 
-  const [currentLang, setCurrentLang] = useState<LanguageCode>('en');
+  const [currentLang, setCurrentLangState] = useState<LanguageCode>(() => {
+    try {
+      const saved = window.localStorage.getItem('medora_lang') as LanguageCode;
+      if (saved && ['en', 'hi', 'te', 'ml', 'ta', 'kn'].includes(saved)) {
+        return saved;
+      }
+    } catch {}
+    return 'en';
+  });
+
+  const setCurrentLang = (lang: LanguageCode) => {
+    setCurrentLangState(lang);
+    try {
+      window.localStorage.setItem('medora_lang', lang);
+    } catch {}
+  };
+
   const [simpleMode, setSimpleMode] = useState<boolean>(false);
   const [lowDataMode, setLowDataMode] = useState<boolean>(false);
   const [offlineDemoMode, setOfflineDemoMode] = useState<boolean>(() => {
@@ -525,6 +541,15 @@ function MedoraAppContent() {
                 onNavigateToDoctorSummary={() => setActiveTab('handoff')}
                 onOpenAddReportModal={() => setIsAddReportModalOpen(true)}
                 onOpenWhatShouldIDo={() => setIsWhatShouldIDoOpen(true)}
+                onOpenUSSD={() => setIsUSSDOpen(true)}
+                onOpenVoiceIVR={() => setIsVoiceIVROpen(true)}
+                onOpenHelp={() => setIsHelpOpen(true)}
+                onOpenDoctorChat={() => setIsDoctorChatOpen(true)}
+                onOpenCommunicationCenter={() => setIsCommunicationCenterOpen(true)}
+                onOpenCommunicationCenterForPatient={(pid) => {
+                  selectPatient(pid);
+                  setIsCommunicationCenterOpen(true);
+                }}
                 isSimpleMode={simpleMode}
                 currentLang={currentLang}
               />

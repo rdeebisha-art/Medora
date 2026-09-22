@@ -43,6 +43,8 @@ export interface Doctor {
   opdTimings: string;
   consultationFee: string;
   education: string;
+  role?: string;
+  availableDaysTime?: string;
 }
 
 export interface Hospital {

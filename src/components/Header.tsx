@@ -85,13 +85,17 @@ export const Header: React.FC<HeaderProps> = ({
   const moreMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
         setMoreOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, [setMoreOpen]);
 
   const handleVoiceListen = () => {
@@ -285,7 +289,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   onClick={() => setMoreOpen(!isMoreOpen)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1 ${
-                    isMoreOpen || ['children', 'maternity', 'elderly', 'diseases', 'camera', 'schemes', 'a2a', 'portal', 'admin'].includes(activeTab)
+                    isMoreOpen || activeTab === 'admin'
                       ? 'bg-slate-900 text-white'
                       : 'text-slate-600 hover:bg-white/60'
                   }`}
@@ -298,108 +302,47 @@ export const Header: React.FC<HeaderProps> = ({
                 {isMoreOpen && (
                   <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-200 p-2 z-50 space-y-1 animate-in fade-in zoom-in-95 duration-150">
                     <div className="px-3 py-1.5 text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                      Care Tiers & Special Services
+                      Account &amp; Settings
                     </div>
                     <button
-                      onClick={() => { onSelectTab('children'); setMoreOpen(false); }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-purple-50 hover:text-purple-700 flex items-center gap-2"
+                      onClick={() => setMoreOpen(false)}
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                     >
-                      👶 Children Care Hub
+                      ⚙️ Settings
                     </button>
                     <button
-                      onClick={() => { onSelectTab('maternity'); setMoreOpen(false); }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-rose-50 hover:text-rose-700 flex items-center gap-2"
+                      onClick={() => setMoreOpen(false)}
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                     >
-                      🤰 Maternity & Postpartum Care
+                      👤 My Account
                     </button>
-                    <button
-                      onClick={() => { onSelectTab('elderly'); setMoreOpen(false); }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-700 flex items-center gap-2"
-                    >
-                      👵 Elderly Care Hub
-                    </button>
-                    <button
-                      onClick={() => { onSelectTab('diseases'); setMoreOpen(false); }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 flex items-center gap-2"
-                    >
-                      🛡️ Rural Disease Guide
-                    </button>
-
                     <div className="border-t border-slate-100 my-1 pt-1">
                       <div className="px-3 py-1.5 text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                        Tools & Portals
+                        Information
                       </div>
                       <button
-                        onClick={() => { onSelectTab('camera'); setMoreOpen(false); }}
-                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-cyan-50 hover:text-cyan-700 flex items-center gap-2"
+                        onClick={() => setMoreOpen(false)}
+                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                       >
-                        📷 AI Camera Scanner
+                        🔒 Privacy Policy
                       </button>
                       <button
-                        onClick={() => { onSelectTab('schemes'); setMoreOpen(false); }}
-                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 flex items-center gap-2"
+                        onClick={() => setMoreOpen(false)}
+                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                       >
-                        🏛️ Government Schemes
+                        ℹ️ About Medora
                       </button>
-                      <button
-                        onClick={() => { onSelectTab('a2a'); setMoreOpen(false); }}
-                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-purple-50 hover:text-purple-700 flex items-center gap-2"
-                      >
-                        🔄 A2A Agent Protocol
-                      </button>
-                      <button
-                        onClick={() => { onSelectTab('portal'); setMoreOpen(false); }}
-                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2"
-                      >
-                        🏥 Hospital Village Portal
-                      </button>
-
-                      {onOpenUSSD && (
-                        <button
-                          onClick={() => { onOpenUSSD(); setMoreOpen(false); }}
-                          className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 flex items-center gap-2"
-                        >
-                          📱 USSD Simulator (*123#)
-                        </button>
-                      )}
-
-                      {onOpenVoiceIVR && (
-                        <button
-                          onClick={() => { onOpenVoiceIVR(); setMoreOpen(false); }}
-                          className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-teal-900 bg-teal-50 hover:bg-teal-100 flex items-center gap-2"
-                        >
-                          📞 Toll-Free Voice IVR Call
-                        </button>
-                      )}
-
-                      {onOpenDoctorChat && (
-                        <button
-                          onClick={() => { onOpenDoctorChat(); setMoreOpen(false); }}
-                          className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-blue-900 bg-blue-50 hover:bg-blue-100 flex items-center gap-2"
-                        >
-                          👨‍⚕️ Two-Way Doctor Chat
-                        </button>
-                      )}
-
-                      {onOpenCommunicationCenter && (
-                        <button
-                          onClick={() => { onOpenCommunicationCenter(); setMoreOpen(false); }}
-                          className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-teal-950 bg-teal-100 hover:bg-teal-200 flex items-center gap-2"
-                        >
-                          📬 Communication Center & Share
-                        </button>
-                      )}
-
                       {onOpenHelp && (
                         <button
                           onClick={() => { onOpenHelp(); setMoreOpen(false); }}
                           className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-purple-900 bg-purple-50 hover:bg-purple-100 flex items-center gap-2"
                         >
-                          ❓ Medora Help & FAQ
+                          ❓ Help &amp; FAQ
                         </button>
                       )}
-
-                      {activeRole === 'admin' && (
+                    </div>
+                    {activeRole === 'admin' && (
+                      <div className="border-t border-slate-100 my-1 pt-1">
                         <button
                           onClick={() => { onSelectTab('admin'); setMoreOpen(false); }}
                           className="w-full text-left px-3 py-2 rounded-xl text-xs font-black text-emerald-800 bg-emerald-50 hover:bg-emerald-100 flex items-center gap-2"
@@ -407,8 +350,8 @@ export const Header: React.FC<HeaderProps> = ({
                           <Shield className="w-3.5 h-3.5 text-emerald-700" />
                           🏛️ Village Admin Panel
                         </button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

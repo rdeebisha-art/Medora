@@ -24,6 +24,7 @@ import { voiceService } from '../services/voiceService';
 import { MEDICAL_DISEASES } from '../data/medical/diseases';
 import { MEDICAL_MEDICINES } from '../data/medical/medicines';
 import { processA2ARequest } from '../services/a2aOrchestrator';
+import { translateString } from '../i18n/pageTranslator';
 
 interface AskMedoraAIProps {
   familyMembers: FamilyMember[];
@@ -434,17 +435,18 @@ export const AskMedoraAI: React.FC<AskMedoraAIProps> = ({
   };
 
   useEffect(() => {
+    const rawWelcome = `Namaste! I am Medora AI, configured for ${patientContext.name} (${patientContext.patientId}). I have direct access to your longitudinal health records, vitals, prescriptions, and village care continuity plan. How may I help you today?${DISCLAIMER_SUFFIX}`;
     setMessages([
       {
         id: 'welcome',
         role: 'ai',
-        text: `Namaste! I am Medora AI, configured for ${patientContext.name} (${patientContext.patientId}). I have direct access to your longitudinal health records, vitals, prescriptions, and village care continuity plan. How may I help you today?${DISCLAIMER_SUFFIX}`,
+        text: translateString(rawWelcome, currentLang),
         workflow: ['Patient Registry (P-XXXX)', 'Medora AI Core', 'Clinical Record Inspector', 'Adherence Agent', 'Safety & Disclaimer Guard'],
         mode: 'DEMO/FALLBACK',
       },
     ]);
     setInput('');
-  }, [patientContext.patientId, patientContext.name]);
+  }, [patientContext.patientId, patientContext.name, currentLang]);
 
   useEffect(() => {
     const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -498,7 +500,8 @@ export const AskMedoraAI: React.FC<AskMedoraAIProps> = ({
         networkStatus: networkStatus,
       });
 
-      const aiText = a2aResult.synthesizedResponse;
+      const rawAiText = a2aResult.synthesizedResponse;
+      const aiText = translateString(rawAiText, currentLang);
       const workflow = a2aResult.agentsInvoked.map(a => `${a} Agent`);
       const quickActions = getQuickActions(trimmed);
 
@@ -514,7 +517,8 @@ export const AskMedoraAI: React.FC<AskMedoraAIProps> = ({
       setMessages(prev => [...prev, aiMessage]);
       speakReply(aiText);
     } catch (error) {
-      const fallbackText = decideResponseText(trimmed, patientContext);
+      const rawFallback = decideResponseText(trimmed, patientContext);
+      const fallbackText = translateString(rawFallback, currentLang);
       const fallbackMessage: Message = {
         id: nextMessageId('ai-fallback'),
         role: 'ai',
