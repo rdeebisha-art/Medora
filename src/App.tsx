@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+﻿import React, { useEffect, useState, useMemo } from 'react';
 import { Header } from './components/Header';
 import { DirectorySearchFilter } from './components/DirectorySearchFilter';
 import { DoctorDirectory } from './components/DoctorDirectory';
@@ -41,6 +41,8 @@ import { TwoWayDoctorChatModal } from './components/TwoWayDoctorChatModal';
 import { CommunicationCenterModal } from './components/CommunicationCenterModal';
 import { OutboxNetworkMonitorBar } from './components/OutboxNetworkMonitorBar';
 import { FamilyPage } from './components/FamilyPage';
+import { DoctorDashboard } from './components/DoctorDashboard';
+import { FamilyDashboard } from './components/FamilyDashboard';
 
 import { MedoraProvider, useMedora } from './context/MedoraContext';
 import { MOCK_DOCTORS, MOCK_HOSPITALS } from './data/mockData';
@@ -265,7 +267,7 @@ function MedoraAppContent() {
           `What is the recommended next step for ${selectedPatient.name}'s ${selectedPatient.primaryCategory} care?`,
           'Are there lifestyle adjustments suitable for rural conditions?',
         ],
-        disclaimer: 'AI-GENERATED DECISION SUPPORT — NOT A MEDICAL DIAGNOSIS. The AI must never claim to diagnose the patient. Clinical evaluation by a qualified doctor is required.',
+        disclaimer: 'AI-GENERATED DECISION SUPPORT â€” NOT A MEDICAL DIAGNOSIS. The AI must never claim to diagnose the patient. Clinical evaluation by a qualified doctor is required.',
       },
     };
   }, [selectedPatient, village, referrals]);
@@ -507,7 +509,29 @@ function MedoraAppContent() {
             )}
 
             {/* 1. Dedicated Master Dashboard Page (Includes All Contents) */}
-            {activeTab === 'dashboard' && (
+            {activeTab === 'dashboard' && activeRole === 'doctor' && (
+              <DoctorDashboard
+                currentLang={currentLang}
+                onNavigateToHandoff={() => setActiveTab('handoff')}
+                onNavigateToAI={() => setActiveTab('ai')}
+                onShowToast={showToast}
+                onOpenCommunicationCenter={() => setIsCommunicationCenterOpen(true)}
+              />
+            )}
+
+            {activeTab === 'dashboard' && activeRole === 'family' && (
+              <FamilyDashboard
+                currentLang={currentLang}
+                familyMembers={accessibleFamilyMembers}
+                selectedFamilyId={selectedPatientId}
+                onSelectFamilyMember={selectPatient}
+                onNavigateToAI={() => setActiveTab('ai')}
+                onOpenCommunicationCenter={() => setIsCommunicationCenterOpen(true)}
+                onShowToast={showToast}
+              />
+            )}
+
+            {activeTab === 'dashboard' && (activeRole === 'patient' || activeRole === 'admin') && (
               <DashboardPage
                 doctors={doctors}
                 hospitals={hospitals}
@@ -834,7 +858,7 @@ function MedoraAppContent() {
             <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-200"></span>
           </span>
           <Sparkles className="w-5 h-5 text-cyan-200 group-hover:rotate-12 transition-transform" />
-          <span className="text-sm font-black tracking-wide pr-1">🤖 Ask Medora AI</span>
+          <span className="text-sm font-black tracking-wide pr-1">ðŸ¤– Ask Medora AI</span>
         </button>
       )}
 
@@ -859,7 +883,7 @@ function MedoraAppContent() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
-            <p>© 2026 Medora – Rural Health Continuity Platform. Designed for underserved rural communities.</p>
+            <p>Â© 2026 Medora â€“ Rural Health Continuity Platform. Designed for underserved rural communities.</p>
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1 text-emerald-700 font-bold">
                 <Heart className="w-3.5 h-3.5 fill-emerald-600" />
@@ -1017,3 +1041,4 @@ export function App() {
 }
 
 export default App;
+

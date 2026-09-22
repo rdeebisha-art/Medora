@@ -1,4 +1,4 @@
-import { OutgoingSMSMessage, SharedResponseObject } from './channelTypes';
+﻿import { OutgoingSMSMessage, SharedResponseObject } from './channelTypes';
 
 const smsLog: OutgoingSMSMessage[] = [];
 
@@ -7,9 +7,9 @@ export const sendSMS = (recipientPhone: string, content: string): OutgoingSMSMes
     id: `SMS-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     recipientPhone,
     content,
-    status: 'DELIVERED',
+    status: 'QUEUED', // Real SMS stays queued until provider updates it
     timestamp: new Date().toISOString(),
-    isDemo: true,
+    isDemo: false,
   };
 
   smsLog.push(smsMessage);
@@ -20,7 +20,7 @@ export const formatSMSResponse = (shared: SharedResponseObject): string => {
   const urgencyLabel = shared.urgency === 'CRITICAL' ? '🚨 CRITICAL' : shared.urgency === 'URGENT' ? '⚠️ URGENT' : 'ℹ️ MEDORA';
   const guidance = shared.generalGuidance.slice(0, 2).join('; ');
 
-  return `[${urgencyLabel}] Medora Health Summary for Patient ${shared.patientId}: ${shared.summary}. Guidance: ${guidance || 'Rest and stay hydrated.'} Clinician review advised. (DEMO SMS GATEWAY)`;
+  return `[${urgencyLabel}] Medora Health Summary for Patient ${shared.patientId}: ${shared.summary}. Guidance: ${guidance || 'Rest and stay hydrated.'} Clinician review advised.`;
 };
 
 export const getSMSLog = (): OutgoingSMSMessage[] => smsLog;

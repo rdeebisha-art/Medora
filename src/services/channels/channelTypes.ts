@@ -1,4 +1,4 @@
-import { LanguageCode, SeverityLevel } from '../../types';
+﻿import { LanguageCode, SeverityLevel } from '../../types';
 
 export type CommunicationChannel = 'web' | 'sms' | 'ussd' | 'voice' | 'ivr' | 'assisted';
 
@@ -28,7 +28,7 @@ export interface OutgoingSMSMessage {
   id: string;
   recipientPhone: string;
   content: string;
-  status: 'PENDING' | 'SENT' | 'DELIVERED' | 'FAILED';
+  status: 'QUEUED' | 'PENDING' | 'SENT' | 'DELIVERED' | 'FAILED' | 'NOT_CONFIGURED';
   timestamp: string;
   isDemo: boolean;
 }
@@ -41,3 +41,4 @@ export interface USSDSessionState {
   patientId: string;
   language: LanguageCode;
 }
+

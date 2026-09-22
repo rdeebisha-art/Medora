@@ -187,6 +187,10 @@ const INITIAL_PATIENTS: PatientProfile[] = [
       mobilityAssistanceNeeded: true,
       polypharmacyAlert: false,
     },
+    emergencyContacts: [
+      { emergencyContactId: 'EC-P1001-1', patientId: 'P-1001', name: 'Lakshmi Kumar', relationship: 'Wife', phoneNumber: '+919876543210', priority: 1, isPrimary: true, createdAt: '2026-01-10' },
+      { emergencyContactId: 'EC-P1001-2', patientId: 'P-1001', name: 'Arun Kumar', relationship: 'Son', phoneNumber: '+919876543211', priority: 2, isPrimary: false, createdAt: '2026-01-10' },
+    ],
   },
 
   // Family 1: Sunita Devi (Maternity)
@@ -259,6 +263,9 @@ const INITIAL_PATIENTS: PatientProfile[] = [
       ancVisitsCompleted: 2,
       folicAcidSupplemented: true,
     },
+    emergencyContacts: [
+      { emergencyContactId: 'EC-P1002-1', patientId: 'P-1002', name: 'Ramesh Kumar', relationship: 'Husband', phoneNumber: '+919876543210', priority: 1, isPrimary: true, createdAt: '2026-01-10' },
+    ],
   },
 
   // Family 1: Aarav Kumar (Child)
@@ -318,6 +325,9 @@ const INITIAL_PATIENTS: PatientProfile[] = [
       vaccinesReceived: ['BCG', 'OPV-1,2,3', 'Pentavalent-1,2,3', 'Rotavirus', 'MR-1', 'DPT Booster 1'],
       vaccinesPending: ['DPT Booster 2 (Overdue)', 'Typhoid Conjugate'],
     },
+    emergencyContacts: [
+      { emergencyContactId: 'EC-P1003-1', patientId: 'P-1003', name: 'Ramesh Kumar', relationship: 'Father', phoneNumber: '+919876543210', priority: 1, isPrimary: true, createdAt: '2026-01-10' },
+    ],
   },
 
   // Family 1: Priya Sharma (Diabetic Adult)

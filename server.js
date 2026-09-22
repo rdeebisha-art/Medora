@@ -304,6 +304,247 @@ app.post('/api/translate', async (req, res) => {
   }
 });
 
+// ─── SMS / Voice Communication ───────────────────────────────────────────────
+
+/** In-memory store: messageId → message object */
+const smsStore = new Map();
+
+/**
+ * Normalize an Indian mobile number to E.164 (+91XXXXXXXXXX).
+ * Returns null when the number cannot be recognized.
+ */
+function normalizeToE164(phone) {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 10 && /^[6-9]/.test(digits)) return `+91${digits}`;
+  if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
+  if (digits.length === 11 && digits.startsWith('0')) return `+91${digits.slice(1)}`;
+  if (phone.startsWith('+')) return `+${digits}`;
+  return null;
+}
+
+/**
+ * POST /api/communications/sms
+ * Send a real SMS via Twilio if credentials are configured, otherwise return
+ * NOT_CONFIGURED so the frontend can show a meaningful message.
+ */
+app.post('/api/communications/sms', async (req, res) => {
+  const { recipientPhone, messageText, patientId } = req.body || {};
+
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken  = process.env.TWILIO_AUTH_TOKEN;
+  const fromNumber = process.env.TWILIO_FROM_NUMBER;
+
+  if (!accountSid || !authToken || !fromNumber) {
+    return res.status(200).json({
+      configured: false,
+      status: 'NOT_CONFIGURED',
+      error: 'Real SMS service is not configured. Add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER environment variables.',
+    });
+  }
+
+  // Validate & normalize phone number
+  const e164 = normalizeToE164(recipientPhone || '');
+  if (!e164) {
+    return res.status(400).json({
+      configured: true,
+      status: 'FAILED',
+      error: `Invalid phone number: "${recipientPhone}". Provide a valid 10-digit Indian mobile number.`,
+    });
+  }
+
+  const messageId = `MSG-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  const createdAt  = new Date().toISOString();
+
+  try {
+    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
+
+    const formBody = new URLSearchParams({
+      To:   e164,
+      From: fromNumber,
+      Body: messageText || '',
+    });
+
+    const twilioRes = await fetch(twilioUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`,
+      },
+      body: formBody.toString(),
+    });
+
+    const twilioData = await twilioRes.json();
+
+    if (!twilioRes.ok) {
+      const friendlyError = twilioData?.message || `Twilio error ${twilioRes.status}`;
+      const record = {
+        messageId,
+        patientId,
+        recipientPhone: e164,
+        messageText,
+        status: 'FAILED',
+        error: friendlyError,
+        createdAt,
+        updatedAt: new Date().toISOString(),
+      };
+      smsStore.set(messageId, record);
+      return res.status(200).json({ configured: true, ...record });
+    }
+
+    const record = {
+      messageId,
+      providerMessageId: twilioData.sid,
+      patientId,
+      recipientPhone: e164,
+      messageText,
+      status: 'QUEUED',
+      providerStatus: twilioData.status,
+      createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    smsStore.set(messageId, record);
+
+    return res.status(200).json({ configured: true, ...record });
+  } catch (err) {
+    const record = {
+      messageId,
+      patientId,
+      recipientPhone: e164,
+      messageText,
+      status: 'FAILED',
+      error: err?.message || 'Unknown error contacting Twilio',
+      createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    smsStore.set(messageId, record);
+    return res.status(200).json({ configured: true, ...record });
+  }
+});
+
+/**
+ * GET /api/communications/messages
+ * Return all stored messages (for debugging / outbox sync).
+ */
+app.get('/api/communications/messages', (_req, res) => {
+  return res.json(Array.from(smsStore.values()));
+});
+
+/**
+ * POST /api/communications/sms/status
+ * Twilio status-callback webhook. Updates message status in smsStore.
+ * Must return TwiML <Response/> to keep Twilio happy.
+ */
+app.post('/api/communications/sms/status', express.urlencoded({ extended: false }), (req, res) => {
+  const { MessageSid, MessageStatus } = req.body || {};
+
+  if (MessageSid && MessageStatus) {
+    // Find the record by providerMessageId
+    for (const [id, record] of smsStore.entries()) {
+      if (record.providerMessageId === MessageSid) {
+        record.providerStatus = MessageStatus;
+        record.updatedAt = new Date().toISOString();
+        // Map Twilio status to our internal status
+        if (MessageStatus === 'delivered') record.status = 'DELIVERED';
+        else if (MessageStatus === 'failed' || MessageStatus === 'undelivered') record.status = 'FAILED';
+        else if (MessageStatus === 'sent') record.status = 'SENT';
+        smsStore.set(id, record);
+        break;
+      }
+    }
+  }
+
+  res.set('Content-Type', 'text/xml');
+  res.send('<?xml version="1.0" encoding="UTF-8"?><Response/>');
+});
+
+/**
+ * POST /api/communications/voice/call
+ * Initiate a voice call via Twilio Calls API.
+ */
+app.post('/api/communications/voice/call', async (req, res) => {
+  const { recipientPhone, twimlUrl, patientId } = req.body || {};
+
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken  = process.env.TWILIO_AUTH_TOKEN;
+  const fromNumber = process.env.TWILIO_FROM_NUMBER;
+
+  if (!accountSid || !authToken || !fromNumber) {
+    return res.status(200).json({
+      configured: false,
+      status: 'NOT_CONFIGURED',
+      error: 'Real voice call service is not configured. Add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER environment variables.',
+    });
+  }
+
+  const e164 = normalizeToE164(recipientPhone || '');
+  if (!e164) {
+    return res.status(400).json({
+      configured: true,
+      status: 'FAILED',
+      error: `Invalid phone number: "${recipientPhone}". Provide a valid 10-digit Indian mobile number.`,
+    });
+  }
+
+  const callId = `CALL-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  const createdAt = new Date().toISOString();
+
+  try {
+    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Calls.json`;
+
+    const formBody = new URLSearchParams({
+      To:   e164,
+      From: fromNumber,
+      // Use a safe TwiML fallback if no twimlUrl provided
+      Url:  twimlUrl || 'http://demo.twilio.com/docs/voice.xml',
+    });
+
+    const twilioRes = await fetch(twilioUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`,
+      },
+      body: formBody.toString(),
+    });
+
+    const twilioData = await twilioRes.json();
+
+    if (!twilioRes.ok) {
+      return res.status(200).json({
+        configured: true,
+        callId,
+        patientId,
+        recipientPhone: e164,
+        status: 'FAILED',
+        error: twilioData?.message || `Twilio error ${twilioRes.status}`,
+        createdAt,
+      });
+    }
+
+    return res.status(200).json({
+      configured: true,
+      callId,
+      providerCallId: twilioData.sid,
+      patientId,
+      recipientPhone: e164,
+      status: twilioData.status || 'QUEUED',
+      createdAt,
+    });
+  } catch (err) {
+    return res.status(200).json({
+      configured: true,
+      callId,
+      patientId,
+      recipientPhone: e164,
+      status: 'FAILED',
+      error: err?.message || 'Unknown error contacting Twilio',
+      createdAt,
+    });
+  }
+});
+
+// ─── Server ──────────────────────────────────────────────────────────────────
+
 app.listen(port, host, () => {
   console.log(`Medora AI server running on http://${host}:${port}`);
 });

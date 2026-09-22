@@ -1,4 +1,4 @@
-export type Specialization = 
+﻿export type Specialization = 
   | 'General Physician'
   | 'Pediatrician'
   | 'Gynecologist / Obstetrician'
@@ -321,6 +321,7 @@ export interface PatientProfile {
   // Contact & Demographic Extensions
   contactPhone?: string;
   emergencyContact?: string;
+  emergencyContacts?: EmergencyContact[];
   address?: string;
 
   // Archival Status (Soft-Archive)
@@ -545,3 +546,24 @@ export interface A2AAuditEntry {
   escalationRequired: boolean;
 }
 
+
+export interface EmergencyContact {
+  emergencyContactId: string;
+  patientId: string;
+  name: string;
+  relationship: string;
+  phoneNumber: string;
+  priority: number;
+  isPrimary: boolean;
+  createdAt: string;
+}
+
+export interface EmergencyService {
+  serviceId: string;
+  name: string;
+  phoneNumber: string;
+  serviceType: 'AMBULANCE' | 'EMERGENCY' | 'HEALTH' | 'POLICE' | 'FIRE';
+  region: string;
+  description: string;
+  isActive: boolean;
+}

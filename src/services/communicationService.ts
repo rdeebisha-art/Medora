@@ -1,4 +1,4 @@
-import { CommunicationChannel } from './channels/channelTypes';
+﻿import { CommunicationChannel } from './channels/channelTypes';
 import { LanguageCode } from '../types';
 
 export interface Contact {
@@ -18,7 +18,8 @@ export type DeliveryStatus =
   | 'SENT'
   | 'DELIVERED'
   | 'FAILED'
-  | 'RETRYING';
+  | 'RETRYING'
+  | 'NOT_CONFIGURED';
 
 export interface RecipientDeliveryStatus {
   recipientId: string;
@@ -61,6 +62,10 @@ export interface Message {
   createdAt: string;
   updatedAt: string;
   isDemo: boolean;
+  recipientPhoneNumber?: string;
+  providerMessageId?: string;
+  providerStatus?: string;
+  failureReason?: string;
 }
 
 export const validateIndianPhoneNumber = (
@@ -136,15 +141,6 @@ export const DEMO_CONTACTS: Contact[] = [
     isDemo: true,
     avatarBg: 'bg-rose-600 text-white',
   },
-  {
-    id: 'c-asha-lakshmi-devi',
-    name: 'Sister Lakshmi Devi',
-    role: 'Health Worker / ASHA',
-    phone: '+91 98765 88990',
-    isAvailable: true,
-    isDemo: true,
-    avatarBg: 'bg-purple-600 text-white',
-  },
 ];
 
 const STORAGE_KEY_MESSAGES = 'medora_comm_messages';
@@ -154,38 +150,87 @@ export const getStoredMessages = (): Message[] => {
     const raw = localStorage.getItem(STORAGE_KEY_MESSAGES);
     if (raw) return JSON.parse(raw);
   } catch {}
-
-  // Initial Seed Messages
-  const initialMessages: Message[] = [
-    {
-      messageId: 'MSG-001',
-      requestId: 'REQ-101',
-      conversationId: 'CONV-DOC-01',
-      senderId: 'c-doc-anitha',
-      senderName: 'Dr. Anitha',
-      patientId: 'P-1001',
-      recipientIds: ['P-1001'],
-      recipientStatuses: [
-        { recipientId: 'P-1001', status: 'DELIVERED', deliveredAt: new Date().toISOString(), retryCount: 0 },
-      ],
-      recipientPermissions: [{ recipientId: 'P-1001', allowedData: ['symptoms', 'report', 'ai_summary'] }],
-      channel: 'web',
-      contentType: 'DOCTOR_REPLY',
-      content: 'Hello Ramesh. I have reviewed your Blood Pressure reading of 158/96 mmHg. Please continue monitoring and reduce sodium intake.',
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-      updatedAt: new Date(Date.now() - 3600000).toISOString(),
-      isDemo: false,
-    },
-  ];
-
-  localStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify(initialMessages));
-  return initialMessages;
+  return [];
 };
 
 export const saveMessages = (msgs: Message[]) => {
   try {
     localStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify(msgs));
   } catch {}
+};
+
+export const openNativeSMSComposer = (phone: string, text: string) => {
+  const digits = phone.replace(/\D/g, '');
+  const e164 = digits.length === 10 ? `+91${digits}` : `+${digits}`;
+  const url = `sms:${e164}?body=${encodeURIComponent(text)}`;
+  window.location.href = url;
+  return { method: 'NATIVE_SMS_COMPOSER', note: 'Opened device SMS app. Delivery is handled by the device.' };
+};
+
+export const sendRealSMS = async (params: { recipientPhone: string; messageText: string; patientId: string }): Promise<Message> => {
+  const messageId = `MSG-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const now = new Date().toISOString();
+  
+  const newMessage: Message = {
+    messageId,
+    requestId: `REQ-${Date.now()}`,
+    conversationId: `CONV-${params.recipientPhone}`,
+    senderId: params.patientId,
+    senderName: 'Patient User',
+    patientId: params.patientId,
+    recipientIds: [params.recipientPhone],
+    recipientStatuses: [{ recipientId: params.recipientPhone, status: 'QUEUED', retryCount: 0 }],
+    recipientPermissions: [],
+    channel: 'sms',
+    contentType: 'TEXT',
+    content: params.messageText,
+    createdAt: now,
+    updatedAt: now,
+    isDemo: false,
+    recipientPhoneNumber: params.recipientPhone,
+  };
+
+  const msgs = getStoredMessages();
+  msgs.unshift(newMessage);
+  saveMessages(msgs);
+
+  try {
+    const res = await fetch('/api/communications/sms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    });
+    const data = await res.json();
+    
+    // Update local message state based on real backend response
+    const stored = getStoredMessages();
+    const target = stored.find(m => m.messageId === messageId);
+    if (target) {
+      if (!data.configured) {
+        target.recipientStatuses[0].status = 'NOT_CONFIGURED';
+        target.failureReason = data.error;
+      } else if (data.status === 'FAILED') {
+        target.recipientStatuses[0].status = 'FAILED';
+        target.failureReason = data.error;
+      } else {
+        target.recipientStatuses[0].status = data.status || 'QUEUED';
+        target.providerMessageId = data.providerMessageId;
+      }
+      target.updatedAt = new Date().toISOString();
+      saveMessages(stored);
+      return target;
+    }
+  } catch (err: any) {
+    const stored = getStoredMessages();
+    const target = stored.find(m => m.messageId === messageId);
+    if (target) {
+      target.recipientStatuses[0].status = 'FAILED';
+      target.failureReason = 'Network error contacting backend';
+      saveMessages(stored);
+      return target;
+    }
+  }
+  return newMessage;
 };
 
 export const sendMessageToContacts = (params: {
@@ -206,20 +251,10 @@ export const sendMessageToContacts = (params: {
   const now = new Date().toISOString();
 
   const recipientStatuses: RecipientDeliveryStatus[] = params.recipientIds.map((rid) => {
-    // Intentionally simulate one retry-ready failure for Lakshmi if selected
-    if (rid === 'c-fam-lakshmi' && !params.isOffline) {
-      return {
-        recipientId: rid,
-        status: 'FAILED',
-        failedAt: now,
-        retryCount: 1,
-      };
-    }
-
     return {
       recipientId: rid,
-      status: params.isOffline ? 'QUEUED' : 'DELIVERED',
-      deliveredAt: params.isOffline ? undefined : now,
+      status: 'QUEUED', // Real messages stay QUEUED until provider updates
+      deliveredAt: undefined,
       retryCount: 0,
     };
   });
@@ -286,7 +321,7 @@ export const replyToConversation = (
     patientId,
     recipientIds: [targetRecipientId],
     recipientStatuses: [
-      { recipientId: targetRecipientId, status: 'DELIVERED', deliveredAt: now, retryCount: 0 },
+      { recipientId: targetRecipientId, status: 'QUEUED', retryCount: 0 },
     ],
     recipientPermissions: [{ recipientId: targetRecipientId, allowedData: ['custom'] }],
     channel: 'web',
@@ -310,8 +345,7 @@ export const retryFailedRecipient = (messageId: string, recipientId: string): Me
 
   const statusObj = target.recipientStatuses.find((rs) => rs.recipientId === recipientId);
   if (statusObj) {
-    statusObj.status = 'DELIVERED';
-    statusObj.deliveredAt = new Date().toISOString();
+    statusObj.status = 'QUEUED';
     statusObj.retryCount += 1;
     target.updatedAt = new Date().toISOString();
     saveMessages(msgs);
@@ -321,19 +355,6 @@ export const retryFailedRecipient = (messageId: string, recipientId: string): Me
 };
 
 export const syncOfflineQueuedMessages = (): number => {
-  const msgs = getStoredMessages();
-  let count = 0;
-
-  msgs.forEach((m) => {
-    m.recipientStatuses.forEach((rs) => {
-      if (rs.status === 'QUEUED') {
-        rs.status = 'DELIVERED';
-        rs.deliveredAt = new Date().toISOString();
-        count++;
-      }
-    });
-  });
-
-  if (count > 0) saveMessages(msgs);
-  return count;
+  // Sync logic should call backend instead of faking delivery
+  return 0;
 };
