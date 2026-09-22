@@ -1,98 +1,53 @@
-import React, { useState } from 'react';
-import { Smartphone, X, Send, RotateCcw, ShieldAlert, Bot } from 'lucide-react';
-import { handleUSSDInput, initialUSSDSession } from '../services/channels/ussdAdapter';
-import { USSDSessionState } from '../services/channels/channelTypes';
+﻿import React from 'react';
+import { X, Hash, Info, Smartphone } from 'lucide-react';
 
-interface USSDSimulatorModalProps {
+interface USSDModalProps {
   isOpen: boolean;
   onClose: () => void;
-  patientId: string;
-  patientContext: Record<string, any>;
 }
 
-export const USSDSimulatorModal: React.FC<USSDSimulatorModalProps> = ({
-  isOpen,
-  onClose,
-  patientId,
-  patientContext,
-}) => {
-  const [session, setSession] = useState<USSDSessionState>(initialUSSDSession(patientId));
-  const [inputVal, setInputVal] = useState<string>('');
-  const [screenText, setScreenText] = useState<string>(
-    `MEDORA USSD (*123#)\n1. My Health\n2. Report Symptoms\n3. Report Status\n4. Contact Doctor\n5. Emergency (108)\n\nSelect option (1-5):`
-  );
-
+export const USSDSimulatorModal: React.FC<USSDModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
-  const handleSend = () => {
-    if (!inputVal.trim()) return;
-    const { nextSession, displayText } = handleUSSDInput(session, inputVal, patientContext);
-    setSession(nextSession);
-    setScreenText(displayText);
-    setInputVal('');
-  };
-
-  const handleReset = () => {
-    const s = initialUSSDSession(patientId);
-    setSession(s);
-    setScreenText(`MEDORA USSD (*123#)\n1. My Health\n2. Report Symptoms\n3. Report Status\n4. Contact Doctor\n5. Emergency (108)\n\nSelect option (1-5):`);
-    setInputVal('');
-  };
-
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-slate-900 text-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-800 space-y-4 relative">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div className="flex items-center gap-2">
-            <Smartphone className="w-5 h-5 text-amber-400" />
-            <h3 className="font-extrabold text-white text-sm">USSD Simulator (*123#)</h3>
+    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl relative">
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500">
+          <X className="w-5 h-5" />
+        </button>
+        
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center">
+            <Hash className="w-6 h-6 text-slate-700" />
           </div>
-          <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-mono">
-            PROTOTYPE CONCEPT
-          </span>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-1">
-            <X className="w-4 h-4" />
+          <div>
+            <h3 className="text-lg font-black text-slate-900">USSD Service</h3>
+            <p className="text-xs text-slate-500">Real Telephony Integration</p>
+          </div>
+        </div>
+
+        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-6 flex gap-3">
+          <Info className="w-5 h-5 text-blue-600 shrink-0" />
+          <p className="text-sm text-blue-800">
+            A normal web browser cannot directly execute carrier USSD sessions. 
+            USSD requires a supported mobile/telephony integration.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <a
+            href="tel:*123%23"
+            className="flex items-center justify-center gap-2 w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all"
+          >
+            <Smartphone className="w-5 h-5" />
+            Dial *123#
+          </a>
+          <button
+            onClick={onClose}
+            className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all"
+          >
+            Close
           </button>
-        </div>
-
-        {/* Feature Phone Screen Mockup */}
-        <div className="bg-emerald-950 border-2 border-slate-700 rounded-2xl p-4 font-mono text-emerald-300 text-xs min-h-[180px] whitespace-pre-line shadow-inner relative overflow-hidden">
-          <div className="text-[9px] text-emerald-600 border-b border-emerald-900 pb-1 mb-2 flex items-center justify-between">
-            <span>NETWORK: 2G / EDGE</span>
-            <span>SIM1</span>
-          </div>
-          {screenText}
-        </div>
-
-        {/* Numeric Keypad Input */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={inputVal}
-              onChange={(e) => setInputVal(e.target.value)}
-              placeholder="Enter number (e.g. 1)..."
-              className="bg-slate-950 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl w-full focus:outline-none focus:border-amber-400 font-mono"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSend();
-              }}
-            />
-            <button
-              onClick={handleSend}
-              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs px-4 py-2 rounded-xl shrink-0 flex items-center gap-1"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>Send</span>
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between text-[11px] pt-1">
-            <button onClick={handleReset} className="text-slate-400 hover:text-white flex items-center gap-1">
-              <RotateCcw className="w-3 h-3" />
-              <span>Reset Dial *123#</span>
-            </button>
-            <span className="text-slate-500 text-[10px]">Button Phone USSD</span>
-          </div>
         </div>
       </div>
     </div>

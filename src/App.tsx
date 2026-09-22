@@ -37,6 +37,8 @@ import { WhatShouldIDoGuideModal } from './components/WhatShouldIDoGuideModal';
 import { HelpModal } from './components/HelpModal';
 import { USSDSimulatorModal } from './components/USSDSimulatorModal';
 import { VoiceIVRModal } from './components/VoiceIVRModal';
+import { VoiceMessageModal } from './components/VoiceMessageModal';
+import { BluetoothModal } from './components/BluetoothModal';
 import { TwoWayDoctorChatModal } from './components/TwoWayDoctorChatModal';
 import { CommunicationCenterModal } from './components/CommunicationCenterModal';
 import { OutboxNetworkMonitorBar } from './components/OutboxNetworkMonitorBar';
@@ -165,6 +167,8 @@ function MedoraAppContent() {
   const [isHelpOpen, setIsHelpOpen] = useState<boolean>(false);
   const [isUSSDOpen, setIsUSSDOpen] = useState<boolean>(false);
   const [isVoiceIVROpen, setIsVoiceIVROpen] = useState<boolean>(false);
+  const [isVoiceMessageOpen, setIsVoiceMessageOpen] = useState<boolean>(false);
+  const [isBluetoothOpen, setIsBluetoothOpen] = useState<boolean>(false);
   const [isDoctorChatOpen, setIsDoctorChatOpen] = useState<boolean>(false);
   const [isCommunicationCenterOpen, setIsCommunicationCenterOpen] = useState<boolean>(false);
 
@@ -989,8 +993,6 @@ function MedoraAppContent() {
       <USSDSimulatorModal
         isOpen={isUSSDOpen}
         onClose={() => setIsUSSDOpen(false)}
-        patientId={selectedPatientId}
-        patientContext={selectedPatient || {}}
       />
 
       {/* 5. Voice / IVR Phone Call Simulator Modal */}
@@ -1041,4 +1043,5 @@ export function App() {
 }
 
 export default App;
+
 

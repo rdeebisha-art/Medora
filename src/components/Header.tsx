@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import {
   PhoneCall,
   Volume2,
@@ -44,6 +44,8 @@ interface HeaderProps {
   setIsMoreMenuOpen?: (open: boolean) => void;
   onOpenUSSD?: () => void;
   onOpenVoiceIVR?: () => void;
+  onOpenVoiceMessage?: () => void;
+  onOpenBluetooth?: () => void;
   onOpenHelp?: () => void;
   onOpenDoctorChat?: () => void;
   onOpenCommunicationCenter?: () => void;
@@ -71,6 +73,8 @@ export const Header: React.FC<HeaderProps> = ({
   setIsMoreMenuOpen: externalSetMoreOpen,
   onOpenUSSD,
   onOpenVoiceIVR,
+  onOpenVoiceMessage,
+  onOpenBluetooth,
   onOpenHelp,
   onOpenDoctorChat,
   onOpenCommunicationCenter,
@@ -116,11 +120,11 @@ export const Header: React.FC<HeaderProps> = ({
 
   const languages: { code: LanguageCode; label: string; nativeLabel: string }[] = [
     { code: 'en', label: 'English', nativeLabel: 'English' },
-    { code: 'hi', label: 'Hindi', nativeLabel: 'हिन्दी' },
-    { code: 'te', label: 'Telugu', nativeLabel: 'తెలుగు' },
-    { code: 'ta', label: 'Tamil', nativeLabel: 'தமிழ்' },
-    { code: 'ml', label: 'Malayalam', nativeLabel: 'മലയാളം' },
-    { code: 'kn', label: 'Kannada', nativeLabel: 'ಕನ್ನಡ' },
+    { code: 'hi', label: 'Hindi', nativeLabel: 'à¤¹à¤¿à¤¨à¥à¤¦à¥€' },
+    { code: 'te', label: 'Telugu', nativeLabel: 'à°¤à±†à°²à±à°—à±' },
+    { code: 'ta', label: 'Tamil', nativeLabel: 'à®¤à®®à®¿à®´à¯' },
+    { code: 'ml', label: 'Malayalam', nativeLabel: 'à´®à´²à´¯à´¾à´³à´‚' },
+    { code: 'kn', label: 'Kannada', nativeLabel: 'à²•à²¨à³à²¨à²¡' },
   ];
 
   return (
@@ -280,11 +284,11 @@ export const Header: React.FC<HeaderProps> = ({
                   className="px-3 py-1.5 rounded-xl text-xs font-black bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-200/80 transition-all flex items-center gap-1.5 shadow-sm shrink-0"
                 >
                   <MessageSquare className="w-3.5 h-3.5 text-teal-600" />
-                  <span>📬 Messages & Share</span>
+                  <span>ðŸ“¬ Messages & Share</span>
                 </button>
               )}
 
-              {/* CLEAN "MORE ▾" DROPDOWN MENU */}
+              {/* CLEAN "MORE â–¾" DROPDOWN MENU */}
               <div className="relative" ref={moreMenuRef}>
                 <button
                   onClick={() => setMoreOpen(!isMoreOpen)}
@@ -308,13 +312,13 @@ export const Header: React.FC<HeaderProps> = ({
                       onClick={() => setMoreOpen(false)}
                       className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                     >
-                      ⚙️ Settings
+                      âš™ï¸ Settings
                     </button>
                     <button
                       onClick={() => setMoreOpen(false)}
                       className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                     >
-                      👤 My Account
+                      ðŸ‘¤ My Account
                     </button>
                     <div className="border-t border-slate-100 my-1 pt-1">
                       <div className="px-3 py-1.5 text-[10px] font-black uppercase text-slate-400 tracking-wider">
@@ -324,20 +328,20 @@ export const Header: React.FC<HeaderProps> = ({
                         onClick={() => setMoreOpen(false)}
                         className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                       >
-                        🔒 Privacy Policy
+                        ðŸ”’ Privacy Policy
                       </button>
                       <button
                         onClick={() => setMoreOpen(false)}
                         className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                       >
-                        ℹ️ About Medora
+                        â„¹ï¸ About Medora
                       </button>
                       {onOpenHelp && (
                         <button
                           onClick={() => { onOpenHelp(); setMoreOpen(false); }}
                           className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-purple-900 bg-purple-50 hover:bg-purple-100 flex items-center gap-2"
                         >
-                          ❓ Help &amp; FAQ
+                          â“ Help &amp; FAQ
                         </button>
                       )}
                     </div>
@@ -348,7 +352,7 @@ export const Header: React.FC<HeaderProps> = ({
                           className="w-full text-left px-3 py-2 rounded-xl text-xs font-black text-emerald-800 bg-emerald-50 hover:bg-emerald-100 flex items-center gap-2"
                         >
                           <Shield className="w-3.5 h-3.5 text-emerald-700" />
-                          🏛️ Village Admin Panel
+                          ðŸ›ï¸ Village Admin Panel
                         </button>
                       </div>
                     )}

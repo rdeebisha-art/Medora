@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+﻿import React, { useRef, useState } from 'react';
 import { MedicineReminder } from './MedicineReminder';
 import { DoctorStatusBanner } from './DoctorStatusBanner';
 import { FamilyHealthSelector } from './FamilyHealthSelector';
@@ -84,6 +84,8 @@ interface DashboardPageProps {
   onOpenCommunicationCenterForPatient?: (patientId: string) => void;
   onOpenUSSD?: () => void;
   onOpenVoiceIVR?: () => void;
+  onOpenVoiceMessage?: () => void;
+  onOpenBluetooth?: () => void;
   onOpenHelp?: () => void;
   onOpenDoctorChat?: () => void;
   onOpenCommunicationCenter?: () => void;
@@ -127,6 +129,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   onOpenCommunicationCenterForPatient,
   onOpenUSSD,
   onOpenVoiceIVR,
+  onOpenVoiceMessage,
+  onOpenBluetooth,
   onOpenHelp,
   onOpenDoctorChat,
   onOpenCommunicationCenter,
@@ -147,26 +151,26 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const dia = patientVitals?.bloodPressureDia || 80;
   const sugar = patientVitals?.bloodSugarFasting || 95;
 
-  const bpStatus = sys >= 140 || dia >= 90 ? '🟡 Monitor' : sys < 90 ? '🟡 Low' : '🟢 Stable';
-  const sugarStatus = sugar > 140 ? '🟡 High' : sugar < 70 ? '🟡 Low' : '🟢 Stable';
-  const medsStatus = selectedPatient?.medicines?.some((m) => m.status === 'Missed Dosage') ? '🔴 Missed Dose' : '🟢 Up to date';
+  const bpStatus = sys >= 140 || dia >= 90 ? 'ðŸŸ¡ Monitor' : sys < 90 ? 'ðŸŸ¡ Low' : 'ðŸŸ¢ Stable';
+  const sugarStatus = sugar > 140 ? 'ðŸŸ¡ High' : sugar < 70 ? 'ðŸŸ¡ Low' : 'ðŸŸ¢ Stable';
+  const medsStatus = selectedPatient?.medicines?.some((m) => m.status === 'Missed Dosage') ? 'ðŸ”´ Missed Dose' : 'ðŸŸ¢ Up to date';
 
   const handleShareLocation = () => {
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          const coords = `Lat: ${pos.coords.latitude.toFixed(4)}°, Lon: ${pos.coords.longitude.toFixed(4)}° (Rampur Ward 4)`;
+          const coords = `Lat: ${pos.coords.latitude.toFixed(4)}Â°, Lon: ${pos.coords.longitude.toFixed(4)}Â° (Rampur Ward 4)`;
           setLocationCaptured(coords);
           if (onShowToast) onShowToast(`GPS Captured: ${coords}`);
         },
         () => {
-          const fallback = 'Rampur Village Sub-Center, Ward 4 (GPS: 26.8467° N, 80.9462° E)';
+          const fallback = 'Rampur Village Sub-Center, Ward 4 (GPS: 26.8467Â° N, 80.9462Â° E)';
           setLocationCaptured(fallback);
           if (onShowToast) onShowToast('Captured Village Sub-Center Location');
         }
       );
     } else {
-      const fallback = 'Rampur Village Sub-Center, Ward 4 (GPS: 26.8467° N, 80.9462° E)';
+      const fallback = 'Rampur Village Sub-Center, Ward 4 (GPS: 26.8467Â° N, 80.9462Â° E)';
       setLocationCaptured(fallback);
     }
   };
@@ -178,9 +182,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     let response = {
       association: 'Common Fever / Viral Assessment',
       why: `Reported symptoms (${inputQuery}) match general viral response or seasonal infection patterns in rural settings.`,
-      do: 'Drink plenty of boiled water or ORS. Rest adequately and monitor body temperature every 4 hours. Take Paracetamol 500mg if fever exceeds 100.5°F as prescribed.',
+      do: 'Drink plenty of boiled water or ORS. Rest adequately and monitor body temperature every 4 hours. Take Paracetamol 500mg if fever exceeds 100.5Â°F as prescribed.',
       dont: 'Do NOT self-medicate with unprescribed antibiotics or steroids. Avoid heavy exertion or unboiled river water.',
-      warning: 'Fever >103°F, severe headache, stiff neck, persistent vomiting, blood in stool, or extreme breathlessness.',
+      warning: 'Fever >103Â°F, severe headache, stiff neck, persistent vomiting, blood in stool, or extreme breathlessness.',
       whenSeek: 'Visit Rampur Primary Health Centre (PHC) immediately if symptoms persist beyond 48 hours or warning signs appear.',
       urgency: 'NEEDS MEDICAL REVIEW',
       urgencyClass: 'bg-amber-100 text-amber-900 border-amber-300'
@@ -217,7 +221,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 relative z-10">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider">
-              <span>👋 Good morning, {selectedPatient?.name?.split(' ')[0] || 'Villager'}</span>
+              <span>ðŸ‘‹ Good morning, {selectedPatient?.name?.split(' ')[0] || 'Villager'}</span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
               Your Health Today
@@ -229,10 +233,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             {/* Active Health Alerts */}
             <div className="pt-2 flex flex-wrap gap-2 text-xs font-bold">
               <div className="bg-amber-500/20 text-amber-200 border border-amber-400/30 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
-                <span>🟠 Pending Health Test: HbA1c screening recommended</span>
+                <span>ðŸŸ  Pending Health Test: HbA1c screening recommended</span>
               </div>
               <div className="bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
-                <span>💊 Medicine Reminder: 2 medicines due today</span>
+                <span>ðŸ’Š Medicine Reminder: 2 medicines due today</span>
               </div>
             </div>
           </div>
@@ -244,7 +248,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs px-5 py-3 rounded-2xl shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95"
               >
                 <Sparkles className="w-4 h-4 fill-slate-950" />
-                <span>❓ WHAT SHOULD I DO?</span>
+                <span>â“ WHAT SHOULD I DO?</span>
               </button>
             )}
 
@@ -255,7 +259,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <div className="space-y-0.5">
                 <span className="text-[10px] uppercase font-black text-teal-200 block">Active Record</span>
                 <h3 className="font-extrabold text-sm text-white">{selectedPatient?.name || 'Ramesh Kumar'}</h3>
-                <span className="text-[10px] text-teal-100 font-mono block">ID: {selectedPatient?.patientId} • Family: {selectedPatient?.familyId}</span>
+                <span className="text-[10px] text-teal-100 font-mono block">ID: {selectedPatient?.patientId} â€¢ Family: {selectedPatient?.familyId}</span>
               </div>
             </div>
           </div>
@@ -292,7 +296,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <MessageSquare className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-black text-slate-900 text-sm">💬 SMS</h4>
+              <h4 className="font-black text-slate-900 text-sm">ðŸ’¬ SMS</h4>
               <p className="text-[11px] text-slate-500 font-medium">Send summary to phone</p>
             </div>
           </button>
@@ -309,7 +313,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <Smartphone className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-black text-slate-900 text-sm">🔢 USSD (*123#)</h4>
+              <h4 className="font-black text-slate-900 text-sm">ðŸ”¢ USSD (*123#)</h4>
               <p className="text-[11px] text-slate-500 font-medium">Basic phone menu</p>
             </div>
           </button>
@@ -326,7 +330,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <PhoneCall className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-black text-slate-900 text-sm">📞 VOICE CALL</h4>
+              <h4 className="font-black text-slate-900 text-sm">ðŸ“ž VOICE CALL</h4>
               <p className="text-[11px] text-slate-500 font-medium">IVR helpline consultation</p>
             </div>
           </button>
@@ -334,8 +338,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           {/* VOICE MESSAGE */}
           <button
             onClick={() => {
-              if (onOpenVoiceIVR) onOpenVoiceIVR();
-              else if (onOpenCommunicationCenter) onOpenCommunicationCenter();
+              if (onOpenVoiceMessage) onOpenVoiceMessage();
             }}
             className="p-4 rounded-2xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-left transition-all group flex flex-col justify-between space-y-2"
           >
@@ -343,7 +346,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <Mic className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-black text-slate-900 text-sm">🎙️ VOICE MESSAGE</h4>
+              <h4 className="font-black text-slate-900 text-sm">ðŸŽ™ï¸ VOICE MESSAGE</h4>
               <p className="text-[11px] text-slate-500 font-medium">Record audio note</p>
             </div>
           </button>
@@ -351,7 +354,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           {/* BLUETOOTH */}
           <button
             onClick={() => {
-              if (onOpenCommunicationCenter) onOpenCommunicationCenter();
+              if (onOpenBluetooth) onOpenBluetooth();
             }}
             className="p-4 rounded-2xl bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 text-left transition-all group flex flex-col justify-between space-y-2 col-span-2 sm:col-span-1"
           >
@@ -359,7 +362,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <Radio className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-black text-slate-900 text-sm">📶 BLUETOOTH</h4>
+              <h4 className="font-black text-slate-900 text-sm">ðŸ“¶ BLUETOOTH</h4>
               <p className="text-[11px] text-slate-500 font-medium">Device-to-device sync</p>
             </div>
           </button>
@@ -384,7 +387,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
             <div>
               <h4 className="text-base font-black text-slate-900 group-hover:text-purple-700 transition-colors">
-                🧒 Children Care Hub
+                ðŸ§’ Children Care Hub
               </h4>
               <p className="text-xs text-slate-600 mt-1">Growth charts, vaccine schedule, and paracetamol weight-dose calculator.</p>
             </div>
@@ -400,7 +403,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
             <div>
               <h4 className="text-base font-black text-slate-900 group-hover:text-rose-700 transition-colors">
-                🤰 Maternity & Postpartum Hub
+                ðŸ¤° Maternity & Postpartum Hub
               </h4>
               <p className="text-xs text-slate-600 mt-1">Trimester timeline, ANC tests, lactation support, and newborn care.</p>
             </div>
@@ -416,7 +419,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
             <div>
               <h4 className="text-base font-black text-slate-900 group-hover:text-amber-800 transition-colors">
-                👵 Elderly Care Hub
+                ðŸ‘µ Elderly Care Hub
               </h4>
               <p className="text-xs text-slate-600 mt-1">BP tracking, fall risk assessment, polypharmacy alerts, and large-text UI.</p>
             </div>
@@ -432,7 +435,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
             <div>
               <h4 className="text-base font-black text-slate-900 group-hover:text-emerald-800 transition-colors">
-                🛡️ Rural Disease Guide
+                ðŸ›¡ï¸ Rural Disease Guide
               </h4>
               <p className="text-xs text-slate-600 mt-1">Typhoid, Chikungunya, Dengue, TB, Diabetes, and Hypertension early signs.</p>
             </div>
@@ -493,17 +496,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         {doctor.specialization}
                       </p>
                       <p className="text-[11px] text-slate-500 font-medium">
-                        {doctor.education} • {doctor.experienceYears} yrs exp
+                        {doctor.education} â€¢ {doctor.experienceYears} yrs exp
                       </p>
                     </div>
                   </div>
 
                   <div className="space-y-1.5 pt-2 border-t border-slate-100 text-xs text-slate-600">
                     <p className="font-medium text-slate-700 line-clamp-1">
-                      🏥 {doctor.hospitalName}
+                      ðŸ¥ {doctor.hospitalName}
                     </p>
                     <p className="text-[11px] text-slate-500 font-medium">
-                      🗣️ Languages: <strong>{doctor.languages.join(', ')}</strong>
+                      ðŸ—£ï¸ Languages: <strong>{doctor.languages.join(', ')}</strong>
                     </p>
                     <p className="text-[11px] font-bold text-teal-900 bg-teal-50 px-2.5 py-1 rounded-xl border border-teal-100 flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5 text-teal-600" />
@@ -555,7 +558,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <div className="space-y-1">
             <div className="inline-flex items-center gap-2 bg-cyan-500/20 text-cyan-200 border border-cyan-400/30 px-3 py-1 rounded-full text-[11px] font-bold">
               <Sparkles className="w-3.5 h-3.5 text-cyan-300 animate-pulse" />
-              <span>💬 MEDORA AI — SYMPTOM TRIAGE & DECISION SUPPORT</span>
+              <span>ðŸ’¬ MEDORA AI â€” SYMPTOM TRIAGE & DECISION SUPPORT</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-white">
               Describe your symptoms for instant guidance.
@@ -625,7 +628,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 <div className="flex items-center gap-2">
                   <Bot className="w-5 h-5 text-cyan-600" />
                   <h4 className="font-extrabold text-sm text-slate-900">
-                    💡 {aiTriageResponse.association}
+                    ðŸ’¡ {aiTriageResponse.association}
                   </h4>
                 </div>
                 <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${aiTriageResponse.urgencyClass}`}>
@@ -634,15 +637,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </div>
 
               <div className="space-y-2 text-xs leading-relaxed text-slate-700">
-                <p><strong>🤔 Why Symptoms Match:</strong> {aiTriageResponse.why}</p>
-                <p><strong className="text-emerald-700">✅ What To Do:</strong> {aiTriageResponse.do}</p>
-                {aiTriageResponse.dont && <p><strong className="text-rose-700">❌ What NOT To Do:</strong> {aiTriageResponse.dont}</p>}
-                <p><strong className="text-amber-800">⚠️ Warning Signs:</strong> {aiTriageResponse.warning}</p>
-                <p><strong className="text-teal-800">🏥 When To Seek Care:</strong> {aiTriageResponse.whenSeek}</p>
+                <p><strong>ðŸ¤” Why Symptoms Match:</strong> {aiTriageResponse.why}</p>
+                <p><strong className="text-emerald-700">âœ… What To Do:</strong> {aiTriageResponse.do}</p>
+                {aiTriageResponse.dont && <p><strong className="text-rose-700">âŒ What NOT To Do:</strong> {aiTriageResponse.dont}</p>}
+                <p><strong className="text-amber-800">âš ï¸ Warning Signs:</strong> {aiTriageResponse.warning}</p>
+                <p><strong className="text-teal-800">ðŸ¥ When To Seek Care:</strong> {aiTriageResponse.whenSeek}</p>
               </div>
 
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                <span>⚠️ AI Educational Decision Support — Always consult a doctor.</span>
+                <span>âš ï¸ AI Educational Decision Support â€” Always consult a doctor.</span>
                 {onNavigateToAI && (
                   <button
                     onClick={onNavigateToAI}
@@ -677,7 +680,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <Heart className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-extrabold text-slate-900 text-sm">❤️ My Health</h4>
+              <h4 className="font-extrabold text-slate-900 text-sm">â¤ï¸ My Health</h4>
               <p className="text-[11px] text-slate-500 font-medium">Vitals & Record</p>
             </div>
           </button>
@@ -695,7 +698,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <Users className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-extrabold text-slate-900 text-sm">👨‍👩‍👧‍👦 Family Health</h4>
+              <h4 className="font-extrabold text-slate-900 text-sm">ðŸ‘¨â€ðŸ‘©â€ðŸ‘§â€ðŸ‘¦ Family Health</h4>
               <p className="text-[11px] text-slate-500 font-medium">{familyMembers.length} Members</p>
             </div>
           </button>
@@ -711,7 +714,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <Pill className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-extrabold text-slate-900 text-sm">💊 Medicines</h4>
+              <h4 className="font-extrabold text-slate-900 text-sm">ðŸ’Š Medicines</h4>
               <p className="text-[11px] text-slate-500 font-medium">Reminders & Doses</p>
             </div>
           </button>
@@ -727,7 +730,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <FileText className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-extrabold text-slate-900 text-sm">📜 Medical Reports</h4>
+              <h4 className="font-extrabold text-slate-900 text-sm">ðŸ“œ Medical Reports</h4>
               <p className="text-[11px] text-slate-500 font-medium">Scan & Analyze</p>
             </div>
           </button>
@@ -743,7 +746,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <Baby className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-extrabold text-slate-900 text-sm">💉 Vaccinations</h4>
+              <h4 className="font-extrabold text-slate-900 text-sm">ðŸ’‰ Vaccinations</h4>
               <p className="text-[11px] text-slate-500 font-medium">Schedule & History</p>
             </div>
           </button>
@@ -759,7 +762,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <Activity className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-extrabold text-slate-900 text-sm">🔬 Health Tests</h4>
+              <h4 className="font-extrabold text-slate-900 text-sm">ðŸ”¬ Health Tests</h4>
               <p className="text-[11px] text-slate-500 font-medium">Lab & Screening</p>
             </div>
           </button>
@@ -775,7 +778,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <Landmark className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-extrabold text-slate-900 text-sm">🏛️ Govt Schemes</h4>
+              <h4 className="font-extrabold text-slate-900 text-sm">ðŸ›ï¸ Govt Schemes</h4>
               <p className="text-[11px] text-slate-500 font-medium">ABHA & PMJAY</p>
             </div>
           </button>
@@ -791,7 +794,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <Stethoscope className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-extrabold text-slate-900 text-sm">👨‍⚕️ Doctor Roster</h4>
+              <h4 className="font-extrabold text-slate-900 text-sm">ðŸ‘¨â€âš•ï¸ Doctor Roster</h4>
               <p className="text-[11px] text-slate-500 font-medium">10 Specialists</p>
             </div>
           </button>
@@ -807,7 +810,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <BookOpen className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-extrabold text-slate-900 text-sm">📚 Health Guide</h4>
+              <h4 className="font-extrabold text-slate-900 text-sm">ðŸ“š Health Guide</h4>
               <p className="text-[11px] text-slate-500 font-medium">Disease Prevention</p>
             </div>
           </button>
@@ -823,7 +826,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <Building2 className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-extrabold text-slate-900 text-sm">🏥 Nearby Hospitals</h4>
+              <h4 className="font-extrabold text-slate-900 text-sm">ðŸ¥ Nearby Hospitals</h4>
               <p className="text-[11px] text-slate-500 font-medium">Civil & PHCs</p>
             </div>
           </button>
@@ -855,7 +858,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
             <div>
               <h4 className="font-black text-slate-900 text-sm group-hover:text-cyan-700 transition-colors">
-                📷 AI Camera Scanner
+                ðŸ“· AI Camera Scanner
               </h4>
               <p className="text-xs text-slate-500 mt-0.5">Scan skin rashes, tongue, or medicines for immediate AI triage.</p>
             </div>
@@ -873,7 +876,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
             <div>
               <h4 className="font-black text-slate-900 text-sm group-hover:text-emerald-700 transition-colors">
-                🏛️ Government Schemes
+                ðŸ›ï¸ Government Schemes
               </h4>
               <p className="text-xs text-slate-500 mt-0.5">PMJAY, Ayushman Bharat, ABHA Health ID, and maternal benefits.</p>
             </div>
@@ -891,7 +894,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
             <div>
               <h4 className="font-black text-slate-900 text-sm group-hover:text-purple-700 transition-colors">
-                🔄 A2A Agent Protocol
+                ðŸ”„ A2A Agent Protocol
               </h4>
               <p className="text-xs text-slate-500 mt-0.5">Agent-to-agent clinical simulation with 13 specialist agents.</p>
             </div>
@@ -909,7 +912,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
             <div>
               <h4 className="font-black text-slate-900 text-sm group-hover:text-blue-700 transition-colors">
-                🏥 Hospital Village Portal
+                ðŸ¥ Hospital Village Portal
               </h4>
               <p className="text-xs text-slate-500 mt-0.5">District hospital bed status, ICU availability, and specialist schedules.</p>
             </div>
@@ -927,7 +930,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
             <div>
               <h4 className="font-black text-slate-900 text-sm group-hover:text-amber-800 transition-colors">
-                🔢 USSD Simulator (*123#)
+                ðŸ”¢ USSD Simulator (*123#)
               </h4>
               <p className="text-xs text-slate-500 mt-0.5">Simulate basic feature-phone menu commands for offline care.</p>
             </div>
@@ -945,7 +948,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
             <div>
               <h4 className="font-black text-slate-900 text-sm group-hover:text-rose-700 transition-colors">
-                📞 Toll-Free Voice IVR Call
+                ðŸ“ž Toll-Free Voice IVR Call
               </h4>
               <p className="text-xs text-slate-500 mt-0.5">Interactive voice response helpline for low-literacy users.</p>
             </div>
@@ -963,7 +966,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
             <div>
               <h4 className="font-black text-slate-900 text-sm group-hover:text-indigo-700 transition-colors">
-                💬 Two-Way Doctor Chat
+                ðŸ’¬ Two-Way Doctor Chat
               </h4>
               <p className="text-xs text-slate-500 mt-0.5">Direct encrypted messaging with assigned primary clinician.</p>
             </div>
@@ -981,7 +984,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
             <div>
               <h4 className="font-black text-slate-900 text-sm group-hover:text-teal-700 transition-colors">
-                📬 Communication Center & Share
+                ðŸ“¬ Communication Center & Share
               </h4>
               <p className="text-xs text-slate-500 mt-0.5">Manual phone sharing, encrypted records export, and delivery status.</p>
             </div>
@@ -999,7 +1002,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
             <div>
               <h4 className="font-black text-slate-900 text-sm group-hover:text-slate-800 transition-colors">
-                ❓ Medora Help & FAQ
+                â“ Medora Help & FAQ
               </h4>
               <p className="text-xs text-slate-500 mt-0.5">Usage guides, offline instructions, and platform documentation.</p>
             </div>
@@ -1007,7 +1010,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
       </div>
 
-      {/* 8. 🚨 EMERGENCY HELP & TRANSPORT DISPATCH */}
+      {/* 8. ðŸš¨ EMERGENCY HELP & TRANSPORT DISPATCH */}
       <div className="grid gap-6 md:grid-cols-2">
         <div className="bg-gradient-to-br from-red-600 to-rose-700 text-white rounded-3xl p-6 shadow-xl flex flex-col justify-between space-y-4 border-2 border-red-400">
           <div className="flex items-start justify-between">
@@ -1080,7 +1083,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
           {locationCaptured && (
             <div className="bg-white/15 backdrop-blur p-2.5 rounded-xl border border-white/20 text-xs font-mono text-amber-200 flex items-center justify-between">
-              <span>📍 {locationCaptured}</span>
+              <span>ðŸ“ {locationCaptured}</span>
               <button
                 onClick={() => {
                   if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -1103,13 +1106,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         />
       </div>
 
-      {/* 9. ❤️ HEALTH OVERVIEW & HEALTH SCORE */}
+      {/* 9. â¤ï¸ HEALTH OVERVIEW & HEALTH SCORE */}
       <div className="grid gap-6 lg:grid-cols-3" ref={medsRef}>
         <div className="lg:col-span-2 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
               <Heart className="w-5 h-5 text-emerald-600 fill-emerald-100" />
-              <span>❤️ Health Overview</span>
+              <span>â¤ï¸ Health Overview</span>
             </h3>
             <span className="text-xs font-bold text-slate-500 font-mono">
               P-ID: {selectedPatient?.patientId}
@@ -1145,7 +1148,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <span className="text-slate-500 font-semibold block">Appointments</span>
               <div className="font-mono text-sm font-extrabold text-slate-900">1 Scheduled</div>
               <span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">
-                🔵 Upcoming
+                ðŸ”µ Upcoming
               </span>
             </div>
           </div>
@@ -1153,7 +1156,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between items-center text-center space-y-3">
           <h3 className="font-extrabold text-slate-900 text-sm tracking-wide">
-            📊 Medora Health Score
+            ðŸ“Š Medora Health Score
           </h3>
 
           <div className="relative w-28 h-28 flex items-center justify-center">
@@ -1187,10 +1190,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
       </div>
 
-      {/* 10. 💊 TODAY'S MEDICINES REMINDER */}
+      {/* 10. ðŸ’Š TODAY'S MEDICINES REMINDER */}
       <MedicineReminder currentLang={currentLang} />
 
-      {/* 11. 👨‍👩‍👧 FAMILY HEALTH SELECTOR */}
+      {/* 11. ðŸ‘¨â€ðŸ‘©â€ðŸ‘§ FAMILY HEALTH SELECTOR */}
       <FamilyHealthSelector
         familyMembers={familyMembers}
         selectedFamilyId={selectedFamilyId}
@@ -1200,3 +1203,4 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     </div>
   );
 };
+
