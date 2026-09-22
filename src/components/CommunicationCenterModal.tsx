@@ -188,7 +188,7 @@ export const CommunicationCenterModal: React.FC<CommunicationCenterModalProps> =
     setShowConsentModal(true);
   };
 
-  const handleConfirmSend = () => {
+  const handleConfirmSend = async () => {
     let finalRecipientIds: string[] = [];
     let customContactsList: Contact[] = [];
 
@@ -221,7 +221,7 @@ export const CommunicationCenterModal: React.FC<CommunicationCenterModalProps> =
       customNote ? `Note: "${customNote}"` : ''
     }`;
 
-    sendMessageToContacts({
+    await sendMessageToContacts({
       senderId: patientId,
       senderName: patientName,
       patientId,

@@ -1,0 +1,99 @@
+﻿export const sendMessageToContacts = async (params: {
+  senderId: string;
+  senderName: string;
+  patientId: string;
+  recipientIds: string[];
+  customContacts?: Contact[];
+  channel: CommunicationChannel;
+  content: string;
+  sharedData?: SharedHealthData;
+  permissions: RecipientPermission[];
+  isOffline?: boolean;
+}): Promise<Message> => {
+  const messageId = `MSG-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const requestId = `REQ-${Date.now()}`;
+  const conversationId = `CONV-${params.recipientIds[0] || 'GEN'}`;
+  const now = new Date().toISOString();
+
+  const isDemo = params.customContacts?.some(c => c.isDemo) || false;
+
+  const recipientStatuses: RecipientDeliveryStatus[] = params.recipientIds.map((rid) => {
+    return {
+      recipientId: rid,
+      status: isDemo ? 'DELIVERED' : (params.isOffline ? 'WAITING_FOR_NETWORK' : 'QUEUED'),
+      deliveredAt: isDemo ? now : undefined,
+      retryCount: 0,
+    };
+  });
+
+  let newMessage: Message = {
+    messageId,
+    requestId,
+    conversationId,
+    senderId: params.senderId,
+    senderName: params.senderName,
+    patientId: params.patientId,
+    recipientIds: params.recipientIds,
+    recipientStatuses,
+    recipientPermissions: params.permissions,
+    channel: params.channel,
+    contentType: 'HEALTH_SHARE',
+    content: params.content,
+    sharedData: params.sharedData,
+    createdAt: now,
+    updatedAt: now,
+    isDemo: isDemo,
+  };
+
+  let msgs = getStoredMessages();
+  msgs.unshift(newMessage);
+  saveMessages(msgs);
+
+  if (params.channel === 'sms' && !isDemo && !params.isOffline) {
+    for (const custom of params.customContacts || []) {
+      if (custom.id.startsWith('num-') && custom.phone) {
+        try {
+          const res = await fetch('/api/communications/sms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              recipientPhone: custom.phone,
+              messageText: params.content,
+              patientId: params.patientId
+            }),
+          });
+          const data = await res.json();
+          
+          msgs = getStoredMessages();
+          const target = msgs.find(m => m.messageId === messageId);
+          if (target) {
+            if (!data.configured) {
+              target.recipientStatuses[0].status = 'NOT_CONFIGURED';
+              target.failureReason = data.error;
+            } else if (data.status === 'FAILED') {
+              target.recipientStatuses[0].status = 'FAILED';
+              target.failureReason = data.error;
+            } else {
+              target.recipientStatuses[0].status = data.status || 'QUEUED';
+              target.providerMessageId = data.providerMessageId;
+            }
+            target.updatedAt = new Date().toISOString();
+            saveMessages(msgs);
+            newMessage = target;
+          }
+        } catch (err: any) {
+          msgs = getStoredMessages();
+          const target = msgs.find(m => m.messageId === messageId);
+          if (target) {
+            target.recipientStatuses[0].status = 'FAILED';
+            target.failureReason = 'Network error contacting backend';
+            saveMessages(msgs);
+            newMessage = target;
+          }
+        }
+      }
+    }
+  }
+
+  return newMessage;
+};

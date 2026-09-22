@@ -233,7 +233,7 @@ export const sendRealSMS = async (params: { recipientPhone: string; messageText:
   return newMessage;
 };
 
-export const sendMessageToContacts = (params: {
+﻿export const sendMessageToContacts = async (params: {
   senderId: string;
   senderName: string;
   patientId: string;
@@ -244,22 +244,24 @@ export const sendMessageToContacts = (params: {
   sharedData?: SharedHealthData;
   permissions: RecipientPermission[];
   isOffline?: boolean;
-}): Message => {
+}): Promise<Message> => {
   const messageId = `MSG-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   const requestId = `REQ-${Date.now()}`;
   const conversationId = `CONV-${params.recipientIds[0] || 'GEN'}`;
   const now = new Date().toISOString();
 
+  const isDemo = params.customContacts?.some(c => c.isDemo) || false;
+
   const recipientStatuses: RecipientDeliveryStatus[] = params.recipientIds.map((rid) => {
     return {
       recipientId: rid,
-      status: 'QUEUED', // Real messages stay QUEUED until provider updates
-      deliveredAt: undefined,
+      status: isDemo ? 'DELIVERED' : 'QUEUED',
+      deliveredAt: isDemo ? now : undefined,
       retryCount: 0,
     };
   });
 
-  const newMessage: Message = {
+  let newMessage: Message = {
     messageId,
     requestId,
     conversationId,
@@ -275,14 +277,62 @@ export const sendMessageToContacts = (params: {
     sharedData: params.sharedData,
     createdAt: now,
     updatedAt: now,
-    isDemo: false,
+    isDemo: isDemo,
   };
 
-  const msgs = getStoredMessages();
+  let msgs = getStoredMessages();
   msgs.unshift(newMessage);
   saveMessages(msgs);
+
+  if (params.channel === 'sms' && !isDemo && !params.isOffline) {
+    for (const custom of params.customContacts || []) {
+      if (custom.id.startsWith('num-') && custom.phone) {
+        try {
+          const res = await fetch('/api/communications/sms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              recipientPhone: custom.phone,
+              messageText: params.content,
+              patientId: params.patientId
+            }),
+          });
+          const data = await res.json();
+          
+          msgs = getStoredMessages();
+          const target = msgs.find(m => m.messageId === messageId);
+          if (target) {
+            if (!data.configured) {
+              target.recipientStatuses[0].status = 'NOT_CONFIGURED';
+              target.failureReason = data.error;
+            } else if (data.status === 'FAILED') {
+              target.recipientStatuses[0].status = 'FAILED';
+              target.failureReason = data.error;
+            } else {
+              target.recipientStatuses[0].status = data.status || 'QUEUED';
+              target.providerMessageId = data.providerMessageId;
+            }
+            target.updatedAt = new Date().toISOString();
+            saveMessages(msgs);
+            newMessage = target;
+          }
+        } catch (err: any) {
+          msgs = getStoredMessages();
+          const target = msgs.find(m => m.messageId === messageId);
+          if (target) {
+            target.recipientStatuses[0].status = 'FAILED';
+            target.failureReason = 'Network error contacting backend';
+            saveMessages(msgs);
+            newMessage = target;
+          }
+        }
+      }
+    }
+  }
+
   return newMessage;
 };
+
 
 export const getInboxMessages = (patientId: string): Message[] => {
   const msgs = getStoredMessages();
