@@ -33,6 +33,10 @@ import ElderlyPage from './pages/ElderlyPage';
 import VaccinationPage from './pages/VaccinationPage';
 import ReportScannerPage from './pages/ReportScannerPage';
 import XrayViewerPage from './pages/XrayViewerPage';
+import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/SettingsPage';
+import FaqPage from './pages/FaqPage';
+import HelpPage from './pages/HelpPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAppStore();
@@ -48,6 +52,8 @@ export default function App() {
       <Route path="/welcome" element={<WelcomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/emergency" element={<EmergencyPage />} />
+      <Route path="/faq" element={<FaqPage />} />
+      <Route path="/help" element={<HelpPage />} />
 
       {/* Protected routes */}
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
@@ -77,6 +83,8 @@ export default function App() {
       <Route path="/vaccination" element={<ProtectedRoute><VaccinationPage /></ProtectedRoute>} />
       <Route path="/report-scanner" element={<ProtectedRoute><ReportScannerPage /></ProtectedRoute>} />
       <Route path="/xray-viewer" element={<ProtectedRoute><XrayViewerPage /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/welcome" replace />} />
