@@ -1,0 +1,85 @@
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { useAppStore } from './store/useAppStore';
+import './i18n/config';
+
+// Pages
+import WelcomePage from './pages/WelcomePage';
+import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
+import MyHealthPage from './pages/MyHealthPage';
+import FamilyPage from './pages/FamilyPage';
+import MedicinesPage from './pages/MedicinesPage';
+import MedicalRecordsPage from './pages/MedicalRecordsPage';
+import HealthTestsPage from './pages/HealthTestsPage';
+import AiAssistantPage from './pages/AiAssistantPage';
+import EmergencyPage from './pages/EmergencyPage';
+import HospitalsPage from './pages/HospitalsPage';
+import TransportPage from './pages/TransportPage';
+import SchemesPage from './pages/SchemesPage';
+import EducationPage from './pages/EducationPage';
+import SmsPage from './pages/SmsPage';
+import IvrPage from './pages/IvrPage';
+import UssdPage from './pages/UssdPage';
+import VillagePage from './pages/VillagePage';
+import DoctorPortalPage from './pages/DoctorPortalPage';
+import AdminPortalPage from './pages/AdminPortalPage';
+import DoctorSummaryPage from './pages/DoctorSummaryPage';
+import NotificationsPage from './pages/NotificationsPage';
+import SyncPage from './pages/SyncPage';
+import MaternityPage from './pages/MaternityPage';
+import NewbornPage from './pages/NewbornPage';
+import ChildcarePage from './pages/ChildcarePage';
+import ElderlyPage from './pages/ElderlyPage';
+import VaccinationPage from './pages/VaccinationPage';
+import ReportScannerPage from './pages/ReportScannerPage';
+import XrayViewerPage from './pages/XrayViewerPage';
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { currentUser } = useAppStore();
+  if (!currentUser) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
+
+export default function App() {
+  return (
+    <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<Navigate to="/welcome" replace />} />
+      <Route path="/welcome" element={<WelcomePage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/emergency" element={<EmergencyPage />} />
+
+      {/* Protected routes */}
+      <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+      <Route path="/health" element={<ProtectedRoute><MyHealthPage /></ProtectedRoute>} />
+      <Route path="/family" element={<ProtectedRoute><FamilyPage /></ProtectedRoute>} />
+      <Route path="/medicines" element={<ProtectedRoute><MedicinesPage /></ProtectedRoute>} />
+      <Route path="/records" element={<ProtectedRoute><MedicalRecordsPage /></ProtectedRoute>} />
+      <Route path="/health-tests" element={<ProtectedRoute><HealthTestsPage /></ProtectedRoute>} />
+      <Route path="/ai" element={<ProtectedRoute><AiAssistantPage /></ProtectedRoute>} />
+      <Route path="/hospitals" element={<ProtectedRoute><HospitalsPage /></ProtectedRoute>} />
+      <Route path="/transport" element={<ProtectedRoute><TransportPage /></ProtectedRoute>} />
+      <Route path="/schemes" element={<ProtectedRoute><SchemesPage /></ProtectedRoute>} />
+      <Route path="/education" element={<ProtectedRoute><EducationPage /></ProtectedRoute>} />
+      <Route path="/sms" element={<ProtectedRoute><SmsPage /></ProtectedRoute>} />
+      <Route path="/ivr" element={<ProtectedRoute><IvrPage /></ProtectedRoute>} />
+      <Route path="/ussd" element={<ProtectedRoute><UssdPage /></ProtectedRoute>} />
+      <Route path="/village" element={<ProtectedRoute><VillagePage /></ProtectedRoute>} />
+      <Route path="/doctor-portal" element={<ProtectedRoute><DoctorPortalPage /></ProtectedRoute>} />
+      <Route path="/admin-portal" element={<ProtectedRoute><AdminPortalPage /></ProtectedRoute>} />
+      <Route path="/doctor-summary" element={<ProtectedRoute><DoctorSummaryPage /></ProtectedRoute>} />
+      <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+      <Route path="/sync" element={<ProtectedRoute><SyncPage /></ProtectedRoute>} />
+      <Route path="/maternity" element={<ProtectedRoute><MaternityPage /></ProtectedRoute>} />
+      <Route path="/newborn" element={<ProtectedRoute><NewbornPage /></ProtectedRoute>} />
+      <Route path="/childcare" element={<ProtectedRoute><ChildcarePage /></ProtectedRoute>} />
+      <Route path="/elderly" element={<ProtectedRoute><ElderlyPage /></ProtectedRoute>} />
+      <Route path="/vaccination" element={<ProtectedRoute><VaccinationPage /></ProtectedRoute>} />
+      <Route path="/report-scanner" element={<ProtectedRoute><ReportScannerPage /></ProtectedRoute>} />
+      <Route path="/xray-viewer" element={<ProtectedRoute><XrayViewerPage /></ProtectedRoute>} />
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/welcome" replace />} />
+    </Routes>
+  );
+}

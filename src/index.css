@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@layer base {
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background-color: #f9fafb;
+    color: #111827;
+    -webkit-tap-highlight-color: transparent;
+  }
+  @media print {
+    .no-print { display: none !important; }
+    .print-only { display: block !important; }
+  }
+}
+
+@layer utilities {
+  .print-only { display: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+}

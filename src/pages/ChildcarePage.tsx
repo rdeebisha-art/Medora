@@ -1,0 +1,99 @@
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useAppStore } from '../store/useAppStore';
+import { db, Patient, Vaccination, Medicine } from '../db/db';
+import Layout from '../components/Layout';
+import DemoDataBadge from '../components/DemoDataBadge';
+
+export default function ChildcarePage() {
+  const { t } = useTranslation();
+  const { currentUser } = useAppStore();
+  const [child, setChild] = useState<Patient | null>(null);
+  const [vaccinations, setVaccinations] = useState<Vaccination[]>([]);
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const all = await db.patients.where({ isChild: true }).toArray();
+      if (all.length > 0) {
+        setChild(all[0]);
+        const [vacc, meds] = await Promise.all([
+          db.vaccinations.where({ patientId: all[0].id! }).toArray(),
+          db.medicines.where({ patientId: all[0].id!, status: 'active' }).toArray(),
+        ]);
+        setVaccinations(vacc);
+        setMedicines(meds);
+      }
+    };
+    load();
+  }, [currentUser]);
+
+  const NUTRITION = ['Balanced diet: rice/roti + dal + vegetables + milk', 'Avoid junk food and excess sugar', '3 meals + 2 healthy snacks daily', 'Iron-rich foods prevent anaemia', 'Ensure adequate protein for growth'];
+  const ILLNESS = [{ name: 'Fever', action: 'Paracetamol, cool compress, fluids. Doctor if >3 days.' }, { name: 'Diarrhoea', action: 'ORS immediately. Continue feeding. Doctor if blood in stool.' }, { name: 'Cough/Cold', action: 'Steam, honey+ginger. Avoid cold drinks. Doctor if >7 days.' }, { name: 'Vomiting', action: 'Small sips of ORS. Rest. Doctor if continuous.' }];
+
+  return (
+    <Layout>
+      <div className="px-4 py-4 max-w-2xl mx-auto space-y-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold text-gray-900">👶 {t('childcare.title')}</h1>
+          <DemoDataBadge />
+        </div>
+
+        {child ? (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 flex items-center gap-3">
+            <span className="text-4xl">🧒</span>
+            <div>
+              <div className="font-bold text-yellow-800 text-lg">{child.name}</div>
+              <div className="text-yellow-600">{child.age} years · {child.gender} · {child.village}</div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 text-center text-yellow-700">
+            Demo child profile: Meena Sharma, 8 years, Kodaikanal
+          </div>
+        )}
+
+        {medicines.length > 0 && (
+          <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+            <h2 className="font-bold text-gray-800 mb-2">💊 {t('childcare.medicines')}</h2>
+            {medicines.map(m => (
+              <div key={m.id} className="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0 text-sm">
+                <span className="font-medium">{m.name} {m.dose}</span>
+                <span className="text-gray-500">{m.times?.join(', ')}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {vaccinations.length > 0 && (
+          <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+            <h2 className="font-bold text-gray-800 mb-2">💉 {t('childcare.vaccinations')}</h2>
+            {vaccinations.map(v => (
+              <div key={v.id} className="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0 text-sm">
+                <span>{v.vaccineName}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${v.status === 'given' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{v.status}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+          <h2 className="font-bold text-gray-800 mb-3">🥗 {t('childcare.nutrition')}</h2>
+          {NUTRITION.map((n, i) => (
+            <div key={i} className="flex items-start gap-2 text-sm text-gray-700 py-1"><span className="text-green-500">✓</span> {n}</div>
+          ))}
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+          <h2 className="font-bold text-gray-800 mb-3">🩺 {t('childcare.commonIllness')}</h2>
+          {ILLNESS.map((ill, i) => (
+            <div key={i} className="py-2 border-b border-gray-100 last:border-0">
+              <div className="font-semibold text-gray-900 text-sm">{ill.name}</div>
+              <div className="text-xs text-gray-600 mt-0.5">{ill.action}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Layout>
+  );
+}
