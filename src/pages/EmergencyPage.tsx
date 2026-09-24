@@ -69,10 +69,10 @@ export default function EmergencyPage() {
   const handleFamilyAlert = async () => {
     await db.smsOutbox.add({
       toPhone: 'Family Emergency Contact',
-      message: '🚨 EMERGENCY ALERT from MEDORA: Your family member may need urgent help. Please call them immediately. [Demo SMS — not actually sent]',
+      message: '🚨 EMERGENCY ALERT from MEDORA: Your family member may need urgent help. Please call them immediately. [DEMO — queued in local outbox, not actually sent]',
       type: 'emergency_alert',
       language: 'en',
-      status: 'pending',
+      status: 'PENDING_OFFLINE',
       createdAt: new Date().toISOString(),
     });
     setAlertSent(true);
@@ -81,10 +81,10 @@ export default function EmergencyPage() {
   const handleAmbulanceCall = async () => {
     await db.smsOutbox.add({
       toPhone: '108',
-      message: 'EMERGENCY: Requesting ambulance from Kodaikanal area. [Demo — not actually sent]',
+      message: 'EMERGENCY: Requesting ambulance from Kodaikanal area. [DEMO — queued in local outbox, not actually sent. Please call 108 directly.]',
       type: 'emergency_alert',
       language: 'en',
-      status: 'pending',
+      status: 'PENDING_OFFLINE',
       createdAt: new Date().toISOString(),
     });
     setAmbulanceCalled(true);
@@ -117,7 +117,7 @@ export default function EmergencyPage() {
           >
             <span className="text-3xl mb-2">🚑</span>
             <span className="text-base">{t('emergency.callAmbulance')}</span>
-            {ambulanceCalled && <span className="text-xs mt-1 bg-white/20 px-2 py-0.5 rounded-full">Added to SMS Outbox</span>}
+            {ambulanceCalled && <span className="text-xs mt-1 bg-white/20 px-2 py-0.5 rounded-full">Queued in SMS Outbox (Demo)</span>}
           </button>
           <button
             onClick={handleFamilyAlert}
@@ -125,7 +125,7 @@ export default function EmergencyPage() {
           >
             <span className="text-3xl mb-2">👪</span>
             <span className="text-base">{t('emergency.familyAlert')}</span>
-            {alertSent && <span className="text-xs mt-1 bg-white/20 px-2 py-0.5 rounded-full">{t('emergency.alertSent')}</span>}
+            {alertSent && <span className="text-xs mt-1 bg-white/20 px-2 py-0.5 rounded-full">Queued (Demo)</span>}
           </button>
         </div>
 

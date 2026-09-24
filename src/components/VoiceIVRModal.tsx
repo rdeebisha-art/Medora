@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { PhoneCall, X, Info, Phone } from 'lucide-react';
 import { LanguageCode } from '../types';
 

@@ -30,11 +30,11 @@ export default function SmsPage() {
     const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
     
     if (isMobile) {
-      // MODE A: Native SMS intent
+      // MODE A: Opens native SMS composer — actual delivery depends on user sending from their phone app
       window.open(`sms:${form.toPhone}?body=${encodeURIComponent(form.message)}`, '_blank');
-      await db.smsOutbox.add({ ...form, status: 'sent', createdAt: new Date().toISOString() });
+      await db.smsOutbox.add({ ...form, status: 'PENDING_USER_SEND', createdAt: new Date().toISOString() });
     } else {
-      // MODE B: Save to outbox for offline/later syncing
+      // MODE B: No SMS provider configured — save to local outbox only
       await db.smsOutbox.add({ ...form, status: 'PENDING_OFFLINE', createdAt: new Date().toISOString() });
     }
     
@@ -44,6 +44,15 @@ export default function SmsPage() {
   };
 
   const statusColor = (s: string) => s === 'sent' ? 'bg-green-100 text-green-700' : s === 'failed' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700';
+
+  const statusLabel = (s: string) => {
+    if (s === 'sent') return 'Sent';
+    if (s === 'PENDING_OFFLINE') return 'PENDING OFFLINE — Provider Not Configured';
+    if (s === 'PENDING_USER_SEND') return 'PENDING — Opened in phone app, not yet confirmed sent';
+    if (s === 'pending') return 'PENDING — Queued in local outbox';
+    if (s === 'failed') return 'Failed';
+    return s;
+  };
 
   return (
     <Layout>
@@ -75,7 +84,7 @@ export default function SmsPage() {
               <div key={msg.id} className="bg-white border border-gray-200 rounded-2xl p-3 shadow-sm">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full font-medium">{msg.type.replace('_', ' ')}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor(msg.status)}`}>{msg.status}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor(msg.status)}`}>{statusLabel(msg.status)}</span>
                 </div>
                 <div className="text-sm font-medium text-gray-700">To: {msg.toPhone}</div>
                 <div className="text-xs text-gray-500 mt-1 line-clamp-2">{msg.message}</div>

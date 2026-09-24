@@ -15,6 +15,7 @@ export class LanguageDetectionService {
     telugu: { lang: 'te-IN', regex: /[\u0C00-\u0C7F]/g },
     malayalam: { lang: 'ml-IN', regex: /[\u0D00-\u0D7F]/g },
     kannada: { lang: 'kn-IN', regex: /[\u0C80-\u0CFF]/g },
+    hindi: { lang: 'hi-IN', regex: /[\u0900-\u097F]/g },
     latin: { lang: 'en-IN', regex: /[a-zA-Z]/g }
   };
 
@@ -59,10 +60,11 @@ export class LanguageDetectionService {
       'te-IN': (cleanText.match(LanguageDetectionService.SCRIPT_RANGES.telugu.regex) || []).length,
       'ml-IN': (cleanText.match(LanguageDetectionService.SCRIPT_RANGES.malayalam.regex) || []).length,
       'kn-IN': (cleanText.match(LanguageDetectionService.SCRIPT_RANGES.kannada.regex) || []).length,
+      'hi-IN': (cleanText.match(LanguageDetectionService.SCRIPT_RANGES.hindi.regex) || []).length,
       'en-IN': (cleanText.match(LanguageDetectionService.SCRIPT_RANGES.latin.regex) || []).length
     };
 
-    const totalIndicChars = scriptCounts['ta-IN'] + scriptCounts['te-IN'] + scriptCounts['ml-IN'] + scriptCounts['kn-IN'];
+    const totalIndicChars = scriptCounts['ta-IN'] + scriptCounts['te-IN'] + scriptCounts['ml-IN'] + scriptCounts['kn-IN'] + scriptCounts['hi-IN'];
     const totalChars = totalIndicChars + scriptCounts['en-IN'];
 
     // If Indic script characters are overwhelmingly present
@@ -70,7 +72,7 @@ export class LanguageDetectionService {
       let dominantIndic: SupportedLanguageCode = 'ta-IN';
       let maxIndicCount = -1;
 
-      (['ta-IN', 'te-IN', 'ml-IN', 'kn-IN'] as SupportedLanguageCode[]).forEach((lang) => {
+      (['ta-IN', 'te-IN', 'ml-IN', 'kn-IN', 'hi-IN'] as SupportedLanguageCode[]).forEach((lang) => {
         if (scriptCounts[lang] > maxIndicCount) {
           maxIndicCount = scriptCounts[lang];
           dominantIndic = lang;
@@ -97,6 +99,7 @@ export class LanguageDetectionService {
       'te-IN': 0,
       'ml-IN': 0,
       'kn-IN': 0,
+      'hi-IN': 0,
       'en-IN': 0
     };
     const matchedWordsByLang: Record<SupportedLanguageCode, string[]> = {
@@ -104,6 +107,7 @@ export class LanguageDetectionService {
       'te-IN': [],
       'ml-IN': [],
       'kn-IN': [],
+      'hi-IN': [],
       'en-IN': []
     };
 
@@ -179,7 +183,7 @@ export class LanguageDetectionService {
       };
     }
 
-    // If script is pure Latin and no specific Indic keywords matched
+    // If script is pure Latin and no specific Indic keywords matched (but could be Hindi in Latin script)
     if (scriptCounts['en-IN'] > 3 && totalIndicChars === 0 && !lockedLanguage) {
       return {
         language: 'en-IN',

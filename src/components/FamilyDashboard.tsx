@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useMedora } from '../context/MedoraContext';
 import { LanguageCode } from '../types';
 import { Users, Heart, Pill, Phone, AlertTriangle, UserCheck, Baby, Footprints } from 'lucide-react';

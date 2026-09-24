@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Phone, Plus, Edit2, Trash2, Star, User, Shield } from 'lucide-react';
 import { EmergencyContact, LanguageCode } from '../types';
 import { useMedora } from '../context/MedoraContext';

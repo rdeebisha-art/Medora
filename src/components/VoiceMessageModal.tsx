@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Mic, X, Play, Square, Trash2, Send, Info, CheckCircle2 } from 'lucide-react';
 
 interface VoiceMessageModalProps {

@@ -59,6 +59,11 @@ export const HEALTH_KNOWLEDGE_BASE: Record<HealthcareIntent, LocalizedHealthResp
         primaryText: 'I understand you have a fever. Please stay hydrated with plenty of water and ORS, and get adequate rest.',
         followUpQuestion: 'How many days have you had this fever, and what is your temperature reading?',
         safetyGuidance: 'If the fever persists for more than 3 days or exceeds 102°F, please visit your nearest Primary Health Centre immediately.'
+      },
+      'hi-IN': {
+        primaryText: 'आपको बुखार है, यह समझ गया। खूब पानी और ओ.आर.एस (ORS) पिएं। आराम करें।',
+        followUpQuestion: 'बुखार कितने दिनों से है? तापमान कितना है?',
+        safetyGuidance: 'यदि बुखार 3 दिन से अधिक रहे या 102°F से ऊपर जाए, तो तुरंत नजदीकी प्राथमिक स्वास्थ्य केंद्र जाएं।'
       }
     }
   },
@@ -92,6 +97,11 @@ export const HEALTH_KNOWLEDGE_BASE: Record<HealthcareIntent, LocalizedHealthResp
         primaryText: '⚠️ Difficulty breathing is an urgent medical symptom. Please sit upright in a comfortable position.',
         followUpQuestion: 'Do you also have chest pain or bluish discolouration around lips?',
         safetyGuidance: 'Please call 108 Ambulance immediately or proceed to the nearest emergency healthcare facility.'
+      },
+      'hi-IN': {
+        primaryText: '⚠️ सांस लेने में तकलीफ एक आपातकालीन स्थिति है। घबराए नहीं, सीधे बैठें और गहरी सांस लेने की कोशिश करें।',
+        followUpQuestion: 'क्या छाती में दर्द या होंठ नीले पड़ रहे हैं?',
+        safetyGuidance: 'तुरंत 108 एम्बुलेंस को कॉल करें या नजदीकी सरकारी अस्पताल जाएं।'
       }
     }
   },
@@ -125,6 +135,11 @@ export const HEALTH_KNOWLEDGE_BASE: Record<HealthcareIntent, LocalizedHealthResp
         primaryText: '🚨 Chest pain is a critical medical emergency. Please remain calm, sit upright and avoid physical exertion.',
         followUpQuestion: 'Does the pain radiate to your left arm, jaw, neck, or back?',
         safetyGuidance: 'Call 108 for an emergency ambulance immediately. Do not drive yourself.'
+      },
+      'hi-IN': {
+        primaryText: '🚨 छाती में दर्द एक गंभीर आपातकाल है। कोई भारी काम न करें, शांत बैठें।',
+        followUpQuestion: 'क्या दर्द बाएं हाथ, जबड़े या पीठ में फैल रहा है?',
+        safetyGuidance: 'तुरंत 108 एम्बुलेंस को कॉल करें। स्वयं गाड़ी न चलाएं।'
       }
     }
   },
@@ -158,6 +173,11 @@ export const HEALTH_KNOWLEDGE_BASE: Record<HealthcareIntent, LocalizedHealthResp
         primaryText: 'For cough and cold, drink warm fluids, take steam inhalation and drink ginger tea with honey.',
         followUpQuestion: 'Is it a dry cough or accompanied by phlegm/mucus?',
         safetyGuidance: 'If the cough lasts longer than a week or is accompanied by chest tightness, consult a physician.'
+      },
+      'hi-IN': {
+        primaryText: 'खांसी और जुकाम के लिए गुनगुना पानी पिएं। अदरक की चाय और भाप लेना फायदेमंद है।',
+        followUpQuestion: 'खांसी सूखी है या बलगम के साथ?',
+        safetyGuidance: 'यदि खांसी एक हफ्ते से अधिक रहे तो डॉक्टर से सलाह लें।'
       }
     }
   },
@@ -191,6 +211,11 @@ export const HEALTH_KNOWLEDGE_BASE: Record<HealthcareIntent, LocalizedHealthResp
         primaryText: 'For stomach pain, avoid spicy or oily food. Drink buttermilk, rice gruel or ORS for hydration.',
         followUpQuestion: 'Do you also have loose stools or vomiting?',
         safetyGuidance: 'If the pain is severe and unremitting or accompanied by blood in stool, visit a hospital promptly.'
+      },
+      'hi-IN': {
+        primaryText: 'पेट दर्द के लिए तीखा भोजन न करें। छाछ या गाजी जैसा हल्का भोजन लें।',
+        followUpQuestion: 'क्या उल्टी या दस्त भी हो रहे हैं?',
+        safetyGuidance: 'यदि दर्द बहुत तेज हो या मल में खून आए तो तुरंत अस्पताल जाएं।'
       }
     }
   },
@@ -224,6 +249,11 @@ export const HEALTH_KNOWLEDGE_BASE: Record<HealthcareIntent, LocalizedHealthResp
         primaryText: 'For headache and dizziness, rest in a quiet space and check your blood pressure reading.',
         followUpQuestion: 'Do you experience blurred vision or weakness on one side of your body?',
         safetyGuidance: 'Sudden severe "thunderclap" headache or facial drooping warrants immediate emergency care.'
+      },
+      'hi-IN': {
+        primaryText: 'सिरदर्द और चक्कर के लिए शांत अंधेरे कमरे में आराम करें। ब्लड प्रेशर जांचें।',
+        followUpQuestion: 'क्या नजर धुंधली हो रही है या शरीर के एक तरफ कमजोरी है?',
+        safetyGuidance: 'अचानक तेज सिरदर्द या एक तरफ पक्षघात होने पर तुरंत इमरजेंसी जाएं।'
       }
     }
   },
@@ -257,6 +287,11 @@ export const HEALTH_KNOWLEDGE_BASE: Record<HealthcareIntent, LocalizedHealthResp
         primaryText: 'Please take your prescribed medicines on schedule as directed by your doctor or ASHA worker.',
         followUpQuestion: 'Which specific medicine from your records would you like details about?',
         safetyGuidance: 'Never alter your medicine dosage or discontinue prescribed treatment without medical consultation.'
+      },
+      'hi-IN': {
+        primaryText: 'दवाइयां डॉक्टर या आशा कार्यकर्ता की सलाह अनुसार समय पर लें।',
+        followUpQuestion: 'आप किस दवा के बारे में जानना चाहते हैं?',
+        safetyGuidance: 'डॉक्टर की सलाह के बिना दवा की खुराक न बदलें।'
       }
     }
   },
@@ -290,6 +325,11 @@ export const HEALTH_KNOWLEDGE_BASE: Record<HealthcareIntent, LocalizedHealthResp
         primaryText: 'During pregnancy, take your daily Folic Acid and Iron supplements, eat nutritious meals and stay hydrated.',
         followUpQuestion: 'Which week of pregnancy are you currently in?',
         safetyGuidance: 'Watch for danger signs: heavy bleeding, severe headache, sudden swelling or decreased fetal movement.'
+      },
+      'hi-IN': {
+        primaryText: 'गर्भावस्था में फोलिक एसिड और आयरन की गोलियां नियमित लें। पौष्टिक भोजन और पर्याप्त आराम जरूरी है।',
+        followUpQuestion: 'गर्भ का कितना महीना या हफ्ता चल रहा है?',
+        safetyGuidance: 'अधिक खून बहना, तेज सिरदर्द, या बच्चे की हलचल कम होने पर तुरंत अस्पताल जाएं।'
       }
     }
   },
@@ -323,6 +363,11 @@ export const HEALTH_KNOWLEDGE_BASE: Record<HealthcareIntent, LocalizedHealthResp
         primaryText: 'Exclusive breastfeeding is recommended for the first 6 months. Keep the newborn warm and skin-to-skin.',
         followUpQuestion: 'Is the baby latching and feeding well every 2-3 hours?',
         safetyGuidance: 'Seek urgent care if the baby refuses to feed, has fever >100.4°F, jaundice, or rapid breathing.'
+      },
+      'hi-IN': {
+        primaryText: 'पहले 6 महीने बच्चे को केवल मां का दूध दें। बच्चे को गर्म रखें।',
+        followUpQuestion: 'क्या बच्चा अच्छे से दूध पी रहा है? नाभि सूख रही है?',
+        safetyGuidance: 'बच्चा दूध न पीए, बुखार हो, या पीलिया दिखे तो तुरंत डॉक्टर को दिखाएं।'
       }
     }
   },
@@ -356,6 +401,11 @@ export const HEALTH_KNOWLEDGE_BASE: Record<HealthcareIntent, LocalizedHealthResp
         primaryText: 'Ensure your child receives balanced nutrition, clean water and all scheduled UIP immunizations.',
         followUpQuestion: 'How old is the child and what specific symptoms are they exhibiting?',
         safetyGuidance: 'Consult a pediatrician if the child shows signs of dehydration, prolonged fever, or lethargy.'
+      },
+      'hi-IN': {
+        primaryText: 'बच्चों को संतुलित पौष्टिक आहार, स्वच्छ जल और समय पर टीकाकरण जरूरी है।',
+        followUpQuestion: 'बच्चे की उम्र क्या है? क्या समस्या है?',
+        safetyGuidance: 'लगातार उल्टी, निर्जलीकरण या तेज बुखार होने पर डॉक्टर से संपर्क करें।'
       }
     }
   },
@@ -389,6 +439,11 @@ export const HEALTH_KNOWLEDGE_BASE: Record<HealthcareIntent, LocalizedHealthResp
         primaryText: 'Elderly individuals should monitor blood pressure and sugar levels regularly and ensure fall-prevention measures at home.',
         followUpQuestion: 'What is their age and have they taken their routine prescribed medications today?',
         safetyGuidance: 'Seek emergency care for sudden weakness, confusion, or loss of mobility.'
+      },
+      'hi-IN': {
+        primaryText: 'बुजुर्गों को ब्लड प्रेशर और शुगर नियमित जांचना चाहिए। घर में गिरने से बचें।',
+        followUpQuestion: 'उनकी उम्र क्या है? क्या नियमित दवाइयां ले रहे हैं?',
+        safetyGuidance: 'अचानक बेहोशी या पक्षघात जैसे लक्षण दिखें तो तुरंत इमरजेंसी जाएं।'
       }
     }
   },
@@ -422,6 +477,11 @@ export const HEALTH_KNOWLEDGE_BASE: Record<HealthcareIntent, LocalizedHealthResp
         primaryText: 'For diabetes management, maintain a low-glycemic diet, engage in 30 minutes of walking daily, and adhere to medication.',
         followUpQuestion: 'What was your most recent fasting or post-meal blood sugar reading?',
         safetyGuidance: 'Beware of hypoglycemia (sugar < 70 mg/dL with sweating/tremors) or severe hyperglycemia (>300 mg/dL).'
+      },
+      'hi-IN': {
+        primaryText: 'मधुमेह के लिए कम कार्बोहाइड्रेट वाला भोजन, रोज टहलना और समय पर दवा जरूरी है।',
+        followUpQuestion: 'आखिरी बार जांचा गया ब्लड शुगर कितना था?',
+        safetyGuidance: 'शुगर 70 से नीचे या 300 से ऊपर होने पर तुरंत डॉक्टर से संपर्क करें।'
       }
     }
   },
@@ -455,6 +515,11 @@ export const HEALTH_KNOWLEDGE_BASE: Record<HealthcareIntent, LocalizedHealthResp
         primaryText: 'A balanced rural diet includes green leafy vegetables, lentils, eggs, local millets and adequate clean water.',
         followUpQuestion: 'Who requires this nutritional guidance (child, pregnant mother, or adult)?',
         safetyGuidance: 'To combat anemia, consume iron-rich foods like moringa leaves, jaggery, dates and pulses.'
+      },
+      'hi-IN': {
+        primaryText: 'स्वस्थ शरीर के लिए हरी पत्तेदार सब्जियां, दाल, अंडा और पर्याप्त स्वच्छ जल जरूरी है।',
+        followUpQuestion: 'किसके लिए पोषण सलाह चाहिए (बच्चा / गर्भवती / वयस्क)?',
+        safetyGuidance: 'एनीमिया से बचने के लिए मूंगा की पत्तियां, गुड़, खजूर जैसे आयरन युक्त आहार लें।'
       }
     }
   },
@@ -488,6 +553,11 @@ export const HEALTH_KNOWLEDGE_BASE: Record<HealthcareIntent, LocalizedHealthResp
         primaryText: 'All essential vaccines under the Universal Immunization Programme (UIP) are provided free of cost at Govt PHCs.',
         followUpQuestion: 'What is the child\'s age and which vaccines have been administered so far?',
         safetyGuidance: 'Birth doses of BCG, OPV-0, and Hepatitis B must be given immediately after birth.'
+      },
+      'hi-IN': {
+        primaryText: 'सरकार के यूआईपी (UIP) कार्यक्रम के तहत सभी टीके सरकारी स्वास्थ्य केंद्रों में मुफ्त हैं।',
+        followUpQuestion: 'बच्चे की उम्र क्या है? अब तक कौन से टीके लगे हैं?',
+        safetyGuidance: 'जन्म के तुरंत बाद बीसीजी, पोलियो की बूंदें और हेपेटाइटिस बी टीका दिलाएं।'
       }
     }
   },
@@ -521,6 +591,11 @@ export const HEALTH_KNOWLEDGE_BASE: Record<HealthcareIntent, LocalizedHealthResp
         primaryText: '🚨 This appears to be a medical emergency. Please call 108 Ambulance immediately or rush to the nearest hospital.',
         followUpQuestion: 'Is the person conscious, responsive and breathing normally?',
         safetyGuidance: 'Do not administer oral fluids to an unconscious person. Keep the airway clear and stay calm.'
+      },
+      'hi-IN': {
+        primaryText: '🚨 यह एक आपातकालीन स्थिति प्रतीत होती है। तुरंत 108 एम्बुलेंस को कॉल करें या नजदीकी अस्पताल जाएं।',
+        followUpQuestion: 'क्या व्यक्ति होश में है? सांस ले रहा है?',
+        safetyGuidance: 'बेहोश व्यक्ति को खाना या पानी न दें। शांत रखें।'
       }
     }
   },
@@ -554,6 +629,11 @@ export const HEALTH_KNOWLEDGE_BASE: Record<HealthcareIntent, LocalizedHealthResp
         primaryText: 'Hello, I have noted your health query. Please ensure adequate rest, hydration and wholesome nutrition.',
         followUpQuestion: 'Could you describe your specific symptoms or health concern in a bit more detail?',
         safetyGuidance: 'If mild symptoms persist for more than a couple of days, please consult your local ASHA worker or PHC doctor.'
+      },
+      'hi-IN': {
+        primaryText: 'नमस्ते, आपकी स्वास्थ्य जानकारी नोट की गई। पर्याप्त आराम, स्वच्छ जल और पौष्टिक भोजन लें।',
+        followUpQuestion: 'कृपया अपने लक्षण या स्वास्थ्य समस्या के बारे में विस्तार से बताएं?',
+        safetyGuidance: 'यदि लक्षण कुछ दिनों तक रहें तो अपने गांव की आशा कार्यकर्ता या डॉक्टर से जांच कराएं।'
       }
     }
   }

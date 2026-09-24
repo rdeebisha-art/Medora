@@ -8,11 +8,7 @@ import HealthScoreCard from '../components/HealthScoreCard';
 import CareGapAlert from '../components/CareGapAlert';
 import DemoDataBadge from '../components/DemoDataBadge';
 import SpeakToMedoraCard from '../components/SpeakToMedoraCard';
-import {
-  AlertTriangle, Heart, Users, Pill, FileText, Activity, Shield,
-  Camera, Image, Stethoscope, Bot, Building2, Syringe, BookOpen, Landmark,
-  Radio, Languages
-} from 'lucide-react';
+import { TriangleAlert as AlertTriangle, Heart, Users, Pill, FileText, Activity, Shield, Camera, Image, Stethoscope, Bot, Building as Building2, Syringe, BookOpen, Landmark, Radio, Languages } from 'lucide-react';
 
 export default function DashboardPage() {
   const { t } = useTranslation();
@@ -185,12 +181,101 @@ export default function DashboardPage() {
         </div>
 
         {/* ========================================================= */}
-        {/* 3. SPEAK TO MEDORA (Direct on front page)                 */}
+        {/* 3. STAY CONNECTED — RURAL COMMUNICATION SECTION           */}
+        {/* ========================================================= */}
+        <div className="bg-slate-900 text-white rounded-3xl p-5 shadow-lg border border-slate-800 space-y-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <Radio size={16} className="text-teal-400" />
+              <h2 className="font-extrabold text-sm text-white">Stay Connected — Even With Limited Internet</h2>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Simulated rural telecom integrations demonstrating offline and low-bandwidth capabilities.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            <Link
+              to="/ai"
+              className="bg-slate-800 hover:bg-slate-700/90 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between transition-all"
+            >
+              <div>
+                <span className="text-xl mb-1 block">🎙️</span>
+                <div className="font-bold text-xs text-white">Voice Communication</div>
+                <p className="text-[10px] text-slate-400 mt-0.5">Natural voice in 6 languages</p>
+              </div>
+              <span className="text-[9px] text-teal-400 font-bold mt-2">Active</span>
+            </Link>
+
+            <Link
+              to="/sms"
+              className="bg-slate-800 hover:bg-slate-700/90 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between transition-all"
+            >
+              <div>
+                <span className="text-xl mb-1 block">📱</span>
+                <div className="font-bold text-xs text-white">SMS Outbox</div>
+                <p className="text-[10px] text-slate-400 mt-0.5">Local queue for low coverage</p>
+              </div>
+              <span className="text-[9px] text-amber-400 font-bold mt-2">DEMO SIMULATION</span>
+            </Link>
+
+            <Link
+              to="/ussd"
+              className="bg-slate-800 hover:bg-slate-700/90 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between transition-all"
+            >
+              <div>
+                <span className="text-xl mb-1 block">🔢</span>
+                <div className="font-bold text-xs text-white">Basic Phone / USSD</div>
+                <p className="text-[10px] text-slate-400 mt-0.5">*141*9999# text menu</p>
+              </div>
+              <span className="text-[9px] text-amber-400 font-bold mt-2">DEMO SIMULATION</span>
+            </Link>
+
+            <Link
+              to="/ivr"
+              className="bg-slate-800 hover:bg-slate-700/90 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between transition-all"
+            >
+              <div>
+                <span className="text-xl mb-1 block">☎️</span>
+                <div className="font-bold text-xs text-white">Telephone Simulation</div>
+                <p className="text-[10px] text-slate-400 mt-0.5">Future toll-free voice engine</p>
+              </div>
+              <span className="text-[9px] text-amber-400 font-bold mt-2">DEMO SIMULATION</span>
+            </Link>
+
+            <Link
+              to="/sync"
+              className="bg-slate-800 hover:bg-slate-700/90 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between transition-all"
+            >
+              <div>
+                <span className="text-xl mb-1 block">🔄</span>
+                <div className="font-bold text-xs text-white">Sync Center</div>
+                <p className="text-[10px] text-slate-400 mt-0.5">Inspect local IndexedDB data</p>
+              </div>
+              <span className="text-[9px] text-teal-400 font-bold mt-2">Active</span>
+            </Link>
+
+            <Link
+              to="/village"
+              className="bg-slate-800 hover:bg-slate-700/90 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between transition-all"
+            >
+              <div>
+                <span className="text-xl mb-1 block">🏘️</span>
+                <div className="font-bold text-xs text-white">Village Dashboard</div>
+                <p className="text-[10px] text-slate-400 mt-0.5">Community health analytics</p>
+              </div>
+              <span className="text-[9px] text-teal-400 font-bold mt-2">Active</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* ========================================================= */}
+        {/* 4. SPEAK TO MEDORA (Direct on front page)                 */}
         {/* ========================================================= */}
         <SpeakToMedoraCard />
 
         {/* ========================================================= */}
-        {/* 4. QUICK ACTIONS ROW                                      */}
+        {/* 5. QUICK ACTIONS ROW                                      */}
         {/* ========================================================= */}
         <div>
           <h2 className="text-xs font-black text-slate-500 uppercase tracking-wider mb-2.5">⚡ Quick Actions</h2>
@@ -378,95 +463,6 @@ export default function DashboardPage() {
                 <span className="text-[10px] font-extrabold mt-3 block">View Care Hub →</span>
               </Link>
             ))}
-          </div>
-        </div>
-
-        {/* ========================================================= */}
-        {/* 8. RURAL COMMUNICATION SECTION                            */}
-        {/* ========================================================= */}
-        <div className="bg-slate-900 text-white rounded-3xl p-5 shadow-lg border border-slate-800 space-y-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <Radio size={16} className="text-teal-400" />
-              <h2 className="font-extrabold text-sm text-white">Stay Connected — Even With Limited Internet</h2>
-            </div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              Simulated rural telecom integrations demonstrating offline and low-bandwidth capabilities.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-            <Link
-              to="/ai"
-              className="bg-slate-800 hover:bg-slate-700/90 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between transition-all"
-            >
-              <div>
-                <span className="text-xl mb-1 block">🎙️</span>
-                <div className="font-bold text-xs text-white">Voice Communication</div>
-                <p className="text-[10px] text-slate-400 mt-0.5">Natural voice in 5 languages</p>
-              </div>
-              <span className="text-[9px] text-teal-400 font-bold mt-2">Active</span>
-            </Link>
-
-            <Link
-              to="/sms"
-              className="bg-slate-800 hover:bg-slate-700/90 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between transition-all"
-            >
-              <div>
-                <span className="text-xl mb-1 block">📱</span>
-                <div className="font-bold text-xs text-white">SMS Outbox</div>
-                <p className="text-[10px] text-slate-400 mt-0.5">Local queue for low coverage</p>
-              </div>
-              <span className="text-[9px] text-amber-400 font-bold mt-2">DEMO SIMULATION</span>
-            </Link>
-
-            <Link
-              to="/ussd"
-              className="bg-slate-800 hover:bg-slate-700/90 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between transition-all"
-            >
-              <div>
-                <span className="text-xl mb-1 block">🔢</span>
-                <div className="font-bold text-xs text-white">Basic Phone / USSD</div>
-                <p className="text-[10px] text-slate-400 mt-0.5">*141*9999# text menu</p>
-              </div>
-              <span className="text-[9px] text-amber-400 font-bold mt-2">DEMO SIMULATION</span>
-            </Link>
-
-            <Link
-              to="/ivr"
-              className="bg-slate-800 hover:bg-slate-700/90 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between transition-all"
-            >
-              <div>
-                <span className="text-xl mb-1 block">☎️</span>
-                <div className="font-bold text-xs text-white">Telephone Simulation</div>
-                <p className="text-[10px] text-slate-400 mt-0.5">Future toll-free voice engine</p>
-              </div>
-              <span className="text-[9px] text-amber-400 font-bold mt-2">DEMO SIMULATION</span>
-            </Link>
-
-            <Link
-              to="/sync"
-              className="bg-slate-800 hover:bg-slate-700/90 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between transition-all"
-            >
-              <div>
-                <span className="text-xl mb-1 block">🔄</span>
-                <div className="font-bold text-xs text-white">Sync Center</div>
-                <p className="text-[10px] text-slate-400 mt-0.5">Inspect local IndexedDB data</p>
-              </div>
-              <span className="text-[9px] text-teal-400 font-bold mt-2">Active</span>
-            </Link>
-
-            <Link
-              to="/village"
-              className="bg-slate-800 hover:bg-slate-700/90 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between transition-all"
-            >
-              <div>
-                <span className="text-xl mb-1 block">🏘️</span>
-                <div className="font-bold text-xs text-white">Village Dashboard</div>
-                <p className="text-[10px] text-slate-400 mt-0.5">Community health analytics</p>
-              </div>
-              <span className="text-[9px] text-teal-400 font-bold mt-2">Active</span>
-            </Link>
           </div>
         </div>
 
