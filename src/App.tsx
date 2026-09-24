@@ -39,6 +39,8 @@ import FaqPage from './pages/FaqPage';
 import HelpPage from './pages/HelpPage';
 import LanguageBridgePage from './pages/LanguageBridgePage';
 
+import MedicalHospitalBackground from './components/layout/MedicalHospitalBackground';
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAppStore();
   if (!currentUser) return <Navigate to="/login" replace />;
@@ -47,7 +49,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <Routes>
+    <MedicalHospitalBackground>
+      <Routes>
       {/* Public routes */}
       <Route path="/" element={<Navigate to="/welcome" replace />} />
       <Route path="/welcome" element={<WelcomePage />} />
@@ -91,5 +94,6 @@ export default function App() {
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/welcome" replace />} />
     </Routes>
+  </MedicalHospitalBackground>
   );
 }

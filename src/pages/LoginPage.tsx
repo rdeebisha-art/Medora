@@ -70,18 +70,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0F766E] via-[#0D5F58] to-[#042F2E] flex flex-col justify-between overflow-x-hidden">
-      <div className="flex items-center justify-center pt-8 pb-4 text-white px-4">
+    <div className="min-h-screen bg-transparent flex flex-col justify-between py-6 px-4 overflow-x-hidden">
+      <div className="flex items-center justify-center pt-4 pb-3 px-4">
         <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 text-3xl flex items-center justify-center mx-auto mb-2 shadow-inner">
+          <div className="w-16 h-16 rounded-2xl bg-white/90 backdrop-blur-md border border-[#0F766E]/30 text-3xl flex items-center justify-center mx-auto mb-2 shadow-lg">
             🏥
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-wide">MEDORA</h1>
-          <p className="text-xs sm:text-sm text-teal-100 font-medium">{t('app.tagline')}</p>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-wide text-[#0F766E] drop-shadow-xs">MEDORA</h1>
+          <p className="text-xs sm:text-sm text-[#0F172A] font-semibold bg-white/70 backdrop-blur-xs px-3 py-0.5 rounded-full inline-block mt-0.5">{t('app.tagline')}</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-t-3xl flex-1 px-4 sm:px-6 pt-6 pb-8 shadow-2xl max-w-lg mx-auto w-full min-w-0 break-words">
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-[#E2E8F0] px-5 sm:px-8 py-6 sm:py-8 shadow-2xl max-w-lg mx-auto w-full min-w-0 break-words my-2">
         {!selectedRole ? (
           <>
             <h2 className="text-xl font-bold text-slate-800 mb-1 text-center">{t('auth.login')}</h2>

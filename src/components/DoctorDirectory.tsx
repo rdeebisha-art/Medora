@@ -2,6 +2,12 @@ import React from 'react';
 import { Phone, User, Calendar, PlusCircle, CheckCircle, Video, MapPin, Award, Clock } from 'lucide-react';
 import { Doctor, LanguageCode } from '../types';
 import { TRANSLATIONS } from '../i18n/translations';
+import {
+  SPECIALTY_TRANSLATIONS,
+  STATUS_TRANSLATIONS,
+  LANGUAGE_DISPLAY_NAMES,
+  CONSULTATION_TYPE_TRANSLATIONS
+} from '../data/doctorsDataset';
 
 interface DoctorDirectoryProps {
   doctors: Doctor[];
@@ -83,7 +89,7 @@ export const DoctorDirectory: React.FC<DoctorDirectoryProps> = ({
                     <span className={`w-2 h-2 rounded-full ${
                       doctor.availabilityStatus.includes('Today') ? 'bg-emerald-500' : 'bg-blue-500'
                     }`} />
-                    {doctor.availabilityStatus}
+                    {STATUS_TRANSLATIONS[doctor.availabilityStatus]?.[currentLang] || doctor.availabilityStatus}
                   </span>
                 </div>
 
@@ -99,7 +105,7 @@ export const DoctorDirectory: React.FC<DoctorDirectoryProps> = ({
                       {doctor.name}
                     </h3>
                     <p className="text-xs sm:text-sm font-bold text-emerald-700 mt-0.5">
-                      {doctor.specialization}
+                      {SPECIALTY_TRANSLATIONS[doctor.specialization]?.[currentLang] || doctor.specialization}
                     </p>
                     <button
                       onClick={() => onViewHospitalById(doctor.hospitalId)}
@@ -110,7 +116,7 @@ export const DoctorDirectory: React.FC<DoctorDirectoryProps> = ({
                     <div className="flex items-center gap-3 text-xs text-slate-500 mt-1.5">
                       <span className="flex items-center gap-1">
                         <Award className="w-3.5 h-3.5 text-amber-500" />
-                        {doctor.experienceYears} yrs exp
+                        {doctor.experienceYears} {t.experienceYears || 'yrs exp'}
                       </span>
                       <span className="flex items-center gap-1">
                         <MapPin className="w-3.5 h-3.5 text-slate-400" />
@@ -125,7 +131,7 @@ export const DoctorDirectory: React.FC<DoctorDirectoryProps> = ({
                   <div className="flex items-center justify-between text-slate-600">
                     <span className="font-medium text-slate-500">{t.languagesSpoken}:</span>
                     <span className="font-semibold text-slate-800">
-                      {doctor.languages.join(', ')}
+                      {doctor.languages.map(l => LANGUAGE_DISPLAY_NAMES[l]?.[currentLang] || l).join(', ')}
                     </span>
                   </div>
 
@@ -133,7 +139,7 @@ export const DoctorDirectory: React.FC<DoctorDirectoryProps> = ({
                     <span className="font-medium text-slate-500">{t.consultationType}:</span>
                     <span className="inline-flex items-center gap-1 font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded">
                       <Video className="w-3 h-3 text-emerald-600" />
-                      {doctor.consultationType}
+                      {CONSULTATION_TYPE_TRANSLATIONS[doctor.consultationType]?.[currentLang] || doctor.consultationType}
                     </span>
                   </div>
 

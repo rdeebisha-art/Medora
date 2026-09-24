@@ -91,7 +91,7 @@ export default function EmergencyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-transparent">
       {/* Header */}
       <div className="bg-[#DC2626] text-white px-4 py-4 sticky top-0 z-10 shadow-sm">
         <div className="flex items-center justify-between max-w-4xl mx-auto">

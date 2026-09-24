@@ -65,7 +65,7 @@ export default function Layout({ children }: LayoutProps) {
   const showBack = location.pathname !== '/dashboard';
 
   return (
-    <div className={`min-h-screen flex flex-col bg-[#F8FAFC] text-[#0F172A] overflow-x-hidden ${is2GMode ? 'text-base' : ''} ${isSimpleMode ? 'text-lg' : ''}`}>
+    <div className={`min-h-screen flex flex-col bg-transparent text-[#0F172A] overflow-x-hidden ${is2GMode ? 'text-base' : ''} ${isSimpleMode ? 'text-lg' : ''}`}>
       {isOffline && (
         <div className="bg-[#D97706] text-white text-center py-1.5 px-4 text-xs font-bold sticky top-0 z-50 flex items-center justify-center gap-1.5 shadow-sm">
           <WifiOff size={13} />

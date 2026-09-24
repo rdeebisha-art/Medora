@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import { X, Phone, Calendar, Building2, MapPin, Award, CheckCircle, Video, Clock, DollarSign, Send, Check } from 'lucide-react';
 import { Doctor, LanguageCode } from '../types';
 import { TRANSLATIONS } from '../i18n/translations';
+import {
+  SPECIALTY_TRANSLATIONS,
+  STATUS_TRANSLATIONS,
+  LANGUAGE_DISPLAY_NAMES,
+  CONSULTATION_TYPE_TRANSLATIONS
+} from '../data/doctorsDataset';
 
 interface DoctorProfileModalProps {
   doctor: Doctor | null;
@@ -73,12 +79,12 @@ export const DoctorProfileModal: React.FC<DoctorProfileModalProps> = ({
                   {doctor.name}
                 </h3>
                 <span className="text-xs font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">
-                  {doctor.availabilityStatus}
+                  {STATUS_TRANSLATIONS[doctor.availabilityStatus]?.[currentLang] || doctor.availabilityStatus}
                 </span>
               </div>
 
               <p className="text-sm font-bold text-emerald-700 mt-1">
-                {doctor.specialization} • {doctor.education}
+                {SPECIALTY_TRANSLATIONS[doctor.specialization]?.[currentLang] || doctor.specialization} • {doctor.education}
               </p>
 
               <button
@@ -102,14 +108,14 @@ export const DoctorProfileModal: React.FC<DoctorProfileModalProps> = ({
               <span className="text-slate-400 font-medium block">{t.experienceYears}</span>
               <span className="font-extrabold text-slate-800 text-sm flex items-center gap-1 mt-0.5">
                 <Award className="w-3.5 h-3.5 text-amber-500" />
-                {doctor.experienceYears} Years
+                {doctor.experienceYears} {t.experienceYears || 'Years'}
               </span>
             </div>
 
             <div>
               <span className="text-slate-400 font-medium block">{t.languagesSpoken}</span>
               <span className="font-semibold text-slate-800 truncate block mt-0.5">
-                {doctor.languages.join(', ')}
+                {doctor.languages.map(l => LANGUAGE_DISPLAY_NAMES[l]?.[currentLang] || l).join(', ')}
               </span>
             </div>
 
@@ -117,7 +123,7 @@ export const DoctorProfileModal: React.FC<DoctorProfileModalProps> = ({
               <span className="text-slate-400 font-medium block">{t.consultationType}</span>
               <span className="font-semibold text-slate-800 flex items-center gap-1 mt-0.5">
                 <Video className="w-3.5 h-3.5 text-emerald-600" />
-                {doctor.consultationType}
+                {CONSULTATION_TYPE_TRANSLATIONS[doctor.consultationType]?.[currentLang] || doctor.consultationType}
               </span>
             </div>
 

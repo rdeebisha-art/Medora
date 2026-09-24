@@ -8,6 +8,7 @@ import HealthScoreCard from '../components/HealthScoreCard';
 import CareGapAlert from '../components/CareGapAlert';
 import DemoDataBadge from '../components/DemoDataBadge';
 import SpeakToMedoraCard from '../components/SpeakToMedoraCard';
+import MedoraHealthcareTeam from '../components/MedoraHealthcareTeam';
 import {
   TriangleAlert as AlertTriangle,
   Heart,
@@ -804,6 +805,11 @@ export default function DashboardPage() {
             ))}
           </div>
         </div>
+
+        {/* ========================================================= */}
+        {/* MEDORA HEALTHCARE TEAM (10 Dedicated Rural Doctors)       */}
+        {/* ========================================================= */}
+        <MedoraHealthcareTeam />
 
         {/* ========================================================= */}
         {/* 9. RECENT HEALTH ACTIVITY (100% Localized Database Data)  */}

@@ -9,7 +9,17 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const genAI = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
+const geminiKey = process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
+let genAI: GoogleGenAI | null = null;
+try {
+  if (geminiKey) {
+    genAI = new GoogleGenAI({ apiKey: geminiKey });
+  } else {
+    genAI = new GoogleGenAI({});
+  }
+} catch {
+  genAI = null;
+}
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;

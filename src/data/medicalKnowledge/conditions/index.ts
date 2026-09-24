@@ -1,10 +1,16 @@
 import { MedicalCondition } from '../types';
 import { MEDICAL_CONDITIONS } from './conditionList';
 import { MORE_MEDICAL_CONDITIONS } from './moreConditions';
+import { RURAL_CONDITIONS } from './ruralConditions';
+import { RURAL_CONDITIONS_TWO } from './ruralConditionsTwo';
+import { RURAL_CONDITIONS_THREE } from './ruralConditionsThree';
 
 export const ALL_CONDITIONS: Record<string, MedicalCondition> = {
   ...MEDICAL_CONDITIONS,
-  ...MORE_MEDICAL_CONDITIONS
+  ...MORE_MEDICAL_CONDITIONS,
+  ...RURAL_CONDITIONS,
+  ...RURAL_CONDITIONS_TWO,
+  ...RURAL_CONDITIONS_THREE
 };
 
 export function getConditionById(id: string): MedicalCondition | undefined {

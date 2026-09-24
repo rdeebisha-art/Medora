@@ -68,7 +68,7 @@ export default function DoctorSummaryPage() {
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
               {/* Header */}
               <div className="bg-sky-600 text-white px-4 py-3">
-                <div className="font-bold text-lg">MEDORA Doctor Handoff Summary</div>
+                <div className="font-bold text-lg">{t('doctorSummary.title')}</div>
                 <div className="text-xs opacity-80">{t('doctorSummary.disclaimer')}</div>
                 <div className="text-xs opacity-70 mt-0.5">{t('doctorSummary.createdAt')}: {summary.createdAt?.slice(0, 16)}</div>
               </div>
