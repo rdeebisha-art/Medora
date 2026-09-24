@@ -19,19 +19,57 @@ export class LanguageDetectionService {
     latin: { lang: 'en-IN', regex: /[a-zA-Z]/g }
   };
 
+  private static TRANSLITERATED_INDIC: Record<SupportedLanguageCode, string[]> = {
+    'ta-IN': [
+      'vanakkam', 'kaichal', 'kaachal', 'juram', 'thalavali', 'thala vali', 'vayiru vali',
+      'udambu vali', 'marunthu', 'mathirai', 'marundhu', 'vali', 'sothanai', 'rathathazhutham',
+      'seeni', 'asathiya', 'maruthuvar', 'udambu', 'erichal', 'kashtam', 'udane', 'udhavi'
+    ],
+    'te-IN': [
+      'namaskaram', 'jwaram', 'mandulu', 'mandhu', 'thala noppi', 'thalanoppi', 'kadupu noppi',
+      'ontlo baaledu', 'ontlo nallaga', 'raktapotu', 'sugaru', 'vaidhyudu', 'baadha', 'kadupu',
+      'cheppandi', 'sahayam', 'aushadham'
+    ],
+    'ml-IN': [
+      'namaskaram', 'pani', 'thala vedhana', 'thalavedhana', 'vayaru vedhana', 'marunnu',
+      'gulika', 'rakthasamardham', 'chumma', 'sheenam', 'shwasamuttal', 'vaidyan', 'vedhana',
+      'sahayam', 'ashupathri'
+    ],
+    'kn-IN': [
+      'namaskara', 'jwara', 'aushadhi', 'mathre', 'thale novu', 'thalenovu', 'hotte novu',
+      'rakthadottada', 'kemmu', 'susthu', 'vaidyaru', 'aarogya', 'sahaya', 'aaspagre'
+    ],
+    'hi-IN': [
+      'namaste', 'namaskar', 'bukhar', 'dard', 'sar dard', 'sardard', 'pet dard', 'petdard',
+      'sardi', 'jukaam', 'khansi', 'davai', 'dawa', 'goli', 'raktachaap', 'kamzori', 'ilaj',
+      'sehat', 'madad', 'aspataal'
+    ],
+    'en-IN': [
+      'hello', 'hi', 'fever', 'headache', 'pain', 'cough', 'cold', 'stomach', 'medicine',
+      'doctor', 'hospital', 'blood pressure', 'sugar', 'emergency', 'help', 'chest', 'vomiting',
+      'i have', 'i feel', 'prescription', 'appointment'
+    ]
+  };
+
   /**
    * Detects the language from input text using multiple independent signals with strict language locking.
    * @param text The input utterance or transcript
    * @param lockedLanguage Optional currently locked language in conversation state
+   * @param preferredLanguage The current application/active language context (never blindly default to English)
    */
-  public detectLanguage(text: string, lockedLanguage?: SupportedLanguageCode): LanguageDetectionResult {
+  public detectLanguage(
+    text: string,
+    lockedLanguage?: SupportedLanguageCode,
+    preferredLanguage: SupportedLanguageCode = 'en-IN'
+  ): LanguageDetectionResult {
     const cleanText = (text || '').trim().toLowerCase();
+    const fallback = lockedLanguage || preferredLanguage || 'en-IN';
+
     if (!cleanText) {
-      const fallback = lockedLanguage || 'en-IN';
       return {
         language: fallback,
-        confidence: 0.5,
-        confidenceLevel: 'uncertain',
+        confidence: 0.85,
+        confidenceLevel: 'high',
         method: 'locked',
         detectedScripts: {},
         matchedKeywords: []
@@ -67,9 +105,9 @@ export class LanguageDetectionService {
     const totalIndicChars = scriptCounts['ta-IN'] + scriptCounts['te-IN'] + scriptCounts['ml-IN'] + scriptCounts['kn-IN'] + scriptCounts['hi-IN'];
     const totalChars = totalIndicChars + scriptCounts['en-IN'];
 
-    // If Indic script characters are overwhelmingly present
+    // If Indic script characters are present
     if (totalIndicChars > 0) {
-      let dominantIndic: SupportedLanguageCode = 'ta-IN';
+      let dominantIndic: SupportedLanguageCode = preferredLanguage !== 'en-IN' ? preferredLanguage : 'ta-IN';
       let maxIndicCount = -1;
 
       (['ta-IN', 'te-IN', 'ml-IN', 'kn-IN', 'hi-IN'] as SupportedLanguageCode[]).forEach((lang) => {
@@ -80,14 +118,13 @@ export class LanguageDetectionService {
       });
 
       if (maxIndicCount > 0) {
-        // If locked language is set and user types in a DIFFERENT Indic script with significant characters
-        if (!lockedLanguage || dominantIndic === lockedLanguage || maxIndicCount >= 4) {
+        if (!lockedLanguage || dominantIndic === lockedLanguage || maxIndicCount >= 3) {
           const ratio = maxIndicCount / Math.max(1, totalChars);
-          const confidence = Math.min(0.98, 0.70 + ratio * 0.28);
+          const confidence = Math.min(0.99, 0.80 + ratio * 0.19);
           return {
             language: dominantIndic,
             confidence,
-            confidenceLevel: confidence >= 0.85 ? 'high' : 'medium',
+            confidenceLevel: 'high',
             method: 'script',
             detectedScripts: scriptCounts,
             matchedKeywords: []
@@ -96,10 +133,25 @@ export class LanguageDetectionService {
       }
     }
 
-    // 3. STRICT LANGUAGE LOCKING:
-    // If a session already has a locked language, preserve it against loanwords or brief utterances
+    // 3. Check transliterated Indic phonetics in Latin alphabet
+    for (const [langCode, phrases] of Object.entries(LanguageDetectionService.TRANSLITERATED_INDIC) as [SupportedLanguageCode, string[]][]) {
+      if (langCode === 'en-IN') continue;
+      for (const phrase of phrases) {
+        if (cleanText.includes(phrase)) {
+          return {
+            language: langCode,
+            confidence: 0.90,
+            confidenceLevel: 'high',
+            method: 'keywords',
+            detectedScripts: scriptCounts,
+            matchedKeywords: [phrase]
+          };
+        }
+      }
+    }
+
+    // 4. STRICT LANGUAGE LOCKING:
     if (lockedLanguage) {
-      // Check if text has any keywords from the locked language dictionary
       const lockedDict = ALL_DICTIONARIES[lockedLanguage];
       const matchedLocked: string[] = [];
       if (lockedDict) {
@@ -125,7 +177,7 @@ export class LanguageDetectionService {
       };
     }
 
-    // 4. Keyword / Vocabulary matching against local healthcare dictionaries (no locked language yet)
+    // 5. Keyword / Vocabulary matching against local healthcare dictionaries
     const langScores: Record<SupportedLanguageCode, number> = {
       'ta-IN': 0,
       'te-IN': 0,
@@ -143,11 +195,9 @@ export class LanguageDetectionService {
       'en-IN': []
     };
 
-    // Tokenize text into words
     const tokens = cleanText.split(/[\s,?.!;:()"]+/).filter((t) => t.length > 1);
 
     for (const [langCode, dict] of Object.entries(ALL_DICTIONARIES) as [SupportedLanguageCode, any][]) {
-      // Check common words
       dict.commonWords.forEach((word: string) => {
         const wLower = word.toLowerCase();
         if (tokens.includes(wLower) || cleanText.includes(wLower)) {
@@ -156,7 +206,6 @@ export class LanguageDetectionService {
         }
       });
 
-      // Check healthcare vocabulary
       Object.values(dict.healthcareTerms).forEach((terms: any) => {
         if (Array.isArray(terms)) {
           terms.forEach((term: string) => {
@@ -170,8 +219,7 @@ export class LanguageDetectionService {
       });
     }
 
-    // Determine highest scoring language
-    let bestLang: SupportedLanguageCode = 'en-IN';
+    let bestLang: SupportedLanguageCode = fallback;
     let highestScore = 0;
 
     for (const [code, score] of Object.entries(langScores) as [SupportedLanguageCode, number][]) {
@@ -181,7 +229,6 @@ export class LanguageDetectionService {
       }
     }
 
-    // Calculate final confidence
     if (highestScore >= 6) {
       return {
         language: bestLang,
@@ -194,7 +241,7 @@ export class LanguageDetectionService {
     } else if (highestScore >= 2) {
       return {
         language: bestLang,
-        confidence: 0.75,
+        confidence: 0.78,
         confidenceLevel: 'medium',
         method: 'keywords',
         detectedScripts: scriptCounts,
@@ -202,23 +249,38 @@ export class LanguageDetectionService {
       };
     }
 
-    // If script is pure Latin and no specific Indic keywords matched
-    if (scriptCounts['en-IN'] > 3 && totalIndicChars === 0) {
+    // 6. Explicit English validation: Only claim English if unambiguous English tokens are present
+    const englishTokens = ['the', 'this', 'that', 'with', 'from', 'have', 'feel', 'pain', 'headache', 'fever', 'doctor', 'medicine', 'hospital', 'help', 'emergency'];
+    const matchedEnglish = tokens.filter((tok) => englishTokens.includes(tok));
+
+    if (matchedEnglish.length >= 1 && preferredLanguage === 'en-IN') {
       return {
         language: 'en-IN',
-        confidence: 0.88,
+        confidence: 0.90,
         confidenceLevel: 'high',
-        method: 'script',
+        method: 'combined',
+        detectedScripts: scriptCounts,
+        matchedKeywords: matchedEnglish
+      };
+    }
+
+    // 7. Context preservation: If user is in an Indic session/UI, preserve their language
+    if (preferredLanguage !== 'en-IN') {
+      return {
+        language: preferredLanguage,
+        confidence: 0.85,
+        confidenceLevel: 'high',
+        method: 'combined',
         detectedScripts: scriptCounts,
         matchedKeywords: []
       };
     }
 
-    // Fallback to English or uncertain
+    // Fallback to English only when application is explicitly in English
     return {
       language: 'en-IN',
-      confidence: 0.50,
-      confidenceLevel: 'uncertain',
+      confidence: 0.70,
+      confidenceLevel: 'medium',
       method: 'combined',
       detectedScripts: scriptCounts,
       matchedKeywords: []

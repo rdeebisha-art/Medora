@@ -80,6 +80,10 @@ export class SpeechRecognitionService {
       this.recognition.onerror = (event: any) => {
         console.warn('Speech recognition error event:', event.error);
         this.isListening = false;
+        // Benign cancellation / interruption event: do not show scary toast
+        if (event.error === 'aborted') {
+          return;
+        }
         let userMessage = 'Speech recognition error: ' + event.error;
         if (event.error === 'not-allowed' || event.error === 'permission-denied') {
           userMessage = 'Microphone permission was denied. Please allow microphone access.';

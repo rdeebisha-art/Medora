@@ -25,10 +25,12 @@ export class ConversationEngine {
    */
   public async processUserInput(
     rawText: string,
-    overrideLanguage?: SupportedLanguageCode
+    overrideLanguage?: SupportedLanguageCode,
+    preferredLanguage?: SupportedLanguageCode
   ): Promise<ProcessedConversationTurn> {
     const text = (rawText || '').trim();
     const state = conversationMemory.getState();
+    const effectivePreferred = preferredLanguage || (state.detectedLanguage as SupportedLanguageCode) || 'en-IN';
 
     // 1. Automatic Language Detection
     let detection: LanguageDetectionResult;
@@ -45,7 +47,8 @@ export class ConversationEngine {
     } else {
       detection = languageDetectionService.detectLanguage(
         text,
-        state.languageLocked ? state.detectedLanguage : undefined
+        state.languageLocked ? state.detectedLanguage : undefined,
+        effectivePreferred
       );
       conversationMemory.updateLanguage(detection.language, detection.confidence);
     }

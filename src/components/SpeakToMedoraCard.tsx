@@ -11,19 +11,37 @@ import { Link } from 'react-router-dom';
 
 export default function SpeakToMedoraCard() {
   const { t } = useTranslation();
-  const { currentUser } = useAppStore();
+  const { currentUser, language } = useAppStore();
+
+  const bcpMap: Record<string, SupportedLanguageCode> = {
+    ta: 'ta-IN',
+    te: 'te-IN',
+    hi: 'hi-IN',
+    kn: 'kn-IN',
+    ml: 'ml-IN',
+    en: 'en-IN'
+  };
+
+  const currentStoreLang: SupportedLanguageCode = bcpMap[language] || 'en-IN';
+
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [turns, setTurns] = useState<ProcessedConversationTurn[]>([]);
   const [lastTurn, setLastTurn] = useState<ProcessedConversationTurn | null>(null);
-  const [activeLang, setActiveLang] = useState<SupportedLanguageCode>('en-IN');
+  const [activeLang, setActiveLang] = useState<SupportedLanguageCode>(currentStoreLang);
   const [confidenceLevel, setConfidenceLevel] = useState<'high' | 'medium' | 'uncertain'>('high');
   const [showLanguagePicker, setShowLanguagePicker] = useState(false);
   const [statusNotice, setStatusNotice] = useState<string | null>(null);
   const [textInput, setTextInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  // Synchronize activeLang whenever application language changes
+  useEffect(() => {
+    setActiveLang(currentStoreLang);
+    conversationMemory.updateLanguage(currentStoreLang, 0.95, false);
+  }, [language, currentStoreLang]);
 
   useEffect(() => {
     if (currentUser?.id) {
@@ -78,7 +96,7 @@ export default function SpeakToMedoraCard() {
     setStatusNotice(null);
 
     try {
-      const turnResult = await conversationEngine.processUserInput(userText, forcedLang);
+      const turnResult = await conversationEngine.processUserInput(userText, forcedLang, activeLang);
       setLastTurn(turnResult);
       setActiveLang(turnResult.detectedLanguage);
       setConfidenceLevel(turnResult.confidenceLevel);
@@ -114,7 +132,7 @@ export default function SpeakToMedoraCard() {
     setActiveLang(lang);
     setShowLanguagePicker(false);
     conversationMemory.updateLanguage(lang, 1.0, true);
-    setStatusNotice(`Language set to ${LANGUAGE_METADATA[lang].nativeName} (${LANGUAGE_METADATA[lang].name})`);
+    setStatusNotice(`${t('dashboard.speakCardDetected')} ${LANGUAGE_METADATA[lang].nativeName} (${LANGUAGE_METADATA[lang].name})`);
   };
 
   const handleReplayAudio = (turn: ProcessedConversationTurn) => {
@@ -134,7 +152,7 @@ export default function SpeakToMedoraCard() {
   const handleReset = () => {
     speechSynthesisService.stop();
     speechRecognitionService.stopListening();
-    conversationEngine.resetConversation('en-IN', currentUser?.id);
+    conversationEngine.resetConversation(activeLang, currentUser?.id);
     setTurns([]);
     setLastTurn(null);
     setTranscript('');
@@ -155,12 +173,12 @@ export default function SpeakToMedoraCard() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="font-extrabold text-base text-[#0F766E] tracking-tight">Speak to Medora</h2>
+              <h2 className="font-extrabold text-base text-[#0F766E] tracking-tight">{t('dashboard.speakCardTitle')}</h2>
               <span className="bg-[#14B8A6]/15 text-[#0F766E] text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#14B8A6]/30 uppercase tracking-wider">
-                Natural Voice
+                {t('dashboard.speakCardNaturalVoice')}
               </span>
             </div>
-            <p className="text-xs text-[#475569]">Tell Medora what is wrong in your own language.</p>
+            <p className="text-xs text-[#475569]">{t('dashboard.speakCardSubtitle')}</p>
           </div>
         </div>
 
@@ -168,11 +186,11 @@ export default function SpeakToMedoraCard() {
         <button
           onClick={() => setShowLanguagePicker(!showLanguagePicker)}
           className="flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-[#E2E8F0] rounded-xl px-2.5 py-1 text-xs font-bold text-[#0F766E] shadow-xs transition-colors"
-          title="Change language manually"
+          title={t('dashboard.speakCardChangeLang')}
         >
           <Globe size={13} className="text-[#14B8A6]" />
           <span>{langMeta.nativeName}</span>
-          <span className="text-[10px] text-[#64748B] font-normal">({confidenceLevel})</span>
+          <span className="text-[10px] text-[#64748B] font-normal">({t('dashboard.conf_' + confidenceLevel)})</span>
         </button>
       </div>
 
@@ -180,8 +198,8 @@ export default function SpeakToMedoraCard() {
       {showLanguagePicker && (
         <div className="mb-4 bg-white border border-[#E2E8F0] rounded-2xl p-3 shadow-md relative z-20">
           <div className="text-xs font-bold text-[#0F172A] mb-2 flex items-center justify-between">
-            <span>Select your preferred language:</span>
-            <span className="text-[10px] text-[#64748B] font-normal">Auto-detection remains active</span>
+            <span>{t('dashboard.speakCardSelectLang')}</span>
+            <span className="text-[10px] text-[#64748B] font-normal">{t('dashboard.speakCardAutoActive')}</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-6 gap-1.5">
             {(Object.keys(LANGUAGE_METADATA) as SupportedLanguageCode[]).map((code) => {
@@ -213,15 +231,15 @@ export default function SpeakToMedoraCard() {
           ref={chatScrollRef}
           className="max-h-56 overflow-y-auto mb-4 space-y-2.5 pr-1 scrollbar-thin scrollbar-thumb-teal-300"
         >
-          {turns.map((t, idx) => (
+          {turns.map((tTurn, idx) => (
             <div key={idx} className="space-y-1.5 text-xs">
               {/* User turn */}
               <div className="flex justify-end">
                 <div className="bg-[#EFF6FF] text-[#0F172A] border border-[#2563EB]/30 rounded-2xl rounded-tr-sm px-3.5 py-2 max-w-[85%] shadow-xs">
                   <div className="text-[10px] text-[#2563EB] font-bold mb-0.5 flex items-center gap-1">
-                    <span>You</span> · <span>{LANGUAGE_METADATA[t.detectedLanguage]?.nativeName || t.detectedLanguage}</span>
+                    <span>{t('dashboard.speakCardYou')}</span> · <span>{LANGUAGE_METADATA[tTurn.detectedLanguage]?.nativeName || tTurn.detectedLanguage}</span>
                   </div>
-                  <p className="text-sm font-medium">{t.userText}</p>
+                  <p className="text-sm font-medium">{tTurn.userText}</p>
                 </div>
               </div>
 
@@ -229,30 +247,30 @@ export default function SpeakToMedoraCard() {
               <div className="flex justify-start">
                 <div
                   className={`border rounded-2xl rounded-tl-sm px-3.5 py-2.5 max-w-[90%] shadow-xs ${
-                    t.isEmergency
+                    tTurn.isEmergency
                       ? 'bg-[#FEF2F2] text-[#0F172A] border-[#DC2626]/40'
                       : 'bg-white text-[#0F172A] border-[#E2E8F0]'
                   }`}
                 >
                   <div className="flex items-center justify-between text-[10px] font-bold mb-1 opacity-90">
                     <span className="flex items-center gap-1 text-[#7C3AED]">
-                      <Sparkles size={11} /> {t.agentName}
+                      <Sparkles size={11} /> {tTurn.agentName}
                     </span>
-                    {t.isEmergency && (
-                      <span className="bg-[#DC2626] text-white px-1.5 py-0.2 rounded font-black text-[9px]">EMERGENCY</span>
+                    {tTurn.isEmergency && (
+                      <span className="bg-[#DC2626] text-white px-1.5 py-0.2 rounded font-black text-[9px]">{t('dashboard.speakCardEmergency')}</span>
                     )}
                   </div>
-                  <p className="text-sm leading-relaxed whitespace-pre-line font-normal text-[#0F172A]">{t.responseText}</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-line font-normal text-[#0F172A]">{tTurn.responseText}</p>
 
                   <div className="mt-2 pt-1.5 border-t border-[#E2E8F0] flex items-center justify-between">
                     <button
-                      onClick={() => handleReplayAudio(t)}
+                      onClick={() => handleReplayAudio(tTurn)}
                       className="flex items-center gap-1 text-[11px] font-bold text-[#0F766E] hover:text-[#14B8A6] transition-colors"
                     >
-                      <Volume2 size={12} /> {t.detectedLanguage.slice(0, 2).toUpperCase()} Voice
+                      <Volume2 size={12} /> {tTurn.detectedLanguage.slice(0, 2).toUpperCase()} {t('dashboard.speakCardVoice')}
                     </button>
-                    {t.followUpQuestion && (
-                      <span className="text-[10px] text-[#64748B] italic">Respond naturally</span>
+                    {tTurn.followUpQuestion && (
+                      <span className="text-[10px] text-[#64748B] italic">{t('dashboard.speakCardRespondNaturally')}</span>
                     )}
                   </div>
                 </div>
@@ -264,7 +282,7 @@ export default function SpeakToMedoraCard() {
             <div className="flex justify-start">
               <div className="bg-white border border-[#E2E8F0] rounded-2xl px-3.5 py-2 text-xs text-[#0F766E] flex items-center gap-2 shadow-xs">
                 <span className="animate-spin text-sm">🔄</span>
-                <span>Understanding your speech & detecting language...</span>
+                <span>{t('dashboard.speakCardUnderstanding')}</span>
               </div>
             </div>
           )}
@@ -278,10 +296,10 @@ export default function SpeakToMedoraCard() {
           <div className="w-full mb-3 py-2.5 px-3 bg-[#FEF2F2] rounded-xl border border-[#DC2626]/30">
             <div className="text-[11px] font-bold text-[#DC2626] flex items-center justify-center gap-2 mb-1">
               <span className="w-2.5 h-2.5 rounded-full bg-[#DC2626] animate-ping" />
-              <span>🔴 Listening in {langMeta.nativeName} ({langMeta.name})...</span>
+              <span>{t('dashboard.speakCardListeningIn', { lang: `${langMeta.nativeName} (${langMeta.name})` })}</span>
             </div>
             <p className="text-sm text-[#0F172A] font-medium italic">
-              {transcript ? `"${transcript}"` : 'Please speak your symptoms now...'}
+              {transcript ? `"${transcript}"` : t('dashboard.speakCardPromptSymptoms')}
             </p>
             {/* Subtle Voice Wave Visualization */}
             <div className="flex items-center justify-center gap-1 mt-2">
@@ -297,7 +315,7 @@ export default function SpeakToMedoraCard() {
         ) : isSpeaking ? (
           <div className="w-full mb-3 py-2 px-3 bg-[#F0FDFA] rounded-xl border border-[#14B8A6]/30">
             <div className="text-[11px] font-bold text-[#0F766E] flex items-center justify-center gap-1.5">
-              <span>🔊 Speaking in {langMeta.nativeName}...</span>
+              <span>{t('dashboard.speakCardSpeakingIn', { lang: langMeta.nativeName })}</span>
             </div>
             {/* Subtle Voice Wave Visualization */}
             <div className="flex items-center justify-center gap-1 mt-1.5">
@@ -313,18 +331,17 @@ export default function SpeakToMedoraCard() {
         ) : lastTurn ? (
           <div className="w-full mb-2.5 flex items-center justify-between text-xs text-[#0F766E] bg-[#F0FDFA] px-3 py-1.5 rounded-xl border border-[#14B8A6]/20">
             <span className="flex items-center gap-1">
-              <CheckCircle size={12} className="text-[#16A34A]" /> Detected: <strong>{langMeta.nativeName}</strong>
+              <CheckCircle size={12} className="text-[#16A34A]" /> {t('dashboard.speakCardDetected')} <strong>{langMeta.nativeName}</strong>
             </span>
-            <span>Intent: <strong>{lastTurn.intent.replace('_', ' ')}</strong></span>
+            <span>{t('dashboard.speakCardIntent')} <strong>{lastTurn.intent.replace('_', ' ')}</strong></span>
           </div>
         ) : (
           <div className="mb-3">
             <p className="text-xs text-[#475569]">
-              Speak naturally in <strong>தமிழ்</strong>, <strong>తెలుగు</strong>, <strong>മലയാളം</strong>,{' '}
-              <strong>ಕನ್ನಡ</strong>, <strong>हिन्दी</strong> or <strong>English</strong>.
+              {t('dashboard.speakCardLanguagesHint')}
             </p>
             <div className="flex items-center justify-center gap-1.5 mt-1 text-[11px] font-medium text-[#64748B]">
-              <span>🎤 Ready to listen</span>
+              <span>{t('dashboard.speakCardReady')}</span>
             </div>
           </div>
         )}
@@ -343,12 +360,12 @@ export default function SpeakToMedoraCard() {
               {isListening ? (
                 <>
                   <MicOff size={18} />
-                  <span>🔴 Stop Listening</span>
+                  <span>{t('dashboard.speakCardStopListening')}</span>
                 </>
               ) : (
                 <>
                   <Mic size={18} />
-                  <span>🎤 TAP TO SPEAK</span>
+                  <span>{t('dashboard.speakCardTapToSpeak')}</span>
                 </>
               )}
             </button>
@@ -357,7 +374,7 @@ export default function SpeakToMedoraCard() {
               <button
                 onClick={handleReset}
                 className="p-3 bg-white hover:bg-slate-50 text-[#64748B] border border-[#E2E8F0] rounded-2xl transition-colors shadow-xs"
-                title="Reset conversation"
+                title={t('dashboard.speakCardReset')}
               >
                 <RotateCcw size={16} />
               </button>
@@ -370,7 +387,7 @@ export default function SpeakToMedoraCard() {
               className="flex items-center justify-center gap-2 px-6 py-2.5 w-full max-w-[200px] rounded-2xl font-black text-xs tracking-wide transition-all shadow-sm active:scale-95 bg-[#DC2626] hover:bg-[#B91C1C] text-white ring-2 ring-red-200"
             >
               <span className="text-base leading-none">⏹</span>
-              <span>STOP SPEAKING</span>
+              <span>{t('dashboard.speakCardStopSpeaking')}</span>
             </button>
           )}
         </div>
@@ -383,7 +400,7 @@ export default function SpeakToMedoraCard() {
           value={textInput}
           onChange={(e) => setTextInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleProcessUtterance(textInput)}
-          placeholder="Or type in your language (e.g. எனக்கு காய்ச்சல், मुझे बुखार है)..."
+          placeholder={t('dashboard.speakCardTypePlaceholder')}
           className="flex-1 bg-white border border-[#E2E8F0] rounded-xl px-3.5 py-2.5 text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#14B8A6] shadow-xs transition-colors"
         />
         <button
@@ -403,17 +420,17 @@ export default function SpeakToMedoraCard() {
         </div>
       )}
 
-      {/* Future Real Toll-Free Telephone Gateway Note */}
+      {/* Toll-Free Note */}
       <div className="mt-3 pt-2.5 border-t border-[#14B8A6]/20 flex items-center justify-between text-[11px] text-[#475569]">
         <span className="flex items-center gap-1">
-          <span>🔒 Works 100% locally offline</span>
+          <span>🔒 {t('dashboard.speakCardWorksOffline')}</span>
         </span>
         <Link
           to="/ivr"
           className="flex items-center gap-1 text-[#0F766E] font-bold hover:underline"
         >
           <PhoneCall size={11} />
-          <span>Telephone Mode Simulation</span>
+          <span>{t('dashboard.speakCardTelephoneMode')}</span>
         </Link>
       </div>
     </div>

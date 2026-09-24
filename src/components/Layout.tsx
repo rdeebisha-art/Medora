@@ -69,7 +69,7 @@ export default function Layout({ children }: LayoutProps) {
       {isOffline && (
         <div className="bg-[#D97706] text-white text-center py-1.5 px-4 text-xs font-bold sticky top-0 z-50 flex items-center justify-center gap-1.5 shadow-sm">
           <WifiOff size={13} />
-          <span>🔴 {t('common.offline')} · All local health records & offline voice are available</span>
+          <span>🔴 {t('common.offline')} · {t('common.offlineNotice')}</span>
         </div>
       )}
 
@@ -85,7 +85,7 @@ export default function Layout({ children }: LayoutProps) {
                 MEDORA
               </div>
               <div className="text-[10px] text-teal-200/90 font-medium mt-0.5 tracking-wide">
-                Rural Health Companion
+                {t('app.tagline')}
               </div>
             </div>
           </Link>
@@ -128,7 +128,7 @@ export default function Layout({ children }: LayoutProps) {
               {langDropdownOpen && (
                 <div className="absolute right-0 top-full mt-1.5 bg-white text-slate-800 rounded-2xl shadow-2xl z-50 min-w-[150px] overflow-hidden border border-slate-200">
                   <div className="px-3 py-2 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    Interface Language
+                    {t('common.interfaceLanguage')}
                   </div>
                   {LANGUAGES.map((l) => (
                     <button
@@ -178,13 +178,13 @@ export default function Layout({ children }: LayoutProps) {
             {/* Drawer Header */}
             <div className="bg-gradient-to-br from-teal-800 to-teal-900 text-white p-5 flex items-center justify-between border-b border-teal-700">
               <div>
-                <div className="font-extrabold text-base tracking-tight">Account & Options</div>
+                <div className="font-extrabold text-base tracking-tight">{t('common.accountOptions')}</div>
                 {currentUser ? (
                   <div className="text-xs text-teal-200 mt-0.5">
                     {currentUser.name} ({currentUser.role})
                   </div>
                 ) : (
-                  <div className="text-xs text-teal-300 opacity-80">Guest Session</div>
+                  <div className="text-xs text-teal-300 opacity-80">{t('common.guestSession')}</div>
                 )}
               </div>
               <button
@@ -198,8 +198,8 @@ export default function Layout({ children }: LayoutProps) {
             {/* Simple Mode Toggle in More Menu */}
             <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <span className="text-xs font-bold text-slate-800 block">Simple Mode</span>
-                <span className="text-[10px] text-slate-500">Large touch targets & voice-first UI</span>
+                <span className="text-xs font-bold text-slate-800 block">{t('common.simpleMode')}</span>
+                <span className="text-[10px] text-slate-500">{t('common.simpleModeDesc')}</span>
               </div>
               <button
                 onClick={toggleSimpleMode}
@@ -227,7 +227,7 @@ export default function Layout({ children }: LayoutProps) {
                 }`}
               >
                 <User size={16} className="text-teal-600" />
-                <span>1. Profile</span>
+                <span>1. {t('common.profile')}</span>
               </Link>
 
               <Link
@@ -240,7 +240,7 @@ export default function Layout({ children }: LayoutProps) {
                 }`}
               >
                 <Settings size={16} className="text-teal-600" />
-                <span>2. Settings</span>
+                <span>2. {t('nav.settings')}</span>
               </Link>
 
               <Link
@@ -266,7 +266,7 @@ export default function Layout({ children }: LayoutProps) {
                 }`}
               >
                 <BookOpen size={16} className="text-teal-600" />
-                <span>4. Help</span>
+                <span>4. {t('nav.help', 'Help')}</span>
               </Link>
 
               {!currentUser ? (
@@ -276,7 +276,7 @@ export default function Layout({ children }: LayoutProps) {
                   className="flex items-center gap-3 px-3.5 py-3 rounded-2xl text-xs font-bold text-slate-700 hover:bg-slate-50"
                 >
                   <LogIn size={16} className="text-teal-600" />
-                  <span>5. Login</span>
+                  <span>5. {t('auth.login')}</span>
                 </Link>
               ) : null}
             </nav>
@@ -289,7 +289,7 @@ export default function Layout({ children }: LayoutProps) {
                   className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl text-xs font-bold transition-colors"
                 >
                   <LogOut size={14} />
-                  <span>6. Sign Out</span>
+                  <span>6. {t('common.signOut')}</span>
                 </button>
               </div>
             )}

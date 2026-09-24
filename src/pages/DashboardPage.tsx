@@ -12,7 +12,7 @@ import { TriangleAlert as AlertTriangle, Heart, Users, Pill, FileText, Activity,
 
 export default function DashboardPage() {
   const { t } = useTranslation();
-  const { currentUser, isOffline, isSimpleMode } = useAppStore();
+  const { currentUser, language, isOffline, isSimpleMode } = useAppStore();
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -47,10 +47,10 @@ export default function DashboardPage() {
 
   const careGaps = [
     ...(medicines.some((m) => (m.missedCount || 0) > 0)
-      ? [{ type: 'medicine' as const, message: 'Missed dose recorded. Please review your active medicine schedule.', link: '/medicines' }]
+      ? [{ type: 'medicine' as const, message: t('dashboard.missedDoseAlert'), link: '/medicines' }]
       : []),
     ...(appointments.length === 0
-      ? [{ type: 'checkup' as const, message: 'No regular checkup scheduled this month.', link: '/doctor-summary' }]
+      ? [{ type: 'checkup' as const, message: t('dashboard.noCheckupAlert'), link: '/doctor-summary' }]
       : [])
   ];
 
@@ -67,7 +67,14 @@ export default function DashboardPage() {
     setTimeout(() => setEmergencyAlertSent(false), 4000);
   };
 
-  const currentDateFormatted = new Date().toLocaleDateString('en-IN', {
+  const dateLocale =
+    language === 'ta' ? 'ta-IN' :
+    language === 'te' ? 'te-IN' :
+    language === 'hi' ? 'hi-IN' :
+    language === 'kn' ? 'kn-IN' :
+    language === 'ml' ? 'ml-IN' : 'en-IN';
+
+  const currentDateFormatted = new Date().toLocaleDateString(dateLocale, {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
@@ -85,13 +92,13 @@ export default function DashboardPage() {
             <div>
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white text-[#0F766E] border border-[#E2E8F0]">
-                  📍 {currentUser?.village || 'Kodaikanal Village'}
+                  📍 {currentUser?.village || t('dashboard.kodaikanalVillage')}
                 </span>
                 <span className="text-xs text-[#64748B] font-medium">🗓️ {currentDateFormatted}</span>
                 <DemoDataBadge />
               </div>
               <h1 className="text-2xl font-black text-[#0F766E] tracking-tight">
-                {t('dashboard.greeting', { name: currentUser?.name || 'Villager' })} 👋
+                {t('dashboard.greeting', { name: currentUser?.name || t('dashboard.villager') })} 👋
               </h1>
               <p className="text-sm text-[#475569] mt-1 max-w-xl leading-relaxed">
                 {t('app.subtitle')}
@@ -108,7 +115,7 @@ export default function DashboardPage() {
               <Link
                 to="/profile"
                 className="w-10 h-10 rounded-2xl bg-white border border-[#E2E8F0] text-[#0F766E] flex items-center justify-center font-bold text-sm"
-                title="View Profile"
+                title={t('dashboard.viewProfile')}
               >
                 {currentUser?.name ? currentUser.name[0] : '👤'}
               </Link>
@@ -126,12 +133,12 @@ export default function DashboardPage() {
                 🚨
               </div>
               <div>
-                <h2 className="text-base font-black text-[#B91C1C] tracking-tight">{t('emergency.title')}</h2>
-                <p className="text-[11px] text-[#475569]">Immediate offline first aid & emergency simulation</p>
+                <h2 className="text-base font-black text-[#B91C1C] tracking-tight">{t('dashboard.emergencyTitle')}</h2>
+                <p className="text-[11px] text-[#475569]">{t('dashboard.emergencySubtitle')}</p>
               </div>
             </div>
             <span className="bg-white text-[#B91C1C] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-[#E2E8F0]">
-              No Login Required
+              {t('dashboard.noLoginRequired')}
             </span>
           </div>
 
@@ -149,7 +156,7 @@ export default function DashboardPage() {
               className="bg-white hover:bg-[#FEF2F2] rounded-2xl p-2.5 text-center text-xs font-bold text-[#B91C1C] border border-[#E2E8F0] min-h-16 flex flex-col items-center justify-center"
             >
               <span className="text-lg mb-1">🩺</span>
-              <span>First Aid Steps</span>
+              <span>{t('dashboard.firstAidSteps')}</span>
             </Link>
 
             <Link
@@ -157,7 +164,7 @@ export default function DashboardPage() {
               className="bg-white hover:bg-[#EFF6FF] rounded-2xl p-2.5 text-center text-xs font-bold text-[#2563EB] border border-[#E2E8F0] min-h-16 flex flex-col items-center justify-center"
             >
               <span className="text-lg mb-1">🏥</span>
-              <span>Nearby Healthcare</span>
+              <span>{t('dashboard.nearbyHealthcare')}</span>
             </Link>
 
             <Link
@@ -165,7 +172,7 @@ export default function DashboardPage() {
               className="bg-white hover:bg-[#FFF7ED] rounded-2xl p-2.5 text-center text-xs font-bold text-[#EA580C] border border-[#E2E8F0] min-h-16 flex flex-col items-center justify-center"
             >
               <span className="text-lg mb-1">🚑</span>
-              <span>Transport Help</span>
+              <span>{t('dashboard.transportHelp')}</span>
             </Link>
 
             <button
@@ -175,7 +182,7 @@ export default function DashboardPage() {
               }`}
             >
               <span className="text-lg mb-1">{emergencyAlertSent ? '✅' : '🔔'}</span>
-              <span>{emergencyAlertSent ? 'Alert Queued!' : 'Family Alert DEMO'}</span>
+              <span>{emergencyAlertSent ? t('dashboard.alertQueued') : t('dashboard.familyAlertDemo')}</span>
             </button>
           </div>
         </div>
@@ -190,9 +197,9 @@ export default function DashboardPage() {
                 <Radio size={16} />
               </div>
               <div>
-                <h2 className="font-extrabold text-sm text-[#0F172A]">Stay Connected — Even With Limited Internet</h2>
+                <h2 className="font-extrabold text-sm text-[#0F172A]">{t('dashboard.stayConnectedTitle')}</h2>
                 <p className="text-[11px] text-[#64748B]">
-                  Simulated rural telecom integrations demonstrating offline and low-bandwidth capabilities.
+                  {t('dashboard.stayConnectedSubtitle')}
                 </p>
               </div>
             </div>
@@ -207,10 +214,10 @@ export default function DashboardPage() {
                 <div className="w-8 h-8 rounded-xl bg-[#F0FDFA] text-[#14B8A6] flex items-center justify-center mb-2 border border-[#14B8A6]/20">
                   🎙️
                 </div>
-                <div className="font-bold text-xs text-[#0F172A]">Voice Communication</div>
-                <p className="text-[10px] text-[#64748B] mt-0.5">Natural voice in 6 languages</p>
+                <div className="font-bold text-xs text-[#0F172A]">{t('dashboard.voiceComm')}</div>
+                <p className="text-[10px] text-[#64748B] mt-0.5">{t('dashboard.voiceCommDesc')}</p>
               </div>
-              <span className="text-[9px] text-[#0F766E] font-bold mt-2">Active</span>
+              <span className="text-[9px] text-[#0F766E] font-bold mt-2">{t('dashboard.statusActive')}</span>
             </Link>
 
             <Link
@@ -221,10 +228,10 @@ export default function DashboardPage() {
                 <div className="w-8 h-8 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mb-2 border border-[#2563EB]/20">
                   📱
                 </div>
-                <div className="font-bold text-xs text-[#0F172A]">SMS Outbox</div>
-                <p className="text-[10px] text-[#64748B] mt-0.5">Local queue for low coverage</p>
+                <div className="font-bold text-xs text-[#0F172A]">{t('dashboard.smsOutbox')}</div>
+                <p className="text-[10px] text-[#64748B] mt-0.5">{t('dashboard.smsOutboxDesc')}</p>
               </div>
-              <span className="text-[9px] text-[#D97706] font-bold mt-2">DEMO SIMULATION</span>
+              <span className="text-[9px] text-[#D97706] font-bold mt-2">{t('dashboard.demoSimulation')}</span>
             </Link>
 
             <Link
@@ -235,10 +242,10 @@ export default function DashboardPage() {
                 <div className="w-8 h-8 rounded-xl bg-slate-100 text-[#475569] flex items-center justify-center mb-2 border border-slate-200">
                   🔢
                 </div>
-                <div className="font-bold text-xs text-[#0F172A]">Basic Phone / USSD</div>
-                <p className="text-[10px] text-[#64748B] mt-0.5">*141*9999# text menu</p>
+                <div className="font-bold text-xs text-[#0F172A]">{t('dashboard.ussd')}</div>
+                <p className="text-[10px] text-[#64748B] mt-0.5">{t('dashboard.ussdDesc')}</p>
               </div>
-              <span className="text-[9px] text-[#D97706] font-bold mt-2">DEMO SIMULATION</span>
+              <span className="text-[9px] text-[#D97706] font-bold mt-2">{t('dashboard.demoSimulation')}</span>
             </Link>
 
             <Link
@@ -249,10 +256,10 @@ export default function DashboardPage() {
                 <div className="w-8 h-8 rounded-xl bg-[#F0FDFA] text-[#14B8A6] flex items-center justify-center mb-2 border border-[#14B8A6]/20">
                   ☎️
                 </div>
-                <div className="font-bold text-xs text-[#0F172A]">Telephone Simulation</div>
-                <p className="text-[10px] text-[#64748B] mt-0.5">Future toll-free voice engine</p>
+                <div className="font-bold text-xs text-[#0F172A]">{t('dashboard.telephoneSim')}</div>
+                <p className="text-[10px] text-[#64748B] mt-0.5">{t('dashboard.telephoneSimDesc')}</p>
               </div>
-              <span className="text-[9px] text-[#D97706] font-bold mt-2">DEMO SIMULATION</span>
+              <span className="text-[9px] text-[#D97706] font-bold mt-2">{t('dashboard.demoSimulation')}</span>
             </Link>
 
             <Link
@@ -263,10 +270,10 @@ export default function DashboardPage() {
                 <div className="w-8 h-8 rounded-xl bg-[#F0FDFA] text-[#0F766E] flex items-center justify-center mb-2 border border-[#0F766E]/20">
                   🔄
                 </div>
-                <div className="font-bold text-xs text-[#0F172A]">Sync Center</div>
-                <p className="text-[10px] text-[#64748B] mt-0.5">Inspect local IndexedDB data</p>
+                <div className="font-bold text-xs text-[#0F172A]">{t('dashboard.syncCenter')}</div>
+                <p className="text-[10px] text-[#64748B] mt-0.5">{t('dashboard.syncCenterDesc')}</p>
               </div>
-              <span className="text-[9px] text-[#0F766E] font-bold mt-2">Active</span>
+              <span className="text-[9px] text-[#0F766E] font-bold mt-2">{t('dashboard.statusActive')}</span>
             </Link>
 
             <Link
@@ -277,10 +284,10 @@ export default function DashboardPage() {
                 <div className="w-8 h-8 rounded-xl bg-[#F0FDF4] text-[#16A34A] flex items-center justify-center mb-2 border border-[#16A34A]/20">
                   🏘️
                 </div>
-                <div className="font-bold text-xs text-[#0F172A]">Village Dashboard</div>
-                <p className="text-[10px] text-[#64748B] mt-0.5">Community health analytics</p>
+                <div className="font-bold text-xs text-[#0F172A]">{t('dashboard.villageDash')}</div>
+                <p className="text-[10px] text-[#64748B] mt-0.5">{t('dashboard.villageDashDesc')}</p>
               </div>
-              <span className="text-[9px] text-[#16A34A] font-bold mt-2">Active</span>
+              <span className="text-[9px] text-[#16A34A] font-bold mt-2">{t('dashboard.statusActive')}</span>
             </Link>
           </div>
         </div>
@@ -294,15 +301,15 @@ export default function DashboardPage() {
         {/* 5. QUICK ACTIONS ROW                                      */}
         {/* ========================================================= */}
         <div>
-          <h2 className="text-xs font-black text-slate-500 uppercase tracking-wider mb-2.5">⚡ Quick Actions</h2>
+          <h2 className="text-xs font-black text-slate-500 uppercase tracking-wider mb-2.5">⚡ {t('dashboard.quickActionsTitle')}</h2>
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {[
-              { path: '/health-tests', label: 'Record Health Test', emoji: '🧪', color: 'bg-white border-[#E2E8F0] text-[#0F766E]' },
-              { path: '/records', label: 'Add Medical Record', emoji: '📋', color: 'bg-white border-[#E2E8F0] text-[#2563EB]' },
-              { path: '/medicines', label: 'Add Medicine', emoji: '💊', color: 'bg-white border-[#E2E8F0] text-[#16A34A]' },
-              { path: '/language-bridge', label: 'Language Bridge', emoji: '🌐', color: 'bg-white border-[#E2E8F0] text-[#0F766E]' },
-              { path: '/doctor-summary', label: 'Doctor Summary', emoji: '📄', color: 'bg-white border-[#E2E8F0] text-[#2563EB]' },
-              { path: '/emergency', label: 'Emergency Help', emoji: '🚨', color: 'bg-white border-[#E2E8F0] text-[#DC2626]' }
+              { path: '/health-tests', label: t('dashboard.qaRecordTest'), emoji: '🧪', color: 'bg-white border-[#E2E8F0] text-[#0F766E]' },
+              { path: '/records', label: t('dashboard.qaAddRecord'), emoji: '📋', color: 'bg-white border-[#E2E8F0] text-[#2563EB]' },
+              { path: '/medicines', label: t('dashboard.qaAddMedicine'), emoji: '💊', color: 'bg-white border-[#E2E8F0] text-[#16A34A]' },
+              { path: '/language-bridge', label: t('dashboard.qaLanguageBridge'), emoji: '🌐', color: 'bg-white border-[#E2E8F0] text-[#0F766E]' },
+              { path: '/doctor-summary', label: t('dashboard.qaDoctorSummary'), emoji: '📄', color: 'bg-white border-[#E2E8F0] text-[#2563EB]' },
+              { path: '/emergency', label: t('dashboard.qaEmergencyHelp'), emoji: '🚨', color: 'bg-white border-[#E2E8F0] text-[#DC2626]' }
             ].map((action, i) => (
               <Link
                 key={i}
@@ -317,16 +324,16 @@ export default function DashboardPage() {
         </div>
 
         {/* ========================================================= */}
-        {/* 5. HEALTH OVERVIEW SECTION                                */}
+        {/* 6. HEALTH OVERVIEW SECTION                                */}
         {/* ========================================================= */}
         <div className="bg-white border border-[#E2E8F0] rounded-3xl p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-extrabold text-base text-[#0F172A]">Health Overview</h2>
-              <p className="text-xs text-[#64748B]">Medora Health Tracking Score & local monitoring indicators</p>
+              <h2 className="font-extrabold text-base text-[#0F172A]">{t('dashboard.healthOverviewTitle')}</h2>
+              <p className="text-xs text-[#64748B]">{t('dashboard.healthOverviewSubtitle')}</p>
             </div>
             <Link to="/health" className="text-xs font-bold text-[#0F766E] hover:underline">
-              View Full Health →
+              {t('dashboard.viewFullHealth')}
             </Link>
           </div>
 
@@ -341,10 +348,10 @@ export default function DashboardPage() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs font-bold text-[#16A34A] flex items-center gap-1.5">
-                    <Pill size={15} className="text-[#16A34A]" /> Active Medicines
+                    <Pill size={15} className="text-[#16A34A]" /> {t('dashboard.activeMedicines')}
                   </span>
                   <Link to="/medicines" className="text-[11px] font-bold text-[#16A34A] hover:underline">
-                    Manage
+                    {t('dashboard.manage')}
                   </Link>
                 </div>
                 {medicines.length > 0 ? (
@@ -356,11 +363,11 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-[#475569] mt-1">No active prescriptions currently recorded.</p>
+                  <p className="text-xs text-[#475569] mt-1">{t('dashboard.noActivePrescriptions')}</p>
                 )}
               </div>
               <div className="mt-3 pt-2 border-t border-[#16A34A]/20 text-[10px] text-[#16A34A]">
-                {medicines.filter((m) => (m.missedCount || 0) === 0).length} of {medicines.length} taken on schedule
+                {medicines.filter((m) => (m.missedCount || 0) === 0).length} {t('dashboard.ofCount')} {medicines.length} {t('dashboard.takenOnSchedule')}
               </div>
             </div>
 
@@ -369,26 +376,26 @@ export default function DashboardPage() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs font-bold text-[#2563EB] flex items-center gap-1.5">
-                    <Activity size={15} className="text-[#2563EB]" /> Recent Vitals
+                    <Activity size={15} className="text-[#2563EB]" /> {t('dashboard.recentVitals')}
                   </span>
                   <Link to="/health-tests" className="text-[11px] font-bold text-[#2563EB] hover:underline">
-                    Trends
+                    {t('dashboard.trends')}
                   </Link>
                 </div>
                 {recentTests.length > 0 ? (
                   <div className="space-y-1 mt-1">
-                    {recentTests.slice(0, 2).map((t) => (
-                      <div key={t.id} className="text-xs text-[#0F172A] font-medium">
-                        • <span className="capitalize">{t.type.replace('_', ' ')}</span>: <strong>{t.value} {t.unit}</strong>
+                    {recentTests.slice(0, 2).map((tItem) => (
+                      <div key={tItem.id} className="text-xs text-[#0F172A] font-medium">
+                        • <span className="capitalize">{tItem.type.replace('_', ' ')}</span>: <strong>{tItem.value} {tItem.unit}</strong>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-[#475569] mt-1">No recent test records. Tap to add BP or blood sugar.</p>
+                  <p className="text-xs text-[#475569] mt-1">{t('dashboard.noRecentTests')}</p>
                 )}
               </div>
               <Link to="/health-tests" className="mt-3 pt-2 border-t border-[#2563EB]/20 text-[10px] text-[#2563EB] font-bold block">
-                + Record new health test reading
+                {t('dashboard.recordNewTest')}
               </Link>
             </div>
           </div>
@@ -398,34 +405,34 @@ export default function DashboardPage() {
         </div>
 
         {/* ========================================================= */}
-        {/* 6. MAIN HEALTHCARE FEATURE GRID (16 Core Cards)          */}
+        {/* 7. MAIN HEALTHCARE FEATURE GRID (16 Core Cards)          */}
         {/* ========================================================= */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-base font-black text-[#0F172A]">Healthcare Features</h2>
-              <p className="text-xs text-[#64748B]">All services directly accessible on your home dashboard</p>
+              <h2 className="text-base font-black text-[#0F172A]">{t('dashboard.healthcareFeaturesTitle')}</h2>
+              <p className="text-xs text-[#64748B]">{t('dashboard.healthcareFeaturesSubtitle')}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {[
-              { path: '/health', icon: <Heart size={22} className="text-[#0F766E]" />, iconBg: 'bg-[#F0FDFA]', title: '1. My Health', desc: 'View your health info, measurements & journey.' },
-              { path: '/family', icon: <Users size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: '2. Family Health', desc: 'Manage health information for your family.' },
-              { path: '/records', icon: <FileText size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: '3. Medical Records', desc: 'View and manage your medical history.' },
-              { path: '/medicines', icon: <Pill size={22} className="text-[#16A34A]" />, iconBg: 'bg-[#F0FDF4]', title: '4. Medicines & Reminders', desc: 'Track schedules, taken & missed doses.' },
-              { path: '/health-tests', icon: <Activity size={22} className="text-[#14B8A6]" />, iconBg: 'bg-[#F0FDFA]', title: '5. Health Tests', desc: 'Record BP, sugar, weight, pulse & SpO2.' },
-              { path: '/records', icon: <Shield size={22} className="text-[#4F46E5]" />, iconBg: 'bg-[#EEF2FF]', title: '6. Medical Reports', desc: 'Store and view your lab & clinical reports.' },
-              { path: '/report-scanner', icon: <Camera size={22} className="text-[#4F46E5]" />, iconBg: 'bg-[#EEF2FF]', title: '7. Report Scanner', desc: 'Capture or upload reports for organized filing.' },
-              { path: '/xray-viewer', icon: <Image size={22} className="text-[#475569]" />, iconBg: 'bg-[#F1F5F9]', title: '8. X-Ray / Image Viewer', desc: 'View and annotate stored medical images.' },
-              { path: '/doctor-portal', icon: <Stethoscope size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: '9. Doctor Consultation', desc: 'Prepare and review clinical consultations.' },
-              { path: '/doctor-summary', icon: <FileText size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: '10. Doctor Summary', desc: 'Create clear patient summary for doctor handoff.' },
-              { path: '/ai', icon: <Bot size={22} className="text-[#7C3AED]" />, iconBg: 'bg-[#F5F3FF]', title: '11. AI Health Assistant', desc: 'Get safe guidance from specialized assistants.' },
-              { path: '/hospitals', icon: <Building2 size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: '12. Nearby Healthcare', desc: 'View locally stored healthcare facilities & PHCs.' },
-              { path: '/vaccination', icon: <Syringe size={22} className="text-[#16A34A]" />, iconBg: 'bg-[#F0FDF4]', title: '13. Vaccinations', desc: 'Track immunization history & UIP schedules.' },
-              { path: '/education', icon: <BookOpen size={22} className="text-[#0F766E]" />, iconBg: 'bg-[#F0FDFA]', title: '14. Health Education', desc: 'Learn about nutrition, hygiene & prevention.' },
-              { path: '/schemes', icon: <Landmark size={22} className="text-[#4F46E5]" />, iconBg: 'bg-[#EEF2FF]', title: '15. Govt Health Schemes', desc: 'Learn about Ayushman Bharat, JSY & PMMVY.' },
-              { path: '/emergency', icon: <AlertTriangle size={22} className="text-[#DC2626]" />, iconBg: 'bg-[#FEF2F2]', title: '16. Emergency Help', desc: 'Access first aid & stored emergency contacts.' }
+              { path: '/health', icon: <Heart size={22} className="text-[#0F766E]" />, iconBg: 'bg-[#F0FDFA]', title: t('dashboard.hfMyHealthTitle'), desc: t('dashboard.hfMyHealthDesc') },
+              { path: '/family', icon: <Users size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: t('dashboard.hfFamilyTitle'), desc: t('dashboard.hfFamilyDesc') },
+              { path: '/records', icon: <FileText size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: t('dashboard.hfRecordsTitle'), desc: t('dashboard.hfRecordsDesc') },
+              { path: '/medicines', icon: <Pill size={22} className="text-[#16A34A]" />, iconBg: 'bg-[#F0FDF4]', title: t('dashboard.hfMedicinesTitle'), desc: t('dashboard.hfMedicinesDesc') },
+              { path: '/health-tests', icon: <Activity size={22} className="text-[#14B8A6]" />, iconBg: 'bg-[#F0FDFA]', title: t('dashboard.hfTestsTitle'), desc: t('dashboard.hfTestsDesc') },
+              { path: '/records', icon: <Shield size={22} className="text-[#4F46E5]" />, iconBg: 'bg-[#EEF2FF]', title: t('dashboard.hfReportsTitle'), desc: t('dashboard.hfReportsDesc') },
+              { path: '/report-scanner', icon: <Camera size={22} className="text-[#4F46E5]" />, iconBg: 'bg-[#EEF2FF]', title: t('dashboard.hfReportScannerTitle'), desc: t('dashboard.hfReportScannerDesc') },
+              { path: '/xray-viewer', icon: <Image size={22} className="text-[#475569]" />, iconBg: 'bg-[#F1F5F9]', title: t('dashboard.hfXrayTitle'), desc: t('dashboard.hfXrayDesc') },
+              { path: '/doctor-portal', icon: <Stethoscope size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: t('dashboard.hfDoctorConsultTitle'), desc: t('dashboard.hfDoctorConsultDesc') },
+              { path: '/doctor-summary', icon: <FileText size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: t('dashboard.hfDoctorSummaryTitle'), desc: t('dashboard.hfDoctorSummaryDesc') },
+              { path: '/ai', icon: <Bot size={22} className="text-[#7C3AED]" />, iconBg: 'bg-[#F5F3FF]', title: t('dashboard.hfAiAssistantTitle'), desc: t('dashboard.hfAiAssistantDesc') },
+              { path: '/hospitals', icon: <Building2 size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: t('dashboard.hfNearbyHospitalsTitle'), desc: t('dashboard.hfNearbyHospitalsDesc') },
+              { path: '/vaccination', icon: <Syringe size={22} className="text-[#16A34A]" />, iconBg: 'bg-[#F0FDF4]', title: t('dashboard.hfVaccinationsTitle'), desc: t('dashboard.hfVaccinationsDesc') },
+              { path: '/education', icon: <BookOpen size={22} className="text-[#0F766E]" />, iconBg: 'bg-[#F0FDFA]', title: t('dashboard.hfEducationTitle'), desc: t('dashboard.hfEducationDesc') },
+              { path: '/schemes', icon: <Landmark size={22} className="text-[#4F46E5]" />, iconBg: 'bg-[#EEF2FF]', title: t('dashboard.hfGovtSchemesTitle'), desc: t('dashboard.hfGovtSchemesDesc') },
+              { path: '/emergency', icon: <AlertTriangle size={22} className="text-[#DC2626]" />, iconBg: 'bg-[#FEF2F2]', title: t('dashboard.hfEmergencyHelpTitle'), desc: t('dashboard.hfEmergencyHelpDesc') }
             ].map((card, i) => (
               <Link
                 key={i}
@@ -439,32 +446,32 @@ export default function DashboardPage() {
                   <h3 className="font-bold text-xs text-[#0F172A] leading-snug">{card.title}</h3>
                   <p className="text-[11px] text-[#475569] mt-1 leading-normal">{card.desc}</p>
                 </div>
-                <span className="text-[10px] font-extrabold text-[#0F766E] mt-3 block group-hover:translate-x-0.5 transition-transform">Open →</span>
+                <span className="text-[10px] font-extrabold text-[#0F766E] mt-3 block group-hover:translate-x-0.5 transition-transform">{t('dashboard.openCard')}</span>
               </Link>
             ))}
           </div>
         </div>
 
         {/* ========================================================= */}
-        {/* 7. SPECIALIZED FAMILY CARE SECTION                        */}
+        {/* 8. SPECIALIZED FAMILY CARE SECTION                        */}
         {/* ========================================================= */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-base font-black text-[#0F172A]">Specialized Family Care</h2>
-              <p className="text-xs text-[#64748B]">Dedicated health hubs across every stage of family life</p>
+              <h2 className="text-base font-black text-[#0F172A]">{t('dashboard.familyCareTitle')}</h2>
+              <p className="text-xs text-[#64748B]">{t('dashboard.familyCareSubtitle')}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {[
-              { path: '/childcare', emoji: '👶', title: 'Child Care', desc: 'Growth, nutrition & common illness', iconBg: 'bg-[#EFF6FF]', textColor: 'text-[#2563EB]' },
-              { path: '/maternity', emoji: '🤰', title: 'Maternity Care', desc: 'Trimesters, nutrition & danger signs', iconBg: 'bg-[#FDF2F8]', textColor: 'text-[#DB2777]' },
-              { path: '/newborn', emoji: '🍼', title: 'Newborn Care', desc: 'Feeding, umbilical cord & birth doses', iconBg: 'bg-[#F0FDFA]', textColor: 'text-[#14B8A6]' },
-              { path: '/maternity', emoji: '🌸', title: 'New Mother Care', desc: 'Postpartum recovery & maternal wellness', iconBg: 'bg-[#FDF2F8]', textColor: 'text-[#DB2777]' },
-              { path: '/elderly', emoji: '👵', title: 'Elderly Care', desc: 'BP, fall safety & senior health alerts', iconBg: 'bg-[#EEF2FF]', textColor: 'text-[#4F46E5]' },
-              { path: '/health-tests', emoji: '🩺', title: 'Diabetes Care', desc: 'Blood sugar trends & diet guidance', iconBg: 'bg-[#FFF7ED]', textColor: 'text-[#EA580C]' },
-              { path: '/education', emoji: '🥗', title: 'Nutrition Care', desc: 'Anemia prevention & wholesome diet', iconBg: 'bg-[#F0FDF4]', textColor: 'text-[#16A34A]' }
+              { path: '/childcare', emoji: '👶', title: t('dashboard.fcChildTitle'), desc: t('dashboard.fcChildDesc'), iconBg: 'bg-[#EFF6FF]', textColor: 'text-[#2563EB]' },
+              { path: '/maternity', emoji: '🤰', title: t('dashboard.fcMaternityTitle'), desc: t('dashboard.fcMaternityDesc'), iconBg: 'bg-[#FDF2F8]', textColor: 'text-[#DB2777]' },
+              { path: '/newborn', emoji: '🍼', title: t('dashboard.fcNewbornTitle'), desc: t('dashboard.fcNewbornDesc'), iconBg: 'bg-[#F0FDFA]', textColor: 'text-[#14B8A6]' },
+              { path: '/maternity', emoji: '🌸', title: t('dashboard.fcNewMotherTitle'), desc: t('dashboard.fcNewMotherDesc'), iconBg: 'bg-[#FDF2F8]', textColor: 'text-[#DB2777]' },
+              { path: '/elderly', emoji: '👵', title: t('dashboard.fcElderlyTitle'), desc: t('dashboard.fcElderlyDesc'), iconBg: 'bg-[#EEF2FF]', textColor: 'text-[#4F46E5]' },
+              { path: '/health-tests', emoji: '🩺', title: t('dashboard.fcDiabetesTitle'), desc: t('dashboard.fcDiabetesDesc'), iconBg: 'bg-[#FFF7ED]', textColor: 'text-[#EA580C]' },
+              { path: '/education', emoji: '🥗', title: t('dashboard.fcNutritionTitle'), desc: t('dashboard.fcNutritionDesc'), iconBg: 'bg-[#F0FDF4]', textColor: 'text-[#16A34A]' }
             ].map((care, i) => (
               <Link
                 key={i}
@@ -478,7 +485,7 @@ export default function DashboardPage() {
                   <h3 className="font-extrabold text-xs text-[#0F172A] mb-1">{care.title}</h3>
                   <p className="text-[11px] text-[#475569] leading-normal">{care.desc}</p>
                 </div>
-                <span className={`text-[10px] font-extrabold mt-3 block ${care.textColor}`}>View Care Hub →</span>
+                <span className={`text-[10px] font-extrabold mt-3 block ${care.textColor}`}>{t('dashboard.viewCareHub')}</span>
               </Link>
             ))}
           </div>
@@ -489,8 +496,8 @@ export default function DashboardPage() {
         {/* ========================================================= */}
         <div className="bg-white border border-[#E2E8F0] rounded-3xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-extrabold text-sm text-[#0F172A]">Recent Health Activity</h2>
-            <span className="text-[11px] text-[#64748B]">From local database</span>
+            <h2 className="font-extrabold text-sm text-[#0F172A]">{t('dashboard.recentActivityTitle')}</h2>
+            <span className="text-[11px] text-[#64748B]">{t('dashboard.fromLocalDb')}</span>
           </div>
 
           <div className="space-y-2">
@@ -508,7 +515,7 @@ export default function DashboardPage() {
               ))
             ) : (
               <div className="p-4 text-center text-xs text-[#64748B] bg-slate-50 border border-[#E2E8F0] rounded-2xl">
-                No recent health alerts. All scheduled medicines and vitals are up to date.
+                {t('dashboard.noRecentAlerts')}
               </div>
             )}
           </div>
@@ -516,8 +523,8 @@ export default function DashboardPage() {
 
         {/* Footer Disclaimer */}
         <div className="text-center py-2 text-[11px] text-[#64748B] space-y-1">
-          <p className="font-semibold text-[#0F172A]">MEDORA — Rural Health Companion • Offline-First Healthcare Platform</p>
-          <p className="text-[10px] text-[#64748B]">All demo data is fictional. Real telecom integrations are represented as simulations.</p>
+          <p className="font-semibold text-[#0F172A]">{t('dashboard.footerTagline')}</p>
+          <p className="text-[10px] text-[#64748B]">{t('dashboard.footerDemoDisclaimer')}</p>
         </div>
       </div>
     </Layout>

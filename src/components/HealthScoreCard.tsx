@@ -20,9 +20,9 @@ export default function HealthScoreCard({ score, size = 'md' }: Props) {
     'bg-[#FEF2F2] text-[#DC2626] border-[#DC2626]/30';
 
   const label =
-    clampedScore >= 75 ? 'Good Tracking' :
-    clampedScore >= 50 ? 'Needs Review' :
-    'Attention Required';
+    clampedScore >= 75 ? t('dashboard.goodTracking') :
+    clampedScore >= 50 ? t('dashboard.needsReview') :
+    t('dashboard.attentionRequired');
 
   const radius = size === 'sm' ? 30 : size === 'lg' ? 52 : 40;
   const strokeWidth = size === 'sm' ? 5 : 7;
@@ -53,14 +53,14 @@ export default function HealthScoreCard({ score, size = 'md' }: Props) {
           </div>
         </div>
         <div>
-          <div className="font-extrabold text-[#0F172A] text-sm tracking-tight">Medora Health Score</div>
+          <div className="font-extrabold text-[#0F172A] text-sm tracking-tight">{t('dashboard.medoraHealthScore')}</div>
           <div className="flex items-center gap-2 mt-0.5">
             <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${badgeBg}`}>
               {label}
             </span>
           </div>
           <p className="text-[11px] text-[#64748B] mt-1.5 leading-snug">
-            This is a health-tracking indicator, not a medical diagnosis.
+            {t('dashboard.scoreDisclaimer')}
           </p>
         </div>
       </div>
