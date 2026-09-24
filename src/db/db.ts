@@ -201,7 +201,7 @@ export interface SmsOutbox {
   message: string;
   type: string;
   language: string;
-  status: 'pending' | 'PENDING_OFFLINE' | 'sent' | 'failed';
+  status: 'pending' | 'PENDING_OFFLINE' | 'PENDING_USER_SEND' | 'sent' | 'failed';
   createdAt: string;
 }
 

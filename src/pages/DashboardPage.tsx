@@ -170,8 +170,8 @@ export default function DashboardPage() {
 
             <button
               onClick={handleQuickEmergencyAlert}
-              className={`rounded-2xl p-2.5 text-center text-xs font-bold transition-all flex flex-col items-center justify-center ${
-                emergencyAlertSent ? 'bg-emerald-500 text-white' : 'bg-white text-red-700 hover:bg-red-50 shadow'
+              className={`rounded-2xl p-2.5 text-center text-xs font-bold transition-all border border-[#E2E8F0] min-h-16 flex flex-col items-center justify-center ${
+                emergencyAlertSent ? 'bg-[#16A34A] text-white' : 'bg-white text-[#DC2626] hover:bg-[#FEF2F2] shadow-2xs'
               }`}
             >
               <span className="text-lg mb-1">{emergencyAlertSent ? '✅' : '🔔'}</span>
@@ -183,88 +183,104 @@ export default function DashboardPage() {
         {/* ========================================================= */}
         {/* 3. STAY CONNECTED — RURAL COMMUNICATION SECTION           */}
         {/* ========================================================= */}
-        <div className="bg-slate-900 text-white rounded-3xl p-5 shadow-lg border border-slate-800 space-y-3">
-          <div>
+        <div className="bg-white rounded-3xl p-5 shadow-sm border border-[#E2E8F0] space-y-3">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Radio size={16} className="text-teal-400" />
-              <h2 className="font-extrabold text-sm text-white">Stay Connected — Even With Limited Internet</h2>
+              <div className="w-8 h-8 rounded-xl bg-[#F0FDFA] text-[#14B8A6] flex items-center justify-center border border-[#14B8A6]/20">
+                <Radio size={16} />
+              </div>
+              <div>
+                <h2 className="font-extrabold text-sm text-[#0F172A]">Stay Connected — Even With Limited Internet</h2>
+                <p className="text-[11px] text-[#64748B]">
+                  Simulated rural telecom integrations demonstrating offline and low-bandwidth capabilities.
+                </p>
+              </div>
             </div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              Simulated rural telecom integrations demonstrating offline and low-bandwidth capabilities.
-            </p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
             <Link
               to="/ai"
-              className="bg-slate-800 hover:bg-slate-700/90 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between transition-all"
+              className="bg-[#F8FAFC] hover:bg-[#F0FDFA] border border-[#E2E8F0] hover:border-[#14B8A6]/40 rounded-2xl p-3 flex flex-col justify-between transition-all shadow-2xs"
             >
               <div>
-                <span className="text-xl mb-1 block">🎙️</span>
-                <div className="font-bold text-xs text-white">Voice Communication</div>
-                <p className="text-[10px] text-slate-400 mt-0.5">Natural voice in 6 languages</p>
+                <div className="w-8 h-8 rounded-xl bg-[#F0FDFA] text-[#14B8A6] flex items-center justify-center mb-2 border border-[#14B8A6]/20">
+                  🎙️
+                </div>
+                <div className="font-bold text-xs text-[#0F172A]">Voice Communication</div>
+                <p className="text-[10px] text-[#64748B] mt-0.5">Natural voice in 6 languages</p>
               </div>
-              <span className="text-[9px] text-teal-400 font-bold mt-2">Active</span>
+              <span className="text-[9px] text-[#0F766E] font-bold mt-2">Active</span>
             </Link>
 
             <Link
               to="/sms"
-              className="bg-slate-800 hover:bg-slate-700/90 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between transition-all"
+              className="bg-[#F8FAFC] hover:bg-[#EFF6FF] border border-[#E2E8F0] hover:border-[#2563EB]/40 rounded-2xl p-3 flex flex-col justify-between transition-all shadow-2xs"
             >
               <div>
-                <span className="text-xl mb-1 block">📱</span>
-                <div className="font-bold text-xs text-white">SMS Outbox</div>
-                <p className="text-[10px] text-slate-400 mt-0.5">Local queue for low coverage</p>
+                <div className="w-8 h-8 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mb-2 border border-[#2563EB]/20">
+                  📱
+                </div>
+                <div className="font-bold text-xs text-[#0F172A]">SMS Outbox</div>
+                <p className="text-[10px] text-[#64748B] mt-0.5">Local queue for low coverage</p>
               </div>
-              <span className="text-[9px] text-amber-400 font-bold mt-2">DEMO SIMULATION</span>
+              <span className="text-[9px] text-[#D97706] font-bold mt-2">DEMO SIMULATION</span>
             </Link>
 
             <Link
               to="/ussd"
-              className="bg-slate-800 hover:bg-slate-700/90 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between transition-all"
+              className="bg-[#F8FAFC] hover:bg-slate-100 border border-[#E2E8F0] hover:border-slate-300 rounded-2xl p-3 flex flex-col justify-between transition-all shadow-2xs"
             >
               <div>
-                <span className="text-xl mb-1 block">🔢</span>
-                <div className="font-bold text-xs text-white">Basic Phone / USSD</div>
-                <p className="text-[10px] text-slate-400 mt-0.5">*141*9999# text menu</p>
+                <div className="w-8 h-8 rounded-xl bg-slate-100 text-[#475569] flex items-center justify-center mb-2 border border-slate-200">
+                  🔢
+                </div>
+                <div className="font-bold text-xs text-[#0F172A]">Basic Phone / USSD</div>
+                <p className="text-[10px] text-[#64748B] mt-0.5">*141*9999# text menu</p>
               </div>
-              <span className="text-[9px] text-amber-400 font-bold mt-2">DEMO SIMULATION</span>
+              <span className="text-[9px] text-[#D97706] font-bold mt-2">DEMO SIMULATION</span>
             </Link>
 
             <Link
               to="/ivr"
-              className="bg-slate-800 hover:bg-slate-700/90 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between transition-all"
+              className="bg-[#F8FAFC] hover:bg-[#F0FDFA] border border-[#E2E8F0] hover:border-[#14B8A6]/40 rounded-2xl p-3 flex flex-col justify-between transition-all shadow-2xs"
             >
               <div>
-                <span className="text-xl mb-1 block">☎️</span>
-                <div className="font-bold text-xs text-white">Telephone Simulation</div>
-                <p className="text-[10px] text-slate-400 mt-0.5">Future toll-free voice engine</p>
+                <div className="w-8 h-8 rounded-xl bg-[#F0FDFA] text-[#14B8A6] flex items-center justify-center mb-2 border border-[#14B8A6]/20">
+                  ☎️
+                </div>
+                <div className="font-bold text-xs text-[#0F172A]">Telephone Simulation</div>
+                <p className="text-[10px] text-[#64748B] mt-0.5">Future toll-free voice engine</p>
               </div>
-              <span className="text-[9px] text-amber-400 font-bold mt-2">DEMO SIMULATION</span>
+              <span className="text-[9px] text-[#D97706] font-bold mt-2">DEMO SIMULATION</span>
             </Link>
 
             <Link
               to="/sync"
-              className="bg-slate-800 hover:bg-slate-700/90 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between transition-all"
+              className="bg-[#F8FAFC] hover:bg-[#F0FDFA] border border-[#E2E8F0] hover:border-[#0F766E]/40 rounded-2xl p-3 flex flex-col justify-between transition-all shadow-2xs"
             >
               <div>
-                <span className="text-xl mb-1 block">🔄</span>
-                <div className="font-bold text-xs text-white">Sync Center</div>
-                <p className="text-[10px] text-slate-400 mt-0.5">Inspect local IndexedDB data</p>
+                <div className="w-8 h-8 rounded-xl bg-[#F0FDFA] text-[#0F766E] flex items-center justify-center mb-2 border border-[#0F766E]/20">
+                  🔄
+                </div>
+                <div className="font-bold text-xs text-[#0F172A]">Sync Center</div>
+                <p className="text-[10px] text-[#64748B] mt-0.5">Inspect local IndexedDB data</p>
               </div>
-              <span className="text-[9px] text-teal-400 font-bold mt-2">Active</span>
+              <span className="text-[9px] text-[#0F766E] font-bold mt-2">Active</span>
             </Link>
 
             <Link
               to="/village"
-              className="bg-slate-800 hover:bg-slate-700/90 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between transition-all"
+              className="bg-[#F8FAFC] hover:bg-[#F0FDF4] border border-[#E2E8F0] hover:border-[#16A34A]/40 rounded-2xl p-3 flex flex-col justify-between transition-all shadow-2xs"
             >
               <div>
-                <span className="text-xl mb-1 block">🏘️</span>
-                <div className="font-bold text-xs text-white">Village Dashboard</div>
-                <p className="text-[10px] text-slate-400 mt-0.5">Community health analytics</p>
+                <div className="w-8 h-8 rounded-xl bg-[#F0FDF4] text-[#16A34A] flex items-center justify-center mb-2 border border-[#16A34A]/20">
+                  🏘️
+                </div>
+                <div className="font-bold text-xs text-[#0F172A]">Village Dashboard</div>
+                <p className="text-[10px] text-[#64748B] mt-0.5">Community health analytics</p>
               </div>
-              <span className="text-[9px] text-teal-400 font-bold mt-2">Active</span>
+              <span className="text-[9px] text-[#16A34A] font-bold mt-2">Active</span>
             </Link>
           </div>
         </div>
@@ -303,13 +319,13 @@ export default function DashboardPage() {
         {/* ========================================================= */}
         {/* 5. HEALTH OVERVIEW SECTION                                */}
         {/* ========================================================= */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
+        <div className="bg-white border border-[#E2E8F0] rounded-3xl p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-extrabold text-base text-slate-900">Health Overview</h2>
-              <p className="text-xs text-slate-500">Medora Health Tracking Score & local monitoring indicators</p>
+              <h2 className="font-extrabold text-base text-[#0F172A]">Health Overview</h2>
+              <p className="text-xs text-[#64748B]">Medora Health Tracking Score & local monitoring indicators</p>
             </div>
-            <Link to="/health" className="text-xs font-bold text-teal-700 hover:text-teal-800">
+            <Link to="/health" className="text-xs font-bold text-[#0F766E] hover:underline">
               View Full Health →
             </Link>
           </div>
@@ -321,57 +337,57 @@ export default function DashboardPage() {
             </div>
 
             {/* Medicine adherence & reminders */}
-            <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-4 flex flex-col justify-between">
+            <div className="bg-[#F0FDF4] border border-[#16A34A]/30 rounded-2xl p-4 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
-                    <Pill size={15} className="text-emerald-600" /> Active Medicines
+                  <span className="text-xs font-bold text-[#16A34A] flex items-center gap-1.5">
+                    <Pill size={15} className="text-[#16A34A]" /> Active Medicines
                   </span>
-                  <Link to="/medicines" className="text-[11px] font-bold text-emerald-700 hover:underline">
+                  <Link to="/medicines" className="text-[11px] font-bold text-[#16A34A] hover:underline">
                     Manage
                   </Link>
                 </div>
                 {medicines.length > 0 ? (
                   <div className="space-y-1 mt-1">
                     {medicines.slice(0, 2).map((m) => (
-                      <div key={m.id} className="text-xs text-emerald-800 font-medium truncate">
+                      <div key={m.id} className="text-xs text-[#0F172A] font-medium truncate">
                         • {m.name} ({m.dose}) – {m.frequency}
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-emerald-700 mt-1">No active prescriptions currently recorded.</p>
+                  <p className="text-xs text-[#475569] mt-1">No active prescriptions currently recorded.</p>
                 )}
               </div>
-              <div className="mt-3 pt-2 border-t border-emerald-200/60 text-[10px] text-emerald-700">
+              <div className="mt-3 pt-2 border-t border-[#16A34A]/20 text-[10px] text-[#16A34A]">
                 {medicines.filter((m) => (m.missedCount || 0) === 0).length} of {medicines.length} taken on schedule
               </div>
             </div>
 
             {/* Recent Vitals Monitor */}
-            <div className="bg-blue-50/70 border border-blue-200 rounded-2xl p-4 flex flex-col justify-between">
+            <div className="bg-[#EFF6FF] border border-[#2563EB]/30 rounded-2xl p-4 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
-                    <Activity size={15} className="text-blue-600" /> Recent Vitals
+                  <span className="text-xs font-bold text-[#2563EB] flex items-center gap-1.5">
+                    <Activity size={15} className="text-[#2563EB]" /> Recent Vitals
                   </span>
-                  <Link to="/health-tests" className="text-[11px] font-bold text-blue-700 hover:underline">
+                  <Link to="/health-tests" className="text-[11px] font-bold text-[#2563EB] hover:underline">
                     Trends
                   </Link>
                 </div>
                 {recentTests.length > 0 ? (
                   <div className="space-y-1 mt-1">
                     {recentTests.slice(0, 2).map((t) => (
-                      <div key={t.id} className="text-xs text-blue-800 font-medium">
+                      <div key={t.id} className="text-xs text-[#0F172A] font-medium">
                         • <span className="capitalize">{t.type.replace('_', ' ')}</span>: <strong>{t.value} {t.unit}</strong>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-blue-700 mt-1">No recent test records. Tap to add BP or blood sugar.</p>
+                  <p className="text-xs text-[#475569] mt-1">No recent test records. Tap to add BP or blood sugar.</p>
                 )}
               </div>
-              <Link to="/health-tests" className="mt-3 pt-2 border-t border-blue-200/60 text-[10px] text-blue-700 font-bold block">
+              <Link to="/health-tests" className="mt-3 pt-2 border-t border-[#2563EB]/20 text-[10px] text-[#2563EB] font-bold block">
                 + Record new health test reading
               </Link>
             </div>
@@ -387,43 +403,43 @@ export default function DashboardPage() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-base font-black text-slate-900">Healthcare Features</h2>
-              <p className="text-xs text-slate-500">All services directly accessible on your home dashboard</p>
+              <h2 className="text-base font-black text-[#0F172A]">Healthcare Features</h2>
+              <p className="text-xs text-[#64748B]">All services directly accessible on your home dashboard</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {[
-              { path: '/health', icon: <Heart size={22} className="text-teal-600" />, title: '1. My Health', desc: 'View your health info, measurements & journey.', bg: 'bg-teal-50 border-teal-200' },
-              { path: '/family', icon: <Users size={22} className="text-purple-600" />, title: '2. Family Health', desc: 'Manage health information for your family.', bg: 'bg-purple-50 border-purple-200' },
-              { path: '/records', icon: <FileText size={22} className="text-blue-600" />, title: '3. Medical Records', desc: 'View and manage your medical history.', bg: 'bg-blue-50 border-blue-200' },
-              { path: '/medicines', icon: <Pill size={22} className="text-emerald-600" />, title: '4. Medicines & Reminders', desc: 'Track schedules, taken & missed doses.', bg: 'bg-emerald-50 border-emerald-200' },
-              { path: '/health-tests', icon: <Activity size={22} className="text-amber-600" />, title: '5. Health Tests', desc: 'Record BP, sugar, weight, pulse & SpO2.', bg: 'bg-amber-50 border-amber-200' },
-              { path: '/records', icon: <Shield size={22} className="text-indigo-600" />, title: '6. Medical Reports', desc: 'Store and view your lab & clinical reports.', bg: 'bg-indigo-50 border-indigo-200' },
-              { path: '/report-scanner', icon: <Camera size={22} className="text-fuchsia-600" />, title: '7. Report Scanner', desc: 'Capture or upload reports for organized filing.', bg: 'bg-fuchsia-50 border-fuchsia-200' },
-              { path: '/xray-viewer', icon: <Image size={22} className="text-slate-700" />, title: '8. X-Ray / Image Viewer', desc: 'View and annotate stored medical images.', bg: 'bg-slate-100 border-slate-300' },
-              { path: '/doctor-portal', icon: <Stethoscope size={22} className="text-cyan-600" />, title: '9. Doctor Consultation', desc: 'Prepare and review clinical consultations.', bg: 'bg-cyan-50 border-cyan-200' },
-              { path: '/doctor-summary', icon: <FileText size={22} className="text-teal-700" />, title: '10. Doctor Summary', desc: 'Create clear patient summary for doctor handoff.', bg: 'bg-teal-50 border-teal-200' },
-              { path: '/ai', icon: <Bot size={22} className="text-violet-600" />, title: '11. AI Health Assistant', desc: 'Get safe guidance from specialized assistants.', bg: 'bg-violet-50 border-violet-200' },
-              { path: '/hospitals', icon: <Building2 size={22} className="text-rose-600" />, title: '12. Nearby Healthcare', desc: 'View locally stored healthcare facilities & PHCs.', bg: 'bg-rose-50 border-rose-200' },
-              { path: '/vaccination', icon: <Syringe size={22} className="text-lime-600" />, title: '13. Vaccinations', desc: 'Track immunization history & UIP schedules.', bg: 'bg-lime-50 border-lime-200' },
-              { path: '/education', icon: <BookOpen size={22} className="text-sky-600" />, title: '14. Health Education', desc: 'Learn about nutrition, hygiene & prevention.', bg: 'bg-sky-50 border-sky-200' },
-              { path: '/schemes', icon: <Landmark size={22} className="text-emerald-700" />, title: '15. Govt Health Schemes', desc: 'Learn about Ayushman Bharat, JSY & PMMVY.', bg: 'bg-emerald-50 border-emerald-200' },
-              { path: '/emergency', icon: <AlertTriangle size={22} className="text-red-600" />, title: '16. Emergency Help', desc: 'Access first aid & stored emergency contacts.', bg: 'bg-red-50 border-red-200' }
+              { path: '/health', icon: <Heart size={22} className="text-[#0F766E]" />, iconBg: 'bg-[#F0FDFA]', title: '1. My Health', desc: 'View your health info, measurements & journey.' },
+              { path: '/family', icon: <Users size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: '2. Family Health', desc: 'Manage health information for your family.' },
+              { path: '/records', icon: <FileText size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: '3. Medical Records', desc: 'View and manage your medical history.' },
+              { path: '/medicines', icon: <Pill size={22} className="text-[#16A34A]" />, iconBg: 'bg-[#F0FDF4]', title: '4. Medicines & Reminders', desc: 'Track schedules, taken & missed doses.' },
+              { path: '/health-tests', icon: <Activity size={22} className="text-[#14B8A6]" />, iconBg: 'bg-[#F0FDFA]', title: '5. Health Tests', desc: 'Record BP, sugar, weight, pulse & SpO2.' },
+              { path: '/records', icon: <Shield size={22} className="text-[#4F46E5]" />, iconBg: 'bg-[#EEF2FF]', title: '6. Medical Reports', desc: 'Store and view your lab & clinical reports.' },
+              { path: '/report-scanner', icon: <Camera size={22} className="text-[#4F46E5]" />, iconBg: 'bg-[#EEF2FF]', title: '7. Report Scanner', desc: 'Capture or upload reports for organized filing.' },
+              { path: '/xray-viewer', icon: <Image size={22} className="text-[#475569]" />, iconBg: 'bg-[#F1F5F9]', title: '8. X-Ray / Image Viewer', desc: 'View and annotate stored medical images.' },
+              { path: '/doctor-portal', icon: <Stethoscope size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: '9. Doctor Consultation', desc: 'Prepare and review clinical consultations.' },
+              { path: '/doctor-summary', icon: <FileText size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: '10. Doctor Summary', desc: 'Create clear patient summary for doctor handoff.' },
+              { path: '/ai', icon: <Bot size={22} className="text-[#7C3AED]" />, iconBg: 'bg-[#F5F3FF]', title: '11. AI Health Assistant', desc: 'Get safe guidance from specialized assistants.' },
+              { path: '/hospitals', icon: <Building2 size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: '12. Nearby Healthcare', desc: 'View locally stored healthcare facilities & PHCs.' },
+              { path: '/vaccination', icon: <Syringe size={22} className="text-[#16A34A]" />, iconBg: 'bg-[#F0FDF4]', title: '13. Vaccinations', desc: 'Track immunization history & UIP schedules.' },
+              { path: '/education', icon: <BookOpen size={22} className="text-[#0F766E]" />, iconBg: 'bg-[#F0FDFA]', title: '14. Health Education', desc: 'Learn about nutrition, hygiene & prevention.' },
+              { path: '/schemes', icon: <Landmark size={22} className="text-[#4F46E5]" />, iconBg: 'bg-[#EEF2FF]', title: '15. Govt Health Schemes', desc: 'Learn about Ayushman Bharat, JSY & PMMVY.' },
+              { path: '/emergency', icon: <AlertTriangle size={22} className="text-[#DC2626]" />, iconBg: 'bg-[#FEF2F2]', title: '16. Emergency Help', desc: 'Access first aid & stored emergency contacts.' }
             ].map((card, i) => (
               <Link
                 key={i}
                 to={card.path}
-                className={`border rounded-2xl p-4 shadow-sm hover:shadow-md hover:scale-102 transition-all flex flex-col justify-between ${card.bg}`}
+                className="bg-white border border-[#E2E8F0] hover:border-slate-300 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
               >
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-xs mb-2.5">
+                  <div className={`w-10 h-10 rounded-xl ${card.iconBg} flex items-center justify-center shadow-2xs mb-2.5 border border-black/5 group-hover:scale-105 transition-transform`}>
                     {card.icon}
                   </div>
-                  <h3 className="font-bold text-xs text-slate-900 leading-snug">{card.title}</h3>
-                  <p className="text-[11px] text-slate-600 mt-1 leading-normal">{card.desc}</p>
+                  <h3 className="font-bold text-xs text-[#0F172A] leading-snug">{card.title}</h3>
+                  <p className="text-[11px] text-[#475569] mt-1 leading-normal">{card.desc}</p>
                 </div>
-                <span className="text-[10px] font-extrabold text-slate-800 mt-3 block">Open →</span>
+                <span className="text-[10px] font-extrabold text-[#0F766E] mt-3 block group-hover:translate-x-0.5 transition-transform">Open →</span>
               </Link>
             ))}
           </div>
@@ -435,32 +451,34 @@ export default function DashboardPage() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-base font-black text-slate-900">Specialized Family Care</h2>
-              <p className="text-xs text-slate-500">Dedicated health hubs across every stage of family life</p>
+              <h2 className="text-base font-black text-[#0F172A]">Specialized Family Care</h2>
+              <p className="text-xs text-[#64748B]">Dedicated health hubs across every stage of family life</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {[
-              { path: '/childcare', emoji: '👶', title: 'Child Care', desc: 'Growth, nutrition & common illness', color: 'bg-orange-50 border-orange-200 text-orange-900' },
-              { path: '/maternity', emoji: '🤰', title: 'Maternity Care', desc: 'Trimesters, nutrition & danger signs', color: 'bg-pink-50 border-pink-200 text-pink-900' },
-              { path: '/newborn', emoji: '🍼', title: 'Newborn Care', desc: 'Feeding, umbilical cord & birth doses', color: 'bg-rose-50 border-rose-200 text-rose-900' },
-              { path: '/maternity', emoji: '🌸', title: 'New Mother Care', desc: 'Postpartum recovery & maternal wellness', color: 'bg-fuchsia-50 border-fuchsia-200 text-fuchsia-900' },
-              { path: '/elderly', emoji: '👵', title: 'Elderly Care', desc: 'BP, fall safety & senior health alerts', color: 'bg-purple-50 border-purple-200 text-purple-900' },
-              { path: '/health-tests', emoji: '🩺', title: 'Diabetes Care', desc: 'Blood sugar trends & diet guidance', color: 'bg-teal-50 border-teal-200 text-teal-900' },
-              { path: '/education', emoji: '🥗', title: 'Nutrition Care', desc: 'Anemia prevention & wholesome diet', color: 'bg-green-50 border-green-200 text-green-900' }
+              { path: '/childcare', emoji: '👶', title: 'Child Care', desc: 'Growth, nutrition & common illness', iconBg: 'bg-[#EFF6FF]', textColor: 'text-[#2563EB]' },
+              { path: '/maternity', emoji: '🤰', title: 'Maternity Care', desc: 'Trimesters, nutrition & danger signs', iconBg: 'bg-[#FDF2F8]', textColor: 'text-[#DB2777]' },
+              { path: '/newborn', emoji: '🍼', title: 'Newborn Care', desc: 'Feeding, umbilical cord & birth doses', iconBg: 'bg-[#F0FDFA]', textColor: 'text-[#14B8A6]' },
+              { path: '/maternity', emoji: '🌸', title: 'New Mother Care', desc: 'Postpartum recovery & maternal wellness', iconBg: 'bg-[#FDF2F8]', textColor: 'text-[#DB2777]' },
+              { path: '/elderly', emoji: '👵', title: 'Elderly Care', desc: 'BP, fall safety & senior health alerts', iconBg: 'bg-[#EEF2FF]', textColor: 'text-[#4F46E5]' },
+              { path: '/health-tests', emoji: '🩺', title: 'Diabetes Care', desc: 'Blood sugar trends & diet guidance', iconBg: 'bg-[#FFF7ED]', textColor: 'text-[#EA580C]' },
+              { path: '/education', emoji: '🥗', title: 'Nutrition Care', desc: 'Anemia prevention & wholesome diet', iconBg: 'bg-[#F0FDF4]', textColor: 'text-[#16A34A]' }
             ].map((care, i) => (
               <Link
                 key={i}
                 to={care.path}
-                className={`border rounded-2xl p-4 shadow-sm hover:scale-102 transition-all flex flex-col justify-between ${care.color}`}
+                className="bg-white border border-[#E2E8F0] hover:border-slate-300 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
               >
                 <div>
-                  <span className="text-3xl mb-2 block">{care.emoji}</span>
-                  <h3 className="font-extrabold text-xs mb-1">{care.title}</h3>
-                  <p className="text-[11px] opacity-80 leading-normal">{care.desc}</p>
+                  <div className={`w-10 h-10 rounded-xl ${care.iconBg} flex items-center justify-center text-xl mb-2.5 border border-black/5 group-hover:scale-105 transition-transform`}>
+                    {care.emoji}
+                  </div>
+                  <h3 className="font-extrabold text-xs text-[#0F172A] mb-1">{care.title}</h3>
+                  <p className="text-[11px] text-[#475569] leading-normal">{care.desc}</p>
                 </div>
-                <span className="text-[10px] font-extrabold mt-3 block">View Care Hub →</span>
+                <span className={`text-[10px] font-extrabold mt-3 block ${care.textColor}`}>View Care Hub →</span>
               </Link>
             ))}
           </div>
@@ -469,27 +487,27 @@ export default function DashboardPage() {
         {/* ========================================================= */}
         {/* 9. RECENT HEALTH ACTIVITY (Real Local IndexedDB Data)    */}
         {/* ========================================================= */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3">
+        <div className="bg-white border border-[#E2E8F0] rounded-3xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-extrabold text-sm text-slate-900">Recent Health Activity</h2>
-            <span className="text-[11px] text-slate-400">From local database</span>
+            <h2 className="font-extrabold text-sm text-[#0F172A]">Recent Health Activity</h2>
+            <span className="text-[11px] text-[#64748B]">From local database</span>
           </div>
 
           <div className="space-y-2">
             {notifications.length > 0 ? (
               notifications.map((n) => (
-                <div key={n.id} className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100 text-xs">
-                  <div className="w-7 h-7 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center flex-shrink-0 font-bold">
+                <div key={n.id} className="flex items-start gap-3 p-3 rounded-2xl bg-[#FFFBEB]/60 border border-[#D97706]/20 text-xs">
+                  <div className="w-7 h-7 rounded-lg bg-[#FFFBEB] text-[#D97706] border border-[#D97706]/30 flex items-center justify-center flex-shrink-0 font-bold">
                     🔔
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium text-slate-800">{n.message}</p>
-                    <span className="text-[10px] text-slate-400">{n.createdAt?.slice(0, 16)}</span>
+                    <p className="font-medium text-[#0F172A]">{n.message}</p>
+                    <span className="text-[10px] text-[#64748B]">{n.createdAt?.slice(0, 16)}</span>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="p-4 text-center text-xs text-slate-400 bg-slate-50 rounded-2xl">
+              <div className="p-4 text-center text-xs text-[#64748B] bg-slate-50 border border-[#E2E8F0] rounded-2xl">
                 No recent health alerts. All scheduled medicines and vitals are up to date.
               </div>
             )}
@@ -497,9 +515,9 @@ export default function DashboardPage() {
         </div>
 
         {/* Footer Disclaimer */}
-        <div className="text-center py-2 text-[11px] text-slate-400 space-y-1">
-          <p>MEDORA — Rural Health Companion • Offline-First Healthcare Platform</p>
-          <p className="text-[10px] text-slate-400/80">All demo data is fictional. Real telecom integrations are represented as simulations.</p>
+        <div className="text-center py-2 text-[11px] text-[#64748B] space-y-1">
+          <p className="font-semibold text-[#0F172A]">MEDORA — Rural Health Companion • Offline-First Healthcare Platform</p>
+          <p className="text-[10px] text-[#64748B]">All demo data is fictional. Real telecom integrations are represented as simulations.</p>
         </div>
       </div>
     </Layout>

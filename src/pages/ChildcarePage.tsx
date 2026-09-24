@@ -35,61 +35,61 @@ export default function ChildcarePage() {
     <Layout>
       <div className="px-4 py-4 max-w-2xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900">👶 {t('childcare.title')}</h1>
+          <h1 className="text-xl font-black text-[#2563EB]">👶 {t('childcare.title')}</h1>
           <DemoDataBadge />
         </div>
 
         {child ? (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 flex items-center gap-3">
+          <div className="bg-[#EFF6FF] border border-[#2563EB]/20 rounded-2xl p-4 flex items-center gap-3 shadow-2xs">
             <span className="text-4xl">🧒</span>
             <div>
-              <div className="font-bold text-yellow-800 text-lg">{child.name}</div>
-              <div className="text-yellow-600">{child.age} years · {child.gender} · {child.village}</div>
+              <div className="font-extrabold text-[#2563EB] text-base">{child.name}</div>
+              <div className="text-xs text-[#475569]">{child.age} years · {child.gender} · {child.village}</div>
             </div>
           </div>
         ) : (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 text-center text-yellow-700">
+          <div className="bg-[#EFF6FF] border border-[#2563EB]/20 rounded-2xl p-4 text-center text-xs text-[#2563EB] font-bold">
             Demo child profile: Meena Sharma, 8 years, Kodaikanal
           </div>
         )}
 
         {medicines.length > 0 && (
-          <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
-            <h2 className="font-bold text-gray-800 mb-2">💊 {t('childcare.medicines')}</h2>
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-xs">
+            <h2 className="font-extrabold text-[#0F172A] text-xs mb-2">💊 {t('childcare.medicines')}</h2>
             {medicines.map(m => (
-              <div key={m.id} className="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0 text-sm">
-                <span className="font-medium">{m.name} {m.dose}</span>
-                <span className="text-gray-500">{m.times?.join(', ')}</span>
+              <div key={m.id} className="flex items-center justify-between py-1.5 border-b border-[#E2E8F0] last:border-0 text-xs">
+                <span className="font-bold text-[#0F172A]">{m.name} {m.dose}</span>
+                <span className="text-[#16A34A] font-semibold">{m.times?.join(', ')}</span>
               </div>
             ))}
           </div>
         )}
 
         {vaccinations.length > 0 && (
-          <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
-            <h2 className="font-bold text-gray-800 mb-2">💉 {t('childcare.vaccinations')}</h2>
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-xs">
+            <h2 className="font-extrabold text-[#0F172A] text-xs mb-2">💉 {t('childcare.vaccinations')}</h2>
             {vaccinations.map(v => (
-              <div key={v.id} className="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0 text-sm">
-                <span>{v.vaccineName}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${v.status === 'given' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{v.status}</span>
+              <div key={v.id} className="flex items-center justify-between py-1.5 border-b border-[#E2E8F0] last:border-0 text-xs">
+                <span className="font-bold text-[#0F172A]">{v.vaccineName}</span>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${v.status === 'given' ? 'bg-[#F0FDF4] text-[#16A34A] border border-[#16A34A]/20' : 'bg-[#FFFBEB] text-[#D97706] border border-[#D97706]/30'}`}>{v.status}</span>
               </div>
             ))}
           </div>
         )}
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
-          <h2 className="font-bold text-gray-800 mb-3">🥗 {t('childcare.nutrition')}</h2>
+        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-xs">
+          <h2 className="font-extrabold text-[#0F172A] text-sm mb-3">🥗 {t('childcare.nutrition')}</h2>
           {NUTRITION.map((n, i) => (
-            <div key={i} className="flex items-start gap-2 text-sm text-gray-700 py-1"><span className="text-green-500">✓</span> {n}</div>
+            <div key={i} className="flex items-start gap-2 text-xs text-[#475569] py-1"><span className="text-[#16A34A] font-bold">✓</span> {n}</div>
           ))}
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
-          <h2 className="font-bold text-gray-800 mb-3">🩺 {t('childcare.commonIllness')}</h2>
+        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-xs">
+          <h2 className="font-extrabold text-[#0F172A] text-sm mb-3">🩺 {t('childcare.commonIllness')}</h2>
           {ILLNESS.map((ill, i) => (
-            <div key={i} className="py-2 border-b border-gray-100 last:border-0">
-              <div className="font-semibold text-gray-900 text-sm">{ill.name}</div>
-              <div className="text-xs text-gray-600 mt-0.5">{ill.action}</div>
+            <div key={i} className="py-2 border-b border-[#E2E8F0] last:border-0">
+              <div className="font-bold text-[#0F172A] text-xs">{ill.name}</div>
+              <div className="text-xs text-[#64748B] mt-0.5">{ill.action}</div>
             </div>
           ))}
         </div>

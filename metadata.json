@@ -1,0 +1,8 @@
+{
+  "name": "Medora - Rural Health Companion",
+  "description": "Offline-first rural healthcare platform.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -146,48 +146,44 @@ export default function SpeakToMedoraCard() {
   const langMeta = LANGUAGE_METADATA[activeLang] || LANGUAGE_METADATA['en-IN'];
 
   return (
-    <div className="bg-gradient-to-br from-teal-900 via-teal-800 to-teal-950 text-white rounded-3xl p-5 shadow-xl border border-teal-700/50 relative overflow-hidden">
-      {/* Background glow accent */}
-      <div className="absolute -top-16 -right-16 w-48 h-48 bg-teal-500/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="bg-[#F0FDFA] border-2 border-[#14B8A6]/30 text-[#0F172A] rounded-3xl p-5 shadow-sm relative overflow-hidden">
       {/* Header bar */}
       <div className="flex items-center justify-between mb-4 relative z-10">
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-2xl bg-teal-600/80 border border-teal-400/40 flex items-center justify-center text-xl shadow-inner">
+          <div className="w-10 h-10 rounded-2xl bg-white border border-[#14B8A6]/40 flex items-center justify-center text-xl shadow-xs text-[#14B8A6]">
             🎙️
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="font-extrabold text-lg tracking-tight">Speak to Medora</h2>
-              <span className="bg-teal-500/30 text-teal-200 text-[10px] font-bold px-2 py-0.5 rounded-full border border-teal-400/30 uppercase tracking-wider">
+              <h2 className="font-extrabold text-base text-[#0F766E] tracking-tight">Speak to Medora</h2>
+              <span className="bg-[#14B8A6]/15 text-[#0F766E] text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#14B8A6]/30 uppercase tracking-wider">
                 Natural Voice
               </span>
             </div>
-            <p className="text-xs text-teal-200/80">Tell Medora what is wrong in your own language.</p>
+            <p className="text-xs text-[#475569]">Tell Medora what is wrong in your own language.</p>
           </div>
         </div>
 
         {/* Language badge & selector */}
         <button
           onClick={() => setShowLanguagePicker(!showLanguagePicker)}
-          className="flex items-center gap-1.5 bg-teal-950/60 hover:bg-teal-900 border border-teal-500/40 rounded-xl px-2.5 py-1 text-xs font-semibold text-teal-100 transition-colors"
+          className="flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-[#E2E8F0] rounded-xl px-2.5 py-1 text-xs font-bold text-[#0F766E] shadow-xs transition-colors"
           title="Change language manually"
         >
-          <Globe size={13} className="text-teal-400" />
+          <Globe size={13} className="text-[#14B8A6]" />
           <span>{langMeta.nativeName}</span>
-          <span className="text-[10px] text-teal-300 opacity-75">({confidenceLevel})</span>
+          <span className="text-[10px] text-[#64748B] font-normal">({confidenceLevel})</span>
         </button>
       </div>
 
       {/* Language Selection Modal / Dropdown */}
       {showLanguagePicker && (
-        <div className="mb-4 bg-teal-950/90 border border-teal-500/40 rounded-2xl p-3 backdrop-blur-md relative z-20">
-          <div className="text-xs font-bold text-teal-200 mb-2 flex items-center justify-between">
+        <div className="mb-4 bg-white border border-[#E2E8F0] rounded-2xl p-3 shadow-md relative z-20">
+          <div className="text-xs font-bold text-[#0F172A] mb-2 flex items-center justify-between">
             <span>Select your preferred language:</span>
-            <span className="text-[10px] text-teal-400 font-normal">Auto-detection remains active</span>
+            <span className="text-[10px] text-[#64748B] font-normal">Auto-detection remains active</span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+          <div className="grid grid-cols-2 sm:grid-cols-6 gap-1.5">
             {(Object.keys(LANGUAGE_METADATA) as SupportedLanguageCode[]).map((code) => {
               const item = LANGUAGE_METADATA[code];
               const isSelected = activeLang === code;
@@ -197,8 +193,8 @@ export default function SpeakToMedoraCard() {
                   onClick={() => handleManualLanguageSelect(code)}
                   className={`flex flex-col items-center justify-center p-2 rounded-xl border text-xs font-bold transition-all ${
                     isSelected
-                      ? 'bg-teal-500 text-white border-teal-300 shadow-md scale-102'
-                      : 'bg-teal-900/60 text-teal-200 border-teal-700/50 hover:bg-teal-800'
+                      ? 'bg-[#0F766E] text-white border-[#0F766E] shadow-sm'
+                      : 'bg-white text-[#475569] border-[#E2E8F0] hover:bg-slate-50'
                   }`}
                 >
                   <span className="text-base mb-0.5">{item.flag}</span>
@@ -215,14 +211,14 @@ export default function SpeakToMedoraCard() {
       {turns.length > 0 && (
         <div
           ref={chatScrollRef}
-          className="max-h-56 overflow-y-auto mb-4 space-y-2.5 pr-1 scrollbar-thin scrollbar-thumb-teal-700/60"
+          className="max-h-56 overflow-y-auto mb-4 space-y-2.5 pr-1 scrollbar-thin scrollbar-thumb-teal-300"
         >
           {turns.map((t, idx) => (
             <div key={idx} className="space-y-1.5 text-xs">
               {/* User turn */}
               <div className="flex justify-end">
-                <div className="bg-teal-700/80 text-teal-50 border border-teal-500/30 rounded-2xl rounded-tr-sm px-3.5 py-2 max-w-[85%] shadow-sm">
-                  <div className="text-[10px] text-teal-300 font-semibold mb-0.5 flex items-center gap-1">
+                <div className="bg-[#EFF6FF] text-[#0F172A] border border-[#2563EB]/30 rounded-2xl rounded-tr-sm px-3.5 py-2 max-w-[85%] shadow-xs">
+                  <div className="text-[10px] text-[#2563EB] font-bold mb-0.5 flex items-center gap-1">
                     <span>You</span> · <span>{LANGUAGE_METADATA[t.detectedLanguage]?.nativeName || t.detectedLanguage}</span>
                   </div>
                   <p className="text-sm font-medium">{t.userText}</p>
@@ -232,31 +228,31 @@ export default function SpeakToMedoraCard() {
               {/* Medora turn */}
               <div className="flex justify-start">
                 <div
-                  className={`border rounded-2xl rounded-tl-sm px-3.5 py-2.5 max-w-[90%] shadow-md ${
+                  className={`border rounded-2xl rounded-tl-sm px-3.5 py-2.5 max-w-[90%] shadow-xs ${
                     t.isEmergency
-                      ? 'bg-red-950/90 text-red-100 border-red-500/60'
-                      : 'bg-teal-950/90 text-teal-50 border-teal-600/60'
+                      ? 'bg-[#FEF2F2] text-[#0F172A] border-[#DC2626]/40'
+                      : 'bg-white text-[#0F172A] border-[#E2E8F0]'
                   }`}
                 >
-                  <div className="flex items-center justify-between text-[10px] font-bold mb-1 opacity-80">
-                    <span className="flex items-center gap-1 text-teal-300">
+                  <div className="flex items-center justify-between text-[10px] font-bold mb-1 opacity-90">
+                    <span className="flex items-center gap-1 text-[#7C3AED]">
                       <Sparkles size={11} /> {t.agentName}
                     </span>
                     {t.isEmergency && (
-                      <span className="bg-red-600 text-white px-1.5 py-0.2 rounded font-black text-[9px]">EMERGENCY</span>
+                      <span className="bg-[#DC2626] text-white px-1.5 py-0.2 rounded font-black text-[9px]">EMERGENCY</span>
                     )}
                   </div>
-                  <p className="text-sm leading-relaxed whitespace-pre-line font-normal">{t.responseText}</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-line font-normal text-[#0F172A]">{t.responseText}</p>
 
-                  <div className="mt-2 pt-1.5 border-t border-teal-800/40 flex items-center justify-between">
+                  <div className="mt-2 pt-1.5 border-t border-[#E2E8F0] flex items-center justify-between">
                     <button
                       onClick={() => handleReplayAudio(t)}
-                      className="flex items-center gap-1 text-[11px] font-bold text-teal-300 hover:text-teal-100 transition-colors"
+                      className="flex items-center gap-1 text-[11px] font-bold text-[#0F766E] hover:text-[#14B8A6] transition-colors"
                     >
                       <Volume2 size={12} /> {t.detectedLanguage.slice(0, 2).toUpperCase()} Voice
                     </button>
                     {t.followUpQuestion && (
-                      <span className="text-[10px] text-teal-400 italic">Respond naturally above</span>
+                      <span className="text-[10px] text-[#64748B] italic">Respond naturally</span>
                     )}
                   </div>
                 </div>
@@ -266,7 +262,7 @@ export default function SpeakToMedoraCard() {
 
           {isProcessing && (
             <div className="flex justify-start">
-              <div className="bg-teal-950/80 border border-teal-700/50 rounded-2xl px-3.5 py-2 text-xs text-teal-300 flex items-center gap-2">
+              <div className="bg-white border border-[#E2E8F0] rounded-2xl px-3.5 py-2 text-xs text-[#0F766E] flex items-center gap-2 shadow-xs">
                 <span className="animate-spin text-sm">🔄</span>
                 <span>Understanding your speech & detecting language...</span>
               </div>
@@ -276,52 +272,83 @@ export default function SpeakToMedoraCard() {
       )}
 
       {/* Main Speak & Action Area */}
-      <div className="bg-teal-950/70 border border-teal-700/40 rounded-2xl p-3.5 mb-3 flex flex-col items-center text-center">
+      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 mb-3 flex flex-col items-center text-center shadow-xs">
         {/* Live speech preview */}
         {isListening ? (
-          <div className="w-full mb-3 py-2 px-3 bg-teal-900/60 rounded-xl border border-teal-500/40 animate-pulse">
-            <div className="text-[11px] font-bold text-teal-300 flex items-center justify-center gap-1.5 mb-1">
-              <span className="w-2 h-2 rounded-full bg-red-400 animate-ping" />
-              <span>Listening in {langMeta.nativeName} ({langMeta.name})...</span>
+          <div className="w-full mb-3 py-2.5 px-3 bg-[#FEF2F2] rounded-xl border border-[#DC2626]/30">
+            <div className="text-[11px] font-bold text-[#DC2626] flex items-center justify-center gap-2 mb-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#DC2626] animate-ping" />
+              <span>🔴 Listening in {langMeta.nativeName} ({langMeta.name})...</span>
             </div>
-            <p className="text-sm text-teal-100 font-medium italic">
+            <p className="text-sm text-[#0F172A] font-medium italic">
               {transcript ? `"${transcript}"` : 'Please speak your symptoms now...'}
             </p>
+            {/* Subtle Voice Wave Visualization */}
+            <div className="flex items-center justify-center gap-1 mt-2">
+              {[4, 8, 14, 20, 14, 8, 4].map((h, i) => (
+                <div
+                  key={i}
+                  className="w-1 bg-[#14B8A6] rounded-full animate-pulse"
+                  style={{ height: `${h}px`, animationDelay: `${i * 120}ms` }}
+                />
+              ))}
+            </div>
+          </div>
+        ) : isSpeaking ? (
+          <div className="w-full mb-3 py-2 px-3 bg-[#F0FDFA] rounded-xl border border-[#14B8A6]/30">
+            <div className="text-[11px] font-bold text-[#0F766E] flex items-center justify-center gap-1.5">
+              <span>🔊 Speaking in {langMeta.nativeName}...</span>
+            </div>
+            {/* Subtle Voice Wave Visualization */}
+            <div className="flex items-center justify-center gap-1 mt-1.5">
+              {[6, 12, 18, 12, 6].map((h, i) => (
+                <div
+                  key={i}
+                  className="w-1 bg-[#0F766E] rounded-full animate-pulse"
+                  style={{ height: `${h}px`, animationDelay: `${i * 100}ms` }}
+                />
+              ))}
+            </div>
           </div>
         ) : lastTurn ? (
-          <div className="w-full mb-2.5 flex items-center justify-between text-xs text-teal-300 bg-teal-900/40 px-3 py-1.5 rounded-xl">
+          <div className="w-full mb-2.5 flex items-center justify-between text-xs text-[#0F766E] bg-[#F0FDFA] px-3 py-1.5 rounded-xl border border-[#14B8A6]/20">
             <span className="flex items-center gap-1">
-              <CheckCircle size={12} className="text-teal-400" /> Detected: <strong>{langMeta.nativeName}</strong>
+              <CheckCircle size={12} className="text-[#16A34A]" /> Detected: <strong>{langMeta.nativeName}</strong>
             </span>
             <span>Intent: <strong>{lastTurn.intent.replace('_', ' ')}</strong></span>
           </div>
         ) : (
-          <p className="text-xs text-teal-200/90 mb-3">
-            Speak naturally in <strong>தமிழ்</strong>, <strong>తెలుగు</strong>, <strong>മലയാളം</strong>,{' '}
-            <strong>ಕನ್ನಡ</strong> or <strong>English</strong>. No menu buttons required.
-          </p>
+          <div className="mb-3">
+            <p className="text-xs text-[#475569]">
+              Speak naturally in <strong>தமிழ்</strong>, <strong>తెలుగు</strong>, <strong>മലയാളം</strong>,{' '}
+              <strong>ಕನ್ನಡ</strong>, <strong>हिन्दी</strong> or <strong>English</strong>.
+            </p>
+            <div className="flex items-center justify-center gap-1.5 mt-1 text-[11px] font-medium text-[#64748B]">
+              <span>🎤 Ready to listen</span>
+            </div>
+          </div>
         )}
 
         {/* Primary Microphone Action Button */}
-        <div className="flex flex-col items-center gap-3 w-full">
+        <div className="flex flex-col items-center gap-2.5 w-full">
           <div className="flex items-center gap-3">
             <button
               onClick={isListening ? handleStopListening : handleStartListening}
-              className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-black text-sm tracking-wide transition-all shadow-lg active:scale-95 ${
+              className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-black text-sm tracking-wide transition-all shadow-sm active:scale-95 min-h-12 ${
                 isListening
-                  ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse shadow-red-500/40 ring-4 ring-red-400/30'
-                  : 'bg-gradient-to-r from-teal-400 to-emerald-400 hover:from-teal-300 hover:to-emerald-300 text-teal-950 font-black shadow-teal-500/30'
+                  ? 'bg-[#DC2626] hover:bg-[#B91C1C] text-white shadow-red-500/30 ring-4 ring-red-200'
+                  : 'bg-[#14B8A6] hover:bg-[#0F766E] text-white shadow-teal-500/20'
               }`}
             >
               {isListening ? (
                 <>
                   <MicOff size={18} />
-                  <span>Stop Listening</span>
+                  <span>🔴 Stop Listening</span>
                 </>
               ) : (
                 <>
                   <Mic size={18} />
-                  <span>TAP TO SPEAK</span>
+                  <span>🎤 TAP TO SPEAK</span>
                 </>
               )}
             </button>
@@ -329,20 +356,20 @@ export default function SpeakToMedoraCard() {
             {turns.length > 0 && (
               <button
                 onClick={handleReset}
-                className="p-3 bg-teal-900/80 hover:bg-teal-800 text-teal-200 border border-teal-600/40 rounded-2xl transition-colors"
+                className="p-3 bg-white hover:bg-slate-50 text-[#64748B] border border-[#E2E8F0] rounded-2xl transition-colors shadow-xs"
                 title="Reset conversation"
               >
                 <RotateCcw size={16} />
               </button>
             )}
           </div>
-          
+
           {isSpeaking && (
             <button
               onClick={() => speechSynthesisService.stop()}
-              className="flex items-center justify-center gap-2 px-6 py-2.5 w-full max-w-[200px] rounded-2xl font-black text-sm tracking-wide transition-all shadow-lg active:scale-95 bg-red-600 hover:bg-red-700 text-white ring-4 ring-red-500/30"
+              className="flex items-center justify-center gap-2 px-6 py-2.5 w-full max-w-[200px] rounded-2xl font-black text-xs tracking-wide transition-all shadow-sm active:scale-95 bg-[#DC2626] hover:bg-[#B91C1C] text-white ring-2 ring-red-200"
             >
-              <span className="text-lg leading-none">⏹</span>
+              <span className="text-base leading-none">⏹</span>
               <span>STOP SPEAKING</span>
             </button>
           )}
@@ -356,13 +383,13 @@ export default function SpeakToMedoraCard() {
           value={textInput}
           onChange={(e) => setTextInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleProcessUtterance(textInput)}
-          placeholder="Or type in your language (e.g. எனக்கு காய்ச்சல், నాకు జ్వరం)..."
-          className="flex-1 bg-teal-950/80 border border-teal-700/50 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-teal-400/60 focus:outline-none focus:border-teal-400 transition-colors"
+          placeholder="Or type in your language (e.g. எனக்கு காய்ச்சல், मुझे बुखार है)..."
+          className="flex-1 bg-white border border-[#E2E8F0] rounded-xl px-3.5 py-2.5 text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#14B8A6] shadow-xs transition-colors"
         />
         <button
           onClick={() => handleProcessUtterance(textInput)}
           disabled={!textInput.trim() || isProcessing}
-          className="bg-teal-500 hover:bg-teal-400 disabled:opacity-40 text-teal-950 font-bold p-2.5 rounded-xl transition-all shadow"
+          className="bg-[#0F766E] hover:bg-[#14B8A6] disabled:opacity-40 text-white font-bold p-2.5 rounded-xl transition-all shadow-xs"
         >
           <Send size={14} />
         </button>
@@ -370,20 +397,20 @@ export default function SpeakToMedoraCard() {
 
       {/* Notice & Status banner */}
       {statusNotice && (
-        <div className="mt-2.5 bg-amber-950/80 border border-amber-500/40 text-amber-200 text-xs px-3 py-1.5 rounded-xl flex items-center gap-1.5">
-          <AlertTriangle size={13} className="text-amber-400 flex-shrink-0" />
+        <div className="mt-2.5 bg-[#FFFBEB] border border-[#D97706]/40 text-[#D97706] text-xs px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+          <AlertTriangle size={13} className="text-[#D97706] flex-shrink-0" />
           <span className="flex-1">{statusNotice}</span>
         </div>
       )}
 
       {/* Future Real Toll-Free Telephone Gateway Note */}
-      <div className="mt-3 pt-2.5 border-t border-teal-800/40 flex items-center justify-between text-[11px] text-teal-300/80">
+      <div className="mt-3 pt-2.5 border-t border-[#14B8A6]/20 flex items-center justify-between text-[11px] text-[#475569]">
         <span className="flex items-center gap-1">
           <span>🔒 Works 100% locally offline</span>
         </span>
         <Link
           to="/ivr"
-          className="flex items-center gap-1 text-teal-300 font-bold hover:text-white underline decoration-teal-400/50"
+          className="flex items-center gap-1 text-[#0F766E] font-bold hover:underline"
         >
           <PhoneCall size={11} />
           <span>Telephone Mode Simulation</span>

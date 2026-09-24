@@ -37,42 +37,42 @@ export default function MaternityPage() {
     <Layout>
       <div className="px-4 py-4 max-w-2xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900">🤰 {t('maternity.title')}</h1>
+          <h1 className="text-xl font-black text-[#DB2777]">🤰 {t('maternity.title')}</h1>
           <DemoDataBadge />
         </div>
 
         {patient?.isPregnant && (
-          <div className="bg-pink-50 border border-pink-200 rounded-2xl p-4">
+          <div className="bg-[#FDF2F8] border border-[#DB2777]/30 rounded-2xl p-4 shadow-xs">
             <div className="flex items-center gap-3">
               <span className="text-4xl">🤰</span>
-              <div>
-                <div className="font-bold text-pink-800">{patient.name}</div>
-                <div className="text-pink-600 font-medium">Week {weeks} · {trimester} Trimester</div>
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                  <div className="bg-pink-500 h-2 rounded-full" style={{ width: `${(weeks / 40) * 100}%` }} />
+              <div className="flex-1">
+                <div className="font-extrabold text-[#DB2777] text-base">{patient.name}</div>
+                <div className="text-xs text-[#0F172A] font-medium">Week {weeks} · {trimester} Trimester</div>
+                <div className="w-full bg-pink-100 rounded-full h-2.5 mt-2 overflow-hidden border border-pink-200">
+                  <div className="bg-[#DB2777] h-2.5 rounded-full" style={{ width: `${(weeks / 40) * 100}%` }} />
                 </div>
-                <div className="text-xs text-gray-500 mt-1">{40 - weeks} weeks remaining</div>
+                <div className="text-[11px] text-[#64748B] mt-1">{40 - weeks} weeks remaining</div>
               </div>
             </div>
           </div>
         )}
 
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
-          <h2 className="font-bold text-blue-800 mb-1">💡 Week {weeks} Tip</h2>
-          <p className="text-sm text-blue-700">{tip}</p>
+        <div className="bg-[#EFF6FF] border border-[#2563EB]/20 rounded-2xl p-4 shadow-2xs">
+          <h2 className="font-extrabold text-[#2563EB] text-xs mb-1">💡 Week {weeks} Tip</h2>
+          <p className="text-xs text-[#0F172A] leading-relaxed">{tip}</p>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
-          <h2 className="font-bold text-gray-800 mb-3">🥗 {t('maternity.nutrition')}</h2>
+        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-xs">
+          <h2 className="font-extrabold text-[#0F172A] text-sm mb-3">🥗 {t('maternity.nutrition')}</h2>
           {['Iron-rich: Spinach, dal, jaggery, meat', 'Folic acid: Green leafy vegetables, lentils', 'Calcium: Milk, curd, paneer, ragi', 'Protein: Eggs, fish, pulses, nuts', 'Avoid: Raw meat, papaya, alcohol, excess caffeine'].map((item, i) => (
-            <div key={i} className="flex items-start gap-2 text-sm text-gray-700 py-1">
-              <span className="text-green-500 flex-shrink-0">✓</span> {item}
+            <div key={i} className="flex items-start gap-2 text-xs text-[#475569] py-1">
+              <span className="text-[#16A34A] font-bold flex-shrink-0">✓</span> {item}
             </div>
           ))}
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
-          <h2 className="font-bold text-gray-800 mb-3">📅 {t('maternity.antenatal')}</h2>
+        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-xs">
+          <h2 className="font-extrabold text-[#0F172A] text-sm mb-3">📅 {t('maternity.antenatal')}</h2>
           {[
             { label: 'First Visit (< 12 weeks)', done: weeks > 12 },
             { label: 'Blood Tests + Weight (16w)', done: weeks > 16 },
@@ -80,21 +80,21 @@ export default function MaternityPage() {
             { label: 'Glucose Test (24-28w)', done: weeks > 28 },
             { label: 'Birth Plan Discussion (36w)', done: weeks > 36 },
           ].map((item, i) => (
-            <div key={i} className="flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-0">
+            <div key={i} className="flex items-center gap-2 py-1.5 border-b border-[#E2E8F0] last:border-0">
               <span>{item.done ? '✅' : '📅'}</span>
-              <span className={`text-sm ${item.done ? 'text-green-700 line-through' : 'text-gray-700'}`}>{item.label}</span>
+              <span className={`text-xs ${item.done ? 'text-[#16A34A] font-semibold line-through' : 'text-[#0F172A]'}`}>{item.label}</span>
             </div>
           ))}
         </div>
 
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
-          <h2 className="font-bold text-red-800 mb-3">⚠️ {t('maternity.warningSigns')}</h2>
+        <div className="bg-[#FEF2F2] border border-[#DC2626]/30 rounded-2xl p-4 shadow-xs">
+          <h2 className="font-extrabold text-[#DC2626] text-sm mb-3">⚠️ {t('maternity.warningSigns')}</h2>
           {WARNING_SIGNS.map((s, i) => (
-            <div key={i} className="flex items-start gap-2 text-sm text-red-700 py-1">
+            <div key={i} className="flex items-start gap-2 text-xs text-[#B91C1C] py-1">
               <span className="flex-shrink-0">🔴</span> {s}
             </div>
           ))}
-          <Link to="/emergency" className="block w-full mt-3 bg-red-600 text-white text-center py-3 rounded-xl font-bold">🚨 Emergency Help</Link>
+          <Link to="/emergency" className="block w-full mt-3 bg-[#DC2626] hover:bg-[#B91C1C] text-white text-center py-3 rounded-xl font-bold text-xs shadow-sm transition-colors">🚨 Emergency Help</Link>
         </div>
       </div>
     </Layout>

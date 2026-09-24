@@ -51,22 +51,22 @@ export default function MedicinesPage() {
     <Layout>
       <div className="px-4 py-4 max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold text-gray-900">💊 {t('medicines.title')}</h1>
+          <h1 className="text-xl font-black text-[#16A34A]">💊 {t('medicines.title')}</h1>
           <div className="flex items-center gap-2">
             <DemoDataBadge />
-            <button onClick={() => setShowAdd(true)} className="bg-sky-600 text-white text-sm px-3 py-1.5 rounded-xl font-medium hover:bg-sky-700">
+            <button onClick={() => setShowAdd(true)} className="bg-[#16A34A] text-white text-xs px-3.5 py-2 rounded-xl font-bold hover:bg-green-700 shadow-2xs transition-colors">
               + {t('medicines.addMedicine')}
             </button>
           </div>
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
+        <div className="flex bg-slate-100 rounded-xl p-1 mb-4 border border-[#E2E8F0]">
           {(['all', 'active', 'completed'] as FilterType[]).map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-all ${filter === f ? 'bg-white text-sky-700 shadow-sm font-bold' : 'text-gray-500'}`}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${filter === f ? 'bg-white text-[#16A34A] shadow-xs' : 'text-[#64748B] hover:text-[#0F172A]'}`}
             >
               {t(`medicines.${f}`, f.charAt(0).toUpperCase() + f.slice(1))}
             </button>
@@ -77,7 +77,7 @@ export default function MedicinesPage() {
         {showAdd && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
             <div className="bg-white rounded-t-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
-              <h2 className="font-bold text-lg mb-4">{t('medicines.addMedicine')}</h2>
+              <h2 className="font-extrabold text-[#0F172A] text-base mb-4">{t('medicines.addMedicine')}</h2>
               <div className="space-y-3">
                 {[
                   { key: 'name', label: t('medicines.name'), type: 'text', placeholder: 'e.g. Paracetamol 500mg' },
@@ -88,22 +88,22 @@ export default function MedicinesPage() {
                   { key: 'instructions', label: t('medicines.instructions'), type: 'text', placeholder: 'After meals' },
                 ].map(field => (
                   <div key={field.key}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+                    <label className="block text-xs font-bold text-[#475569] mb-1">{field.label}</label>
                     <input
                       type={field.type}
                       value={(newMed as any)[field.key]}
                       onChange={e => setNewMed(prev => ({ ...prev, [field.key]: e.target.value }))}
                       placeholder={field.placeholder}
-                      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-base focus:border-sky-400 focus:outline-none"
+                      className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-xs text-[#0F172A] focus:border-[#16A34A] focus:outline-none"
                     />
                   </div>
                 ))}
               </div>
               <div className="flex gap-3 mt-4">
-                <button onClick={() => setShowAdd(false)} className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-xl font-medium">
+                <button onClick={() => setShowAdd(false)} className="flex-1 border border-[#E2E8F0] text-[#475569] py-2.5 rounded-xl font-bold text-xs hover:bg-slate-50">
                   {t('common.cancel')}
                 </button>
-                <button onClick={handleAdd} className="flex-1 bg-sky-600 text-white py-3 rounded-xl font-bold hover:bg-sky-700">
+                <button onClick={handleAdd} className="flex-1 bg-[#16A34A] text-white py-2.5 rounded-xl font-bold text-xs hover:bg-green-700 shadow-2xs">
                   {t('common.save')}
                 </button>
               </div>
