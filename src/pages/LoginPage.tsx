@@ -20,6 +20,7 @@ export default function LoginPage() {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [phone, setPhone] = useState('');
   const [pin, setPin] = useState('');
+  const [showPin, setShowPin] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -135,16 +136,31 @@ export default function LoginPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.pin')}</label>
-                <input
-                  type="password"
-                  value={pin}
-                  onChange={e => setPin(e.target.value)}
-                  placeholder={t('auth.enterPin')}
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:border-sky-400 focus:outline-none"
-                  onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                />
+                <div className="relative">
+                  <input
+                    type={showPin ? 'text' : 'password'}
+                    value={pin}
+                    onChange={e => setPin(e.target.value)}
+                    placeholder={t('auth.enterPin')}
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 pr-12 text-base focus:border-sky-400 focus:outline-none"
+                    onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => setShowPin(!showPin)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                  >
+                    {showPin ? '👁️‍🗨️' : '👁️'}
+                  </button>
+                </div>
               </div>
-              {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-xl">{error}</div>}
+              
+              {/* Validation Feedback */}
+              {error && (
+                <div className="flex items-center gap-2 text-red-600 bg-red-50 px-3 py-2 rounded-xl text-sm font-medium border border-red-200">
+                  <span className="font-bold">✕</span> {error === t('auth.loginError') ? 'Incorrect password or phone' : error}
+                </div>
+              )}
               <button
                 onClick={handleLogin}
                 disabled={loading}

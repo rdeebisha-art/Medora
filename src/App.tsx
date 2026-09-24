@@ -37,6 +37,7 @@ import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import FaqPage from './pages/FaqPage';
 import HelpPage from './pages/HelpPage';
+import LanguageBridgePage from './pages/LanguageBridgePage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAppStore();
@@ -63,6 +64,7 @@ export default function App() {
       <Route path="/records" element={<ProtectedRoute><MedicalRecordsPage /></ProtectedRoute>} />
       <Route path="/health-tests" element={<ProtectedRoute><HealthTestsPage /></ProtectedRoute>} />
       <Route path="/ai" element={<ProtectedRoute><AiAssistantPage /></ProtectedRoute>} />
+      <Route path="/language-bridge" element={<ProtectedRoute><LanguageBridgePage /></ProtectedRoute>} />
       <Route path="/hospitals" element={<ProtectedRoute><HospitalsPage /></ProtectedRoute>} />
       <Route path="/transport" element={<ProtectedRoute><TransportPage /></ProtectedRoute>} />
       <Route path="/schemes" element={<ProtectedRoute><SchemesPage /></ProtectedRoute>} />

@@ -141,6 +141,58 @@ export interface DoctorSummary {
   createdAt: string;
   doctorNotes?: string;
   agentType?: string;
+  patientLanguage?: string;
+  doctorLanguage?: string;
+  languageBridgeUsed?: boolean;
+  originalPatientStatements?: string;
+  translatedPatientStatements?: string;
+  doctorResponseOriginal?: string;
+  doctorResponseTranslated?: string;
+  followUp?: string;
+  appointmentNotes?: string;
+}
+
+export type BridgeTranslationConfidence = 'HIGH' | 'MEDIUM' | 'LOW';
+
+export interface LanguageBridgeSession {
+  id?: number;
+  patientId?: number;
+  doctorId?: number;
+  patientLanguage: string;
+  doctorLanguage: string;
+  autoDetect: boolean;
+  status: 'setup' | 'active' | 'ended';
+  commonLanguage: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LanguageBridgeMessage {
+  id?: number;
+  sessionId: number;
+  speaker: 'patient' | 'doctor' | 'medora';
+  originalLanguage: string;
+  originalText: string;
+  translatedLanguage: string;
+  translatedText: string;
+  translationConfidence: BridgeTranslationConfidence;
+  translationStatus: string;
+  timestamp: string;
+  isEmergency?: boolean;
+  isCritical?: boolean;
+  needsConfirmation?: boolean;
+  machineTranslation?: string;
+  correctedTranslation?: string;
+}
+
+export interface LanguageBridgeCorrection {
+  id?: number;
+  sessionId: number;
+  original: string;
+  machineTranslation: string;
+  correctedTranslation: string;
+  languagePair: string;
+  timestamp: string;
 }
 
 export interface SmsOutbox {
@@ -149,7 +201,7 @@ export interface SmsOutbox {
   message: string;
   type: string;
   language: string;
-  status: 'pending' | 'sent' | 'failed';
+  status: 'pending' | 'PENDING_OFFLINE' | 'sent' | 'failed';
   createdAt: string;
 }
 
@@ -238,6 +290,9 @@ export class MedoraDB extends Dexie {
   transport!: Table<Transport, number>;
   schemes!: Table<Scheme, number>;
   education!: Table<EducationContent, number>;
+  languageBridgeSessions!: Table<LanguageBridgeSession, number>;
+  languageBridgeMessages!: Table<LanguageBridgeMessage, number>;
+  languageBridgeCorrections!: Table<LanguageBridgeCorrection, number>;
 
   constructor() {
     super('MedoraDB');
@@ -260,6 +315,11 @@ export class MedoraDB extends Dexie {
       transport: '++id, type',
       schemes: '++id, shortName',
       education: '++id, category',
+    });
+    this.version(2).stores({
+      languageBridgeSessions: '++id, patientId, doctorId, status, createdAt',
+      languageBridgeMessages: '++id, sessionId, timestamp, speaker',
+      languageBridgeCorrections: '++id, sessionId, languagePair, timestamp',
     });
   }
 }
@@ -432,28 +492,119 @@ export async function seedDatabase() {
     { patientId: Number(p6), doctorId: Number(d1), date: nextWeek, reason: 'Newborn follow-up – 2 weeks', status: 'scheduled', notes: '' },
   ]);
 
-  // Medical Records
+  // Medical Records (8 Detailed Demo Reports)
   await db.medicalRecords.bulkAdd([
     {
       patientId: Number(p2), type: 'report', date: '2024-09-01',
-      data: { reportName: 'HbA1c Test', result: '7.8%', lab: 'Kodaikanal Diagnostics', referenceRange: '<7%' },
-      notes: 'Slightly elevated. Continue medication and diet control.',
+      data: { 
+        reportName: 'Complete Blood Count (CBC)', 
+        lab: 'Kodaikanal Diagnostics',
+        status: 'ABNORMAL',
+        parameters: [
+          { name: 'Hemoglobin', result: '11.2', unit: 'g/dL', ref: '13.0-17.0', status: 'LOW' },
+          { name: 'WBC Count', result: '8500', unit: 'cells/mcL', ref: '4000-11000', status: 'NORMAL' },
+          { name: 'Platelets', result: '150,000', unit: 'cells/mcL', ref: '150,000-450,000', status: 'NORMAL' }
+        ]
+      },
+      notes: 'DEMO REPORT — FICTIONAL DATA — NOT FOR CLINICAL USE. Mild anemia observed.',
     },
     {
-      patientId: Number(p1), type: 'report', date: '2024-08-15',
-      data: { reportName: 'Hemoglobin', result: '9.2 g/dL', lab: 'CHC Palani', referenceRange: '11.5–15.5 g/dL' },
-      notes: 'Mild anemia. Iron supplementation started.',
+      patientId: Number(p2), type: 'report', date: '2024-08-15',
+      data: { 
+        reportName: 'Fasting Blood Sugar (FBS)', 
+        lab: 'CHC Palani',
+        status: 'ABNORMAL',
+        parameters: [
+          { name: 'Fasting Glucose', result: '162', unit: 'mg/dL', ref: '70-100', status: 'HIGH' },
+          { name: 'HbA1c', result: '7.8', unit: '%', ref: '<5.7', status: 'HIGH' }
+        ]
+      },
+      notes: 'DEMO REPORT — FICTIONAL DATA — NOT FOR CLINICAL USE. Poor glycemic control.',
     },
     {
-      patientId: Number(p2), type: 'vitals', date: '2024-09-10',
-      data: { bp: '138/85', sugar: '162', weight: '74', bmi: '27.2', temp: '98.4', pulse: '76' },
-      doctorId: Number(d1),
+      patientId: Number(p2), type: 'report', date: '2024-07-10',
+      data: { 
+        reportName: 'Lipid Profile', 
+        lab: 'Kodaikanal Diagnostics',
+        status: 'ABNORMAL',
+        parameters: [
+          { name: 'Total Cholesterol', result: '240', unit: 'mg/dL', ref: '<200', status: 'HIGH' },
+          { name: 'LDL (Bad)', result: '160', unit: 'mg/dL', ref: '<100', status: 'HIGH' },
+          { name: 'HDL (Good)', result: '35', unit: 'mg/dL', ref: '>40', status: 'LOW' },
+          { name: 'Triglycerides', result: '190', unit: 'mg/dL', ref: '<150', status: 'HIGH' }
+        ]
+      },
+      notes: 'DEMO REPORT — FICTIONAL DATA — NOT FOR CLINICAL USE. High risk of cardiovascular event.',
     },
     {
-      patientId: Number(p1), type: 'consultation', date: '2024-08-15',
-      data: { complaint: 'Fatigue, dizziness', diagnosis: 'Anemia in pregnancy', plan: 'Iron + Folic Acid supplements' },
-      doctorId: Number(d1),
+      patientId: Number(p1), type: 'report', date: '2024-08-20',
+      data: { 
+        reportName: 'Thyroid Profile (TFT)', 
+        lab: 'AIIMS Madurai',
+        status: 'NORMAL',
+        parameters: [
+          { name: 'TSH', result: '2.5', unit: 'mIU/L', ref: '0.4-4.0', status: 'NORMAL' },
+          { name: 'Free T3', result: '3.1', unit: 'pg/mL', ref: '2.3-4.2', status: 'NORMAL' },
+          { name: 'Free T4', result: '1.2', unit: 'ng/dL', ref: '0.8-1.8', status: 'NORMAL' }
+        ]
+      },
+      notes: 'DEMO REPORT — FICTIONAL DATA — NOT FOR CLINICAL USE. Normal thyroid function during pregnancy.',
     },
+    {
+      patientId: Number(p1), type: 'report', date: '2024-09-05',
+      data: { 
+        reportName: 'Maternal Ultrasound (T2)', 
+        lab: 'Kodaikanal Hospital',
+        status: 'NORMAL',
+        parameters: [
+          { name: 'Fetal Heart Rate', result: '140', unit: 'bpm', ref: '120-160', status: 'NORMAL' },
+          { name: 'Amniotic Fluid', result: '12', unit: 'cm', ref: '8-18', status: 'NORMAL' },
+          { name: 'Gestational Age', result: '28', unit: 'weeks', ref: '-', status: 'NORMAL' }
+        ]
+      },
+      notes: 'DEMO REPORT — FICTIONAL DATA — NOT FOR CLINICAL USE. Healthy single intrauterine pregnancy.',
+    },
+    {
+      patientId: Number(p4), type: 'report', date: '2024-08-01',
+      data: { 
+        reportName: 'Liver Function Test (LFT)', 
+        lab: 'CHC Palani',
+        status: 'NORMAL',
+        parameters: [
+          { name: 'ALT (SGPT)', result: '35', unit: 'U/L', ref: '7-56', status: 'NORMAL' },
+          { name: 'AST (SGOT)', result: '30', unit: 'U/L', ref: '10-40', status: 'NORMAL' },
+          { name: 'Total Bilirubin', result: '0.8', unit: 'mg/dL', ref: '0.1-1.2', status: 'NORMAL' }
+        ]
+      },
+      notes: 'DEMO REPORT — FICTIONAL DATA — NOT FOR CLINICAL USE. No signs of liver damage.',
+    },
+    {
+      patientId: Number(p7), type: 'report', date: '2024-06-15',
+      data: { 
+        reportName: 'Kidney Function Test (KFT)', 
+        lab: 'Kodaikanal Diagnostics',
+        status: 'ABNORMAL',
+        parameters: [
+          { name: 'Serum Creatinine', result: '1.4', unit: 'mg/dL', ref: '0.7-1.3', status: 'HIGH' },
+          { name: 'Blood Urea Nitrogen', result: '25', unit: 'mg/dL', ref: '7-20', status: 'HIGH' },
+          { name: 'eGFR', result: '55', unit: 'mL/min/1.73m2', ref: '>90', status: 'LOW' }
+        ]
+      },
+      notes: 'DEMO REPORT — FICTIONAL DATA — NOT FOR CLINICAL USE. Stage 3 CKD suspected. Refer to nephrologist.',
+    },
+    {
+      patientId: Number(p7), type: 'report', date: '2024-07-20',
+      data: { 
+        reportName: 'Chest X-Ray (PA View)', 
+        lab: 'Kodaikanal Govt Hospital',
+        status: 'ABNORMAL',
+        parameters: [
+          { name: 'Lung Fields', result: 'Hyperinflated', unit: '-', ref: 'Clear', status: 'ABNORMAL' },
+          { name: 'Heart Size', result: 'Normal', unit: '-', ref: 'Normal', status: 'NORMAL' }
+        ]
+      },
+      notes: 'DEMO REPORT — FICTIONAL DATA — NOT FOR CLINICAL USE. Findings consistent with COPD.',
+    }
   ]);
 
   // Hospitals

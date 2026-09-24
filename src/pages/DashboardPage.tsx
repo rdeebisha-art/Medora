@@ -9,10 +9,9 @@ import CareGapAlert from '../components/CareGapAlert';
 import DemoDataBadge from '../components/DemoDataBadge';
 import SpeakToMedoraCard from '../components/SpeakToMedoraCard';
 import {
-  AlertTriangle, Heart, Users, Pill, FileText, Activity, Shield, PhoneCall,
+  AlertTriangle, Heart, Users, Pill, FileText, Activity, Shield,
   Camera, Image, Stethoscope, Bot, Building2, Syringe, BookOpen, Landmark,
-  Baby, Sparkles, UserCheck, Flame, Apple, Radio, MessageSquare, PhoneForwarded,
-  RefreshCw, CheckCircle2, Clock, PlusCircle
+  Radio, Languages
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -85,34 +84,34 @@ export default function DashboardPage() {
         {/* ========================================================= */}
         {/* 1. WELCOME SECTION                                        */}
         {/* ========================================================= */}
-        <div className="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-sm relative overflow-hidden">
+        <div className="bg-gradient-to-r from-[#F0FDFA] to-[#EFF6FF] border border-[#E2E8F0] rounded-3xl p-5 shadow-sm relative overflow-hidden">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-800 border border-teal-200">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white text-[#0F766E] border border-[#E2E8F0]">
                   📍 {currentUser?.village || 'Kodaikanal Village'}
                 </span>
-                <span className="text-xs text-slate-500 font-medium">🗓️ {currentDateFormatted}</span>
+                <span className="text-xs text-[#64748B] font-medium">🗓️ {currentDateFormatted}</span>
                 <DemoDataBadge />
               </div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-                Welcome, {currentUser?.name || 'Villager'}
+              <h1 className="text-2xl font-black text-[#0F766E] tracking-tight">
+                {t('dashboard.greeting', { name: currentUser?.name || 'Villager' })} 👋
               </h1>
-              <p className="text-xs text-slate-600 mt-1 max-w-xl leading-relaxed">
-                Healthcare that reaches the village — even when the internet doesn't.
+              <p className="text-sm text-[#475569] mt-1 max-w-xl leading-relaxed">
+                {t('app.subtitle')}
               </p>
             </div>
 
             <div className="flex items-center gap-2">
               <Link
                 to="/ai"
-                className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-2xl shadow-sm transition-all"
+                className="flex items-center gap-1.5 bg-[#14B8A6] hover:bg-[#0F766E] text-white text-xs font-bold px-3.5 py-2.5 rounded-2xl shadow-sm min-h-11"
               >
-                <span>🎙️ Speak Now</span>
+                <span>🎙️ {t('ai.speak')}</span>
               </Link>
               <Link
                 to="/profile"
-                className="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-sm transition-colors"
+                className="w-10 h-10 rounded-2xl bg-white border border-[#E2E8F0] text-[#0F766E] flex items-center justify-center font-bold text-sm"
                 title="View Profile"
               >
                 {currentUser?.name ? currentUser.name[0] : '👤'}
@@ -124,18 +123,18 @@ export default function DashboardPage() {
         {/* ========================================================= */}
         {/* 2. EMERGENCY SECTION (Prominently Near Top)               */}
         {/* ========================================================= */}
-        <div className="bg-gradient-to-br from-red-600 via-red-700 to-red-800 text-white rounded-3xl p-5 shadow-lg border border-red-500 relative overflow-hidden">
+        <div className="bg-[#FEF2F2] border border-[#E2E8F0] rounded-3xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-lg animate-pulse">
+              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-lg border border-[#E2E8F0]">
                 🚨
               </div>
               <div>
-                <h2 className="text-base font-black tracking-tight">Emergency Help</h2>
-                <p className="text-[11px] text-red-100/90">Immediate offline first aid & emergency simulation</p>
+                <h2 className="text-base font-black text-[#B91C1C] tracking-tight">{t('emergency.title')}</h2>
+                <p className="text-[11px] text-[#475569]">Immediate offline first aid & emergency simulation</p>
               </div>
             </div>
-            <span className="bg-white/20 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">
+            <span className="bg-white text-[#B91C1C] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-[#E2E8F0]">
               No Login Required
             </span>
           </div>
@@ -143,15 +142,15 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
             <Link
               to="/emergency"
-              className="bg-white/15 hover:bg-white/25 rounded-2xl p-2.5 text-center text-xs font-bold text-white transition-colors flex flex-col items-center justify-center"
+              className="bg-[#DC2626] hover:bg-[#B91C1C] rounded-2xl p-2.5 text-center text-xs font-bold text-white min-h-16 flex flex-col items-center justify-center"
             >
               <span className="text-lg mb-1">🩹</span>
-              <span>Emergency Guidance</span>
+              <span>🚨 {t('nav.emergency')}</span>
             </Link>
 
             <Link
               to="/emergency"
-              className="bg-white/15 hover:bg-white/25 rounded-2xl p-2.5 text-center text-xs font-bold text-white transition-colors flex flex-col items-center justify-center"
+              className="bg-white hover:bg-[#FEF2F2] rounded-2xl p-2.5 text-center text-xs font-bold text-[#B91C1C] border border-[#E2E8F0] min-h-16 flex flex-col items-center justify-center"
             >
               <span className="text-lg mb-1">🩺</span>
               <span>First Aid Steps</span>
@@ -159,7 +158,7 @@ export default function DashboardPage() {
 
             <Link
               to="/hospitals"
-              className="bg-white/15 hover:bg-white/25 rounded-2xl p-2.5 text-center text-xs font-bold text-white transition-colors flex flex-col items-center justify-center"
+              className="bg-white hover:bg-[#EFF6FF] rounded-2xl p-2.5 text-center text-xs font-bold text-[#2563EB] border border-[#E2E8F0] min-h-16 flex flex-col items-center justify-center"
             >
               <span className="text-lg mb-1">🏥</span>
               <span>Nearby Healthcare</span>
@@ -167,7 +166,7 @@ export default function DashboardPage() {
 
             <Link
               to="/transport"
-              className="bg-white/15 hover:bg-white/25 rounded-2xl p-2.5 text-center text-xs font-bold text-white transition-colors flex flex-col items-center justify-center"
+              className="bg-white hover:bg-[#FFF7ED] rounded-2xl p-2.5 text-center text-xs font-bold text-[#EA580C] border border-[#E2E8F0] min-h-16 flex flex-col items-center justify-center"
             >
               <span className="text-lg mb-1">🚑</span>
               <span>Transport Help</span>
@@ -197,17 +196,17 @@ export default function DashboardPage() {
           <h2 className="text-xs font-black text-slate-500 uppercase tracking-wider mb-2.5">⚡ Quick Actions</h2>
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {[
-              { path: '/health-tests', label: 'Record Health Test', emoji: '🧪', color: 'bg-teal-50 border-teal-200 text-teal-800' },
-              { path: '/records', label: 'Add Medical Record', emoji: '📋', color: 'bg-blue-50 border-blue-200 text-blue-800' },
-              { path: '/medicines', label: 'Add Medicine', emoji: '💊', color: 'bg-emerald-50 border-emerald-200 text-emerald-800' },
-              { path: '/report-scanner', label: 'Upload Report', emoji: '📷', color: 'bg-purple-50 border-purple-200 text-purple-800' },
-              { path: '/doctor-summary', label: 'Doctor Summary', emoji: '📄', color: 'bg-cyan-50 border-cyan-200 text-cyan-800' },
-              { path: '/emergency', label: 'Emergency Help', emoji: '🚨', color: 'bg-red-50 border-red-200 text-red-800' }
+              { path: '/health-tests', label: 'Record Health Test', emoji: '🧪', color: 'bg-white border-[#E2E8F0] text-[#0F766E]' },
+              { path: '/records', label: 'Add Medical Record', emoji: '📋', color: 'bg-white border-[#E2E8F0] text-[#2563EB]' },
+              { path: '/medicines', label: 'Add Medicine', emoji: '💊', color: 'bg-white border-[#E2E8F0] text-[#16A34A]' },
+              { path: '/language-bridge', label: 'Language Bridge', emoji: '🌐', color: 'bg-white border-[#E2E8F0] text-[#0F766E]' },
+              { path: '/doctor-summary', label: 'Doctor Summary', emoji: '📄', color: 'bg-white border-[#E2E8F0] text-[#2563EB]' },
+              { path: '/emergency', label: 'Emergency Help', emoji: '🚨', color: 'bg-white border-[#E2E8F0] text-[#DC2626]' }
             ].map((action, i) => (
               <Link
                 key={i}
                 to={action.path}
-                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-2xl border text-xs font-bold whitespace-nowrap shadow-sm hover:scale-102 transition-all ${action.color}`}
+                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-2xl border text-xs font-bold whitespace-nowrap shadow-sm hover:shadow-md min-h-11 ${action.color}`}
               >
                 <span>{action.emoji}</span>
                 <span>{action.label}</span>

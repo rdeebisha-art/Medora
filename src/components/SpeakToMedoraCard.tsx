@@ -303,35 +303,47 @@ export default function SpeakToMedoraCard() {
         )}
 
         {/* Primary Microphone Action Button */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={isListening ? handleStopListening : handleStartListening}
-            className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-black text-sm tracking-wide transition-all shadow-lg active:scale-95 ${
-              isListening
-                ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse shadow-red-500/40 ring-4 ring-red-400/30'
-                : 'bg-gradient-to-r from-teal-400 to-emerald-400 hover:from-teal-300 hover:to-emerald-300 text-teal-950 font-black shadow-teal-500/30'
-            }`}
-          >
-            {isListening ? (
-              <>
-                <MicOff size={18} />
-                <span>Stop Listening</span>
-              </>
-            ) : (
-              <>
-                <Mic size={18} />
-                <span>TAP TO SPEAK</span>
-              </>
-            )}
-          </button>
-
-          {turns.length > 0 && (
+        <div className="flex flex-col items-center gap-3 w-full">
+          <div className="flex items-center gap-3">
             <button
-              onClick={handleReset}
-              className="p-3 bg-teal-900/80 hover:bg-teal-800 text-teal-200 border border-teal-600/40 rounded-2xl transition-colors"
-              title="Reset conversation"
+              onClick={isListening ? handleStopListening : handleStartListening}
+              className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-black text-sm tracking-wide transition-all shadow-lg active:scale-95 ${
+                isListening
+                  ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse shadow-red-500/40 ring-4 ring-red-400/30'
+                  : 'bg-gradient-to-r from-teal-400 to-emerald-400 hover:from-teal-300 hover:to-emerald-300 text-teal-950 font-black shadow-teal-500/30'
+              }`}
             >
-              <RotateCcw size={16} />
+              {isListening ? (
+                <>
+                  <MicOff size={18} />
+                  <span>Stop Listening</span>
+                </>
+              ) : (
+                <>
+                  <Mic size={18} />
+                  <span>TAP TO SPEAK</span>
+                </>
+              )}
+            </button>
+
+            {turns.length > 0 && (
+              <button
+                onClick={handleReset}
+                className="p-3 bg-teal-900/80 hover:bg-teal-800 text-teal-200 border border-teal-600/40 rounded-2xl transition-colors"
+                title="Reset conversation"
+              >
+                <RotateCcw size={16} />
+              </button>
+            )}
+          </div>
+          
+          {isSpeaking && (
+            <button
+              onClick={() => speechSynthesisService.stop()}
+              className="flex items-center justify-center gap-2 px-6 py-2.5 w-full max-w-[200px] rounded-2xl font-black text-sm tracking-wide transition-all shadow-lg active:scale-95 bg-red-600 hover:bg-red-700 text-white ring-4 ring-red-500/30"
+            >
+              <span className="text-lg leading-none">⏹</span>
+              <span>STOP SPEAKING</span>
             </button>
           )}
         </div>

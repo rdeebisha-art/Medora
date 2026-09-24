@@ -15,6 +15,7 @@ export interface ConversationMessage {
 
 export interface ConversationState {
   sessionId: string;
+  callerNumber?: string;
   detectedLanguage: SupportedLanguageCode;
   languageConfidence: number;
   languageLocked: boolean;
@@ -43,9 +44,14 @@ export class ConversationMemory {
     this.currentState = this.createInitialState();
   }
 
-  public createInitialState(preferredLanguage: SupportedLanguageCode = 'en-IN', patientId?: number): ConversationState {
+  public createInitialState(
+    preferredLanguage: SupportedLanguageCode = 'en-IN',
+    patientId?: number,
+    callerNumber?: string
+  ): ConversationState {
     return {
       sessionId: 'session_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+      callerNumber: callerNumber || this.currentState?.callerNumber || '+91 9876543210',
       detectedLanguage: preferredLanguage,
       languageConfidence: 0.5,
       languageLocked: false,
@@ -61,6 +67,14 @@ export class ConversationMemory {
 
   public getState(): ConversationState {
     return this.currentState;
+  }
+
+  public setCallerNumber(callerNumber: string) {
+    this.currentState.callerNumber = callerNumber;
+  }
+
+  public getCallerNumber(): string {
+    return this.currentState.callerNumber || '+91 9876543210';
   }
 
   public updateLanguage(language: SupportedLanguageCode, confidence: number, isExplicit = false) {
@@ -109,8 +123,9 @@ export class ConversationMemory {
     }
   }
 
-  public reset(preferredLanguage: SupportedLanguageCode = 'en-IN', patientId?: number) {
-    this.currentState = this.createInitialState(preferredLanguage, patientId);
+  public reset(preferredLanguage: SupportedLanguageCode = 'en-IN', patientId?: number, preserveCallerNumber = true) {
+    const callerNum = preserveCallerNumber ? this.currentState.callerNumber : undefined;
+    this.currentState = this.createInitialState(preferredLanguage, patientId, callerNum);
   }
 }
 

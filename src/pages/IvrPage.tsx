@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Layout from '../components/Layout';
 import DemoDataBadge from '../components/DemoDataBadge';
-import { MockTelephonyAdapter } from '../services/voice/telephonyAdapter';
+import { MockTelephonyAdapter, validatePhoneNumber } from '../services/voice/telephonyAdapter';
 import { SupportedLanguageCode, LANGUAGE_METADATA } from '../data/languages';
 import { speechRecognitionService } from '../services/voice/speechRecognitionService';
 import { speechSynthesisService } from '../services/voice/speechSynthesisService';
-import { Phone, PhoneOff, Mic, Volume2, Shield, Radio, Sparkles } from 'lucide-react';
+import { Phone, PhoneOff, Mic, Volume2, Shield, Radio, Sparkles, StopCircle } from 'lucide-react';
 
 export default function IvrPage() {
   const { t } = useTranslation();
@@ -16,14 +16,24 @@ export default function IvrPage() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentInput, setCurrentInput] = useState('');
   const [activeLang, setActiveLang] = useState<SupportedLanguageCode>('en-IN');
+  const [tollFreeNumber, setTollFreeNumber] = useState('');
+  const [phoneError, setPhoneError] = useState('');
   const [telephonyAdapter] = useState(() => new MockTelephonyAdapter());
 
   const handleStartCall = async () => {
+    setPhoneError('');
+    const validation = validatePhoneNumber(tollFreeNumber);
+    if (!validation.isValid) {
+      setPhoneError(validation.message);
+      return;
+    }
+
     setTelephonyLogs([
+      { sender: 'system', text: `Dialing ${validation.formattedNumber}...` },
       { sender: 'system', text: 'Connecting to Medora Voice Telephony Gateway (Simulation)...' }
     ]);
 
-    await telephonyAdapter.connect();
+    await telephonyAdapter.connect(validation.formattedNumber);
     setCallStatus('connected');
 
     const greeting = 'Welcome to Medora Health Helpline. Please speak naturally in your language. Tell me what is wrong.';
@@ -195,15 +205,37 @@ export default function IvrPage() {
           {/* Call Controls */}
           <div className="space-y-3">
             {callStatus !== 'connected' ? (
-              <button
-                onClick={handleStartCall}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/40 active:scale-95 transition-all"
-              >
-                <Phone size={18} />
-                <span>START SIMULATED CALL</span>
-              </button>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-400 mb-1">ENTER PHONE OR TOLL-FREE NUMBER</label>
+                  <input
+                    type="text"
+                    value={tollFreeNumber}
+                    onChange={(e) => setTollFreeNumber(e.target.value)}
+                    placeholder="e.g. 1800-123-4567 or +91 9876543210"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
+                  />
+                  {phoneError && <p className="text-red-400 text-xs mt-1.5">{phoneError}</p>}
+                </div>
+                <button
+                  onClick={handleStartCall}
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/40 active:scale-95 transition-all"
+                >
+                  <Phone size={18} />
+                  <span>START SIMULATED CALL</span>
+                </button>
+              </div>
             ) : (
               <div className="space-y-2">
+                {isSpeaking && (
+                  <button
+                    onClick={() => speechSynthesisService.stop()}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all"
+                  >
+                    <StopCircle size={16} />
+                    <span>STOP SPEAKING</span>
+                  </button>
+                )}
                 <div className="flex gap-2">
                   <button
                     onClick={isListening ? handleStopMic : handleStartMic}

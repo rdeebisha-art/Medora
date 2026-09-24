@@ -26,13 +26,24 @@ export default function SmsPage() {
 
   const handleSend = async () => {
     if (!form.toPhone || !form.message) return;
-    await db.smsOutbox.add({ ...form, status: 'pending', createdAt: new Date().toISOString() });
+    
+    const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // MODE A: Native SMS intent
+      window.open(`sms:${form.toPhone}?body=${encodeURIComponent(form.message)}`, '_blank');
+      await db.smsOutbox.add({ ...form, status: 'sent', createdAt: new Date().toISOString() });
+    } else {
+      // MODE B: Save to outbox for offline/later syncing
+      await db.smsOutbox.add({ ...form, status: 'PENDING_OFFLINE', createdAt: new Date().toISOString() });
+    }
+    
     setForm({ toPhone: '', type: 'family_alert', language: language, message: '' });
     setShowCompose(false);
     setRefresh(r => r + 1);
   };
 
-  const statusColor = (s: string) => s === 'sent' ? 'bg-green-100 text-green-700' : s === 'failed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700';
+  const statusColor = (s: string) => s === 'sent' ? 'bg-green-100 text-green-700' : s === 'failed' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700';
 
   return (
     <Layout>

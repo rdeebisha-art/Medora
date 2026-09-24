@@ -7,6 +7,7 @@ import {
   Globe, LogOut, User, Settings, HelpCircle, BookOpen, LogIn, ChevronDown
 } from 'lucide-react';
 import NotificationBell from './NotificationBell';
+import EmergencyOverlay from './EmergencyOverlay';
 
 const LANGUAGES = [
   { code: 'en', label: 'EN', name: 'English', native: 'English' },
@@ -39,6 +40,7 @@ export default function Layout({ children }: LayoutProps) {
 
   const [moreDrawerOpen, setMoreDrawerOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -48,30 +50,30 @@ export default function Layout({ children }: LayoutProps) {
 
   // Mobile Bottom Navigation items (Strictly 5 items)
   const navItems = [
-    { path: '/dashboard', icon: <Home size={20} />, label: 'Home' },
-    { path: '/health', icon: <Heart size={20} />, label: 'Health' },
-    { path: '/family', icon: <Users size={20} />, label: 'Family' },
-    { path: '/ai', icon: <Mic size={20} />, label: 'Speak' },
+    { path: '/dashboard', icon: <Home size={20} />, label: t('nav.home') },
+    { path: '/health', icon: <Heart size={20} />, label: t('nav.myHealth') },
+    { path: '/family', icon: <Users size={20} />, label: t('nav.family') },
+    { path: '/ai', icon: <Mic size={20} />, label: t('ai.speak') },
     {
       path: '#more',
       icon: <MoreHorizontal size={20} />,
-      label: 'More',
+      label: t('nav.more'),
       action: () => setMoreDrawerOpen(true)
     }
   ];
 
+  const showBack = location.pathname !== '/dashboard';
+
   return (
-    <div className={`min-h-screen flex flex-col bg-slate-50 text-slate-900 ${is2GMode ? 'text-base' : ''}`}>
-      {/* Offline Alert Strip */}
+    <div className={`min-h-screen flex flex-col bg-[#F8FAFC] text-[#0F172A] ${is2GMode ? 'text-base' : ''} ${isSimpleMode ? 'text-lg' : ''}`}>
       {isOffline && (
-        <div className="bg-red-600 text-white text-center py-1.5 px-4 text-xs font-bold sticky top-0 z-50 flex items-center justify-center gap-1.5 shadow-sm">
+        <div className="bg-[#D97706] text-white text-center py-1.5 px-4 text-xs font-bold sticky top-0 z-50 flex items-center justify-center gap-1.5 shadow-sm">
           <WifiOff size={13} />
-          <span>Offline Mode Active · All local health records & offline voice are available</span>
+          <span>🔴 {t('common.offline')} · All local health records & offline voice are available</span>
         </div>
       )}
 
-      {/* Main App Header (Modern Deep Teal) */}
-      <header className="bg-teal-800 text-white px-4 py-3 shadow-md sticky top-0 z-40 border-b border-teal-700/50">
+      <header className="bg-[#0F766E] text-white px-4 py-3 shadow-md sticky top-0 z-40">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           {/* Logo & Tagline */}
           <Link to="/dashboard" className="flex items-center gap-2.5 group">
@@ -93,12 +95,12 @@ export default function Layout({ children }: LayoutProps) {
             {/* Connectivity Pill */}
             <div
               className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                isOffline ? 'bg-red-500/20 text-red-200 border border-red-400/40' : 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/40'
+                isOffline ? 'bg-white/15 text-white border border-white/30' : 'bg-white/20 text-white border border-white/30'
               }`}
-              title={isOffline ? 'Offline' : 'Online'}
+              title={isOffline ? t('common.offline') : t('common.online')}
             >
               {isOffline ? <WifiOff size={11} /> : <Wifi size={11} />}
-              <span className="hidden sm:inline">{isOffline ? 'Offline' : 'Online'}</span>
+              <span>{isOffline ? `🔴 ${t('common.offline')}` : `🟢 ${t('common.online')}`}</span>
             </div>
 
             {/* 2G Toggle */}
@@ -295,11 +297,32 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       )}
 
-      {/* Main Content Area */}
-      <main className={`flex-1 pb-20 ${isSimpleMode ? 'text-lg' : ''}`}>{children}</main>
+      {showBack && (
+        <div className="px-4 pt-3 max-w-4xl mx-auto w-full">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-1 min-h-11 text-[#0F766E] font-bold text-sm"
+          >
+            ← {t('common.back')}
+          </button>
+        </div>
+      )}
 
-      {/* Mobile Bottom Navigation (Strictly 5 items: Home, Health, Family, Speak, More) */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center justify-around z-40 shadow-lg py-1.5 no-print">
+      <main className={`flex-1 pb-24 ${isSimpleMode ? 'text-lg' : ''}`}>{children}</main>
+
+      <button
+        onClick={() => setEmergencyOpen(true)}
+        className="fixed bottom-[76px] right-3 z-40 min-h-14 px-3.5 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-full shadow-lg flex items-center justify-center gap-1.5 active:scale-95 transition-all border-2 border-[#FEF2F2]"
+        title={t('nav.emergency')}
+      >
+        <span className="text-xl">🚨</span>
+        <span className="text-xs font-black pr-1">{t('nav.emergency')}</span>
+      </button>
+
+      {emergencyOpen && <EmergencyOverlay onClose={() => setEmergencyOpen(false)} />}
+
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0] flex items-center justify-around z-40 shadow-lg py-1.5 no-print">
         {navItems.map((item, i) => {
           const isActive = location.pathname === item.path && !item.action;
           return (
@@ -309,11 +332,11 @@ export default function Layout({ children }: LayoutProps) {
                 if (item.action) item.action();
                 else navigate(item.path);
               }}
-              className={`flex flex-col items-center justify-center flex-1 py-1 text-[11px] gap-0.5 transition-colors ${
-                isActive ? 'text-teal-700 font-bold' : 'text-slate-500 hover:text-teal-600'
+              className={`flex flex-col items-center justify-center flex-1 py-1 text-[11px] gap-0.5 min-h-12 transition-colors ${
+                isActive ? 'text-[#0F766E] font-bold' : 'text-[#475569]'
               }`}
             >
-              <div className={isActive ? 'p-1 rounded-xl bg-teal-50' : 'p-1'}>{item.icon}</div>
+              <div className={isActive ? 'p-1 rounded-xl bg-[#F0FDFA]' : 'p-1'}>{item.icon}</div>
               <span className="truncate max-w-full">{item.label}</span>
             </button>
           );

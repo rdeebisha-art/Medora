@@ -292,6 +292,19 @@ export default function AiAssistantPage() {
           </div>
         )}
 
+        {/* Stop Speaking Button */}
+        {isSpeaking && (
+          <div className="mb-2 flex justify-center">
+            <button
+              onClick={() => speechSynthesisService.stop()}
+              className="flex items-center justify-center gap-2 px-6 py-2.5 w-full max-w-[200px] rounded-2xl font-black text-sm tracking-wide transition-all shadow-lg active:scale-95 bg-red-600 hover:bg-red-700 text-white ring-4 ring-red-500/30"
+            >
+              <span className="text-lg leading-none">⏹</span>
+              <span>STOP SPEAKING</span>
+            </button>
+          </div>
+        )}
+
         {/* Input Bar */}
         <div className="bg-white border border-slate-200 rounded-2xl p-2 flex items-center gap-2 shadow-sm">
           <button
