@@ -112,7 +112,7 @@ export function translateHealthcareText(
       translatedLanguage: targetLang,
       translatedText,
       translationConfidence: confidence,
-      translationStatus: confidence === 'LOW' ? 'NeedsConfirmation' : 'Translated',
+      translationStatus: 'Translated',
       engine: 'local-phrase',
       preservedTokens: tokens,
       emergencyIntent: phrase.emergency || isEmergency ? intent.intent || 'BREATHING_DIFFICULTY' : undefined,

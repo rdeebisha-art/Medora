@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Layout from '../components/Layout';
@@ -20,7 +20,7 @@ import {
 import { languageDisplayName, nativeLanguageName } from '../services/languageBridge/langMap';
 import { LanguageBridgeMessage } from '../db/db';
 import { BridgeTranslationResult } from '../data/languageBridge/types';
-import { Mic, Keyboard, Volume2, Square, Pause, Play, Send } from 'lucide-react';
+import { Mic, Keyboard, Volume2, Square, Pause, Play, Send, Languages } from 'lucide-react';
 
 const BRIDGE_LANGS: SupportedLanguageCode[] = ['ta-IN', 'te-IN', 'ml-IN', 'kn-IN', 'en-IN'];
 
