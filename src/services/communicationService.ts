@@ -1,4 +1,4 @@
-﻿import { CommunicationChannel } from './channels/channelTypes';
+import { CommunicationChannel } from './channels/channelTypes';
 import { LanguageCode } from '../types';
 
 export interface Contact {

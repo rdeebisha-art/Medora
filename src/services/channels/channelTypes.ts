@@ -1,4 +1,4 @@
-﻿import { LanguageCode, SeverityLevel } from '../../types';
+import { LanguageCode, SeverityLevel } from '../../types';
 
 export type CommunicationChannel = 'web' | 'sms' | 'ussd' | 'voice' | 'ivr' | 'assisted';
 

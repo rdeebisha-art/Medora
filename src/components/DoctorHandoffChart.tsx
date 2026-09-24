@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { TrendingUp, CheckCircle2 } from 'lucide-react';
 import { VitalMeasurement } from '../types';
 

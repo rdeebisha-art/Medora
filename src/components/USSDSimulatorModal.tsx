@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { X, Hash, Info, Smartphone } from 'lucide-react';
 
 interface USSDModalProps {

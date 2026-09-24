@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useMedora } from '../context/MedoraContext';
 import { LanguageCode, Doctor, Hospital, Referral, HealthSummaryReport } from '../types';
 import { Stethoscope, Users, FileText, MessageSquare, AlertTriangle, ClipboardList, Phone, CheckCircle2 } from 'lucide-react';

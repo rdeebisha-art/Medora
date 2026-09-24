@@ -7,32 +7,15 @@ export default {
   theme: {
     extend: {
       colors: {
-        medora: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
+        primary: {
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
         },
-        healthcare: {
-          blue: '#0284c7',
-          darkBlue: '#0369a1',
-          teal: '#0d9488',
-          emergency: '#dc2626',
-          warning: '#d97706',
-          purple: '#7c3aed'
-        }
-      },
-      fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
       }
     },
   },
   plugins: [],
 }
-

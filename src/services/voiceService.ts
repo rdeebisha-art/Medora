@@ -1,4 +1,4 @@
-﻿import { LanguageCode } from '../types';
+import { LanguageCode } from '../types';
 
 class VoiceService {
   private synth: SpeechSynthesis | null = null;

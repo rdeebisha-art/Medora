@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Search, X, RotateCcw, Stethoscope, Building2, MapPin, Globe, Video, ShieldCheck, Siren } from 'lucide-react';
 import { Specialization, HospitalType, ConsultationType, LanguageCode } from '../types';
 import { TRANSLATIONS } from '../i18n/translations';
