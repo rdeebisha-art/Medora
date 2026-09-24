@@ -112,6 +112,48 @@ export default function DoctorSummaryPage() {
                     <div className="text-sm text-amber-800">{summary.doctorNotes}</div>
                   </div>
                 )}
+
+                {summary.languageBridgeUsed && (
+                  <div className="bg-sky-50 border border-sky-200 rounded-xl p-3 space-y-2">
+                    <div className="text-xs font-bold text-sky-700 uppercase tracking-wide mb-1">
+                      🌐 {t('doctorSummary.bridgeUsed')}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 bg-white p-2 rounded-lg border border-sky-100">
+                      <div>
+                        <span className="font-semibold text-slate-800">{t('doctorSummary.patientLanguage')}:</span>{' '}
+                        {summary.patientLanguage || 'Local Language'}
+                      </div>
+                      <div>
+                        <span className="font-semibold text-slate-800">{t('doctorSummary.doctorLanguage')}:</span>{' '}
+                        {summary.doctorLanguage || 'Clinical Language'}
+                      </div>
+                    </div>
+                    {summary.originalPatientStatements && (
+                      <div className="text-xs bg-white p-2 rounded-lg border border-sky-100">
+                        <span className="font-semibold text-slate-800 block mb-0.5">{t('doctorSummary.originalPatient')}:</span>
+                        <span className="text-slate-700 whitespace-pre-line">{summary.originalPatientStatements}</span>
+                      </div>
+                    )}
+                    {summary.translatedPatientStatements && (
+                      <div className="text-xs bg-white p-2 rounded-lg border border-sky-100">
+                        <span className="font-semibold text-slate-800 block mb-0.5">{t('doctorSummary.translatedPatient')}:</span>
+                        <span className="text-slate-700 whitespace-pre-line">{summary.translatedPatientStatements}</span>
+                      </div>
+                    )}
+                    {summary.doctorResponseOriginal && (
+                      <div className="text-xs bg-white p-2 rounded-lg border border-sky-100">
+                        <span className="font-semibold text-slate-800 block mb-0.5">{t('doctorSummary.doctorResponse')}:</span>
+                        <span className="text-slate-700 whitespace-pre-line">{summary.doctorResponseOriginal}</span>
+                      </div>
+                    )}
+                    {summary.doctorResponseTranslated && (
+                      <div className="text-xs bg-white p-2 rounded-lg border border-sky-100">
+                        <span className="font-semibold text-slate-800 block mb-0.5">{t('doctorSummary.patientTranslation')}:</span>
+                        <span className="text-slate-700 whitespace-pre-line">{summary.doctorResponseTranslated}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Actions */}

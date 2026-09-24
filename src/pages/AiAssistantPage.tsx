@@ -16,7 +16,38 @@ import { Link } from 'react-router-dom';
 
 export default function AiAssistantPage() {
   const { t } = useTranslation();
-  const { currentUser } = useAppStore();
+  const { currentUser, language } = useAppStore();
+
+  const getInitialLanguage = (): SupportedLanguageCode => {
+    switch (language) {
+      case 'ta': return 'ta-IN';
+      case 'te': return 'te-IN';
+      case 'hi': return 'hi-IN';
+      case 'kn': return 'kn-IN';
+      case 'ml': return 'ml-IN';
+      default: return 'en-IN';
+    }
+  };
+
+  const getInitialGreeting = (code: SupportedLanguageCode): string => {
+    switch (code) {
+      case 'ta-IN':
+        return 'வணக்கம்! நான் மெடோரா, உங்கள் கிராமப்புற சுகாதார உதவியாளர். உங்கள் உடல்நலப் பிரச்சனையை என்னிடம் கூறவும்.';
+      case 'te-IN':
+        return 'నమస్కారం! నేను మెడోరా, మీ గ్రామీణ ఆరోగ్య సహాయకుడిని. మీ ఆరోగ్య సమస్యను నాకు చెప్పండి.';
+      case 'hi-IN':
+        return 'नमस्ते! मैं मेडोरा हूँ, आपका ग्रामीण स्वास्थ्य सहायक। मुझे अपनी स्वास्थ्य समस्या बताएं।';
+      case 'kn-IN':
+        return 'ನಮಸ್ಕಾರ! ನಾನು ಮೆಡೋರಾ, ನಿಮ್ಮ ಗ್ರಾಮೀಣ ಆರೋಗ್ಯ ಸಹಾಯಕ. ನಿಮ್ಮ ಆರೋಗ್ಯ ಸಮಸ್ಯೆಯನ್ನು ತಿಳಿಸಿ.';
+      case 'ml-IN':
+        return 'നമസ്കാരം! ഞാൻ മെഡോറ, നിങ്ങളുടെ ഗ്രാമീണ ആരോഗ്യ സഹായി. നിങ്ങളുടെ ആരോഗ്യ പ്രശ്നം പറയൂ.';
+      default:
+        return 'Hello! I am Medora, your rural healthcare companion. Speak to me naturally in Tamil, Telugu, Hindi, Malayalam, Kannada, or English. Tell me what is wrong.';
+    }
+  };
+
+  const initialLang = getInitialLanguage();
+
   const [messages, setMessages] = useState<Array<{
     role: 'user' | 'assistant';
     text: string;
@@ -26,15 +57,15 @@ export default function AiAssistantPage() {
   }>>([
     {
       role: 'assistant',
-      text: 'Hello! I am Medora, your rural healthcare companion. Speak to me naturally in Tamil, Telugu, Malayalam, Kannada, or English. Tell me what is wrong.',
+      text: getInitialGreeting(initialLang),
       agentName: 'Medora Triage Assistant',
-      language: 'en-IN'
+      language: initialLang
     }
   ]);
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [detectedLang, setDetectedLang] = useState<SupportedLanguageCode>('en-IN');
+  const [detectedLang, setDetectedLang] = useState<SupportedLanguageCode>(initialLang);
   const [confidenceLevel, setConfidenceLevel] = useState<'high' | 'medium' | 'uncertain'>('high');
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusNotice, setStatusNotice] = useState<string | null>(null);
@@ -175,27 +206,27 @@ export default function AiAssistantPage() {
     <Layout>
       <div className="flex flex-col h-[calc(100vh-130px)] max-w-2xl mx-auto px-3 py-2">
         {/* Header bar */}
-        <div className="bg-gradient-to-r from-teal-800 to-teal-950 text-white px-4 py-3 rounded-2xl shadow-md mb-2 flex items-center justify-between">
+        <div className="bg-[#7C3AED] text-white px-4 py-3 rounded-2xl shadow-sm mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-teal-600/80 flex items-center justify-center text-lg">
+            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-lg">
               🤖
             </div>
             <div>
               <div className="font-extrabold text-sm flex items-center gap-2">
                 <span>Ask Medora AI Assistant</span>
-                <span className="text-[10px] bg-teal-500/30 text-teal-200 px-2 py-0.2 rounded-full border border-teal-400/30">
+                <span className="text-[10px] bg-white/20 text-white px-2 py-0.2 rounded-full border border-white/30">
                   Multilingual Voice
                 </span>
               </div>
-              <p className="text-[10px] text-teal-200/80">
-                Auto-detects Tamil, Telugu, Malayalam, Kannada & English
+              <p className="text-[10px] text-purple-100">
+                Auto-detects Tamil, Telugu, Malayalam, Kannada, Hindi & English
               </p>
             </div>
           </div>
 
           {/* Detected Language Indicator */}
-          <div className="bg-teal-900/80 border border-teal-500/40 rounded-xl px-2.5 py-1 text-right">
-            <div className="text-[9px] text-teal-300 uppercase font-bold">Detected</div>
+          <div className="bg-purple-900/40 border border-purple-300/40 rounded-xl px-2.5 py-1 text-right">
+            <div className="text-[9px] text-purple-200 uppercase font-bold">Detected</div>
             <div className="text-xs font-black text-white flex items-center gap-1">
               <span>{currentLangMeta.flag}</span>
               <span>{currentLangMeta.nativeName}</span>
@@ -203,48 +234,64 @@ export default function AiAssistantPage() {
           </div>
         </div>
 
+        {/* Medora Medical Knowledge Badge */}
+        <div className="bg-[#0B2424] border border-[#14B8A6]/40 rounded-xl px-3 py-2 mb-2 text-[#CBD5E1]">
+          <div className="flex items-center justify-between text-xs font-bold text-[#14B8A6] mb-1">
+            <span>MEDORA MEDICAL KNOWLEDGE</span>
+            <span className="text-[10px] text-teal-200">Version 1.2.0 • Reviewed Feb 2026</span>
+          </div>
+          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px]">
+            <span>✓ Evidence-based knowledge</span>
+            <span>✓ Offline available</span>
+            <span>✓ Source-linked (WHO/MoHFW)</span>
+            <span>✓ Multilingual (6 Languages)</span>
+            <span>✓ Emergency warning detection</span>
+            <span>✓ Patient data isolation</span>
+          </div>
+        </div>
+
         {/* Status or warning alert */}
         {statusNotice && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs px-3 py-1.5 rounded-xl mb-2 flex items-center gap-2">
-            <AlertTriangle size={13} className="text-amber-600 flex-shrink-0" />
+          <div className="bg-[#FFFBEB] border border-[#D97706]/40 text-[#D97706] text-xs px-3 py-1.5 rounded-xl mb-2 flex items-center gap-2">
+            <AlertTriangle size={13} className="text-[#D97706] flex-shrink-0" />
             <span className="flex-1">{statusNotice}</span>
           </div>
         )}
 
         {/* Message Thread */}
-        <div className="flex-1 overflow-y-auto space-y-3 p-3 bg-white border border-slate-200 rounded-2xl shadow-inner mb-2">
+        <div className="flex-1 overflow-y-auto space-y-3 p-3 bg-white border border-[#E2E8F0] rounded-2xl shadow-inner mb-2">
           {messages.map((m, idx) => (
             <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div
                 className={`max-w-[85%] rounded-2xl px-4 py-3 text-xs leading-relaxed shadow-xs ${
                   m.role === 'user'
-                    ? 'bg-teal-700 text-white rounded-br-xs font-medium'
+                    ? 'bg-[#EFF6FF] border border-[#2563EB]/30 text-[#0F172A] rounded-br-xs font-medium'
                     : m.isEmergency
-                    ? 'bg-red-50 border border-red-300 text-red-950 rounded-bl-xs'
-                    : 'bg-slate-50 border border-slate-200 text-slate-900 rounded-bl-xs'
+                    ? 'bg-[#FEF2F2] border border-[#DC2626]/40 text-[#0F172A] rounded-bl-xs'
+                    : 'bg-[#F5F3FF] border border-[#7C3AED]/20 text-[#0F172A] rounded-bl-xs'
                 }`}
               >
                 {m.role === 'assistant' && (
-                  <div className="flex items-center justify-between font-bold text-[10px] mb-1 opacity-80">
-                    <span className="text-teal-700 flex items-center gap-1">
+                  <div className="flex items-center justify-between font-bold text-[10px] mb-1">
+                    <span className="text-[#7C3AED] flex items-center gap-1">
                       <Sparkles size={11} /> {m.agentName || 'Medora AI'}
                     </span>
                     {m.isEmergency && (
-                      <span className="bg-red-600 text-white px-1.5 rounded font-black text-[9px]">EMERGENCY</span>
+                      <span className="bg-[#DC2626] text-white px-1.5 rounded font-black text-[9px]">EMERGENCY</span>
                     )}
                   </div>
                 )}
                 <p className="whitespace-pre-wrap">{m.text}</p>
 
                 {m.role === 'assistant' && (
-                  <div className="mt-2 pt-1.5 border-t border-slate-200/50 flex items-center justify-between text-[10px]">
+                  <div className="mt-2 pt-1.5 border-t border-purple-200/50 flex items-center justify-between text-[10px]">
                     <button
                       onClick={() => handleReplayVoice(m.text, m.language)}
-                      className="text-teal-700 hover:text-teal-900 font-bold flex items-center gap-1"
+                      className="text-[#7C3AED] hover:text-purple-900 font-bold flex items-center gap-1"
                     >
                       <Volume2 size={12} /> {m.language?.slice(0, 2).toUpperCase()} Audio
                     </button>
-                    <span className="text-slate-400">Deterministic local response</span>
+                    <span className="text-[#64748B]">Deterministic local response</span>
                   </div>
                 )}
               </div>
@@ -253,7 +300,7 @@ export default function AiAssistantPage() {
 
           {isProcessing && (
             <div className="flex justify-start">
-              <div className="bg-teal-50 border border-teal-200 rounded-2xl px-4 py-2 text-xs text-teal-800 flex items-center gap-2">
+              <div className="bg-[#F5F3FF] border border-[#7C3AED]/30 rounded-2xl px-4 py-2 text-xs text-[#7C3AED] flex items-center gap-2">
                 <span className="animate-spin">🔄</span>
                 <span>Medora is processing your request in {currentLangMeta.nativeName}...</span>
               </div>
@@ -269,7 +316,7 @@ export default function AiAssistantPage() {
               <button
                 key={i}
                 onClick={() => handleSendMessage(q.text)}
-                className="bg-slate-100 hover:bg-teal-50 hover:text-teal-800 border border-slate-200 rounded-xl px-2.5 py-1 text-[11px] font-semibold text-slate-700 transition-colors"
+                className="bg-white hover:bg-[#F5F3FF] hover:text-[#7C3AED] border border-[#E2E8F0] rounded-xl px-2.5 py-1 text-[11px] font-semibold text-[#475569] transition-colors shadow-2xs"
               >
                 {q.label}
               </button>
@@ -283,7 +330,7 @@ export default function AiAssistantPage() {
             <button
               onClick={generateDoctorSummary}
               className={`w-full py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 ${
-                summarySuccess ? 'bg-emerald-600 text-white' : 'bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-200'
+                summarySuccess ? 'bg-[#16A34A] text-white' : 'bg-[#EFF6FF] hover:bg-blue-100 text-[#2563EB] border border-[#2563EB]/30'
               }`}
             >
               <FileText size={13} />
@@ -297,7 +344,7 @@ export default function AiAssistantPage() {
           <div className="mb-2 flex justify-center">
             <button
               onClick={() => speechSynthesisService.stop()}
-              className="flex items-center justify-center gap-2 px-6 py-2.5 w-full max-w-[200px] rounded-2xl font-black text-sm tracking-wide transition-all shadow-lg active:scale-95 bg-red-600 hover:bg-red-700 text-white ring-4 ring-red-500/30"
+              className="flex items-center justify-center gap-2 px-6 py-2.5 w-full max-w-[200px] rounded-2xl font-black text-sm tracking-wide transition-all shadow-lg active:scale-95 bg-[#DC2626] hover:bg-[#B91C1C] text-white ring-4 ring-red-200"
             >
               <span className="text-lg leading-none">⏹</span>
               <span>STOP SPEAKING</span>
@@ -306,13 +353,13 @@ export default function AiAssistantPage() {
         )}
 
         {/* Input Bar */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-2 flex items-center gap-2 shadow-sm">
+        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-2 flex items-center gap-2 shadow-xs focus-within:border-[#7C3AED]">
           <button
             onClick={isListening ? handleStopListening : handleStartListening}
-            className={`p-2.5 rounded-xl transition-all shadow-sm ${
+            className={`p-2.5 rounded-xl transition-all shadow-2xs ${
               isListening
-                ? 'bg-red-500 text-white animate-pulse'
-                : 'bg-teal-600 hover:bg-teal-700 text-white'
+                ? 'bg-[#DC2626] text-white animate-pulse'
+                : 'bg-[#7C3AED] hover:bg-purple-700 text-white'
             }`}
             title={isListening ? 'Stop listening' : 'Start speaking'}
           >
@@ -324,14 +371,14 @@ export default function AiAssistantPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-            placeholder={isListening ? 'Listening...' : 'Type in Tamil, Telugu, Malayalam, Kannada or English...'}
-            className="flex-1 bg-transparent text-xs text-slate-900 placeholder-slate-400 focus:outline-none"
+            placeholder={isListening ? 'Listening...' : 'Type in Tamil, Telugu, Malayalam, Kannada, Hindi or English...'}
+            className="flex-1 bg-transparent text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none"
           />
 
           <button
             onClick={() => handleSendMessage()}
             disabled={!input.trim() || isProcessing}
-            className="bg-teal-700 hover:bg-teal-800 disabled:opacity-30 text-white p-2.5 rounded-xl font-bold transition-all"
+            className="bg-[#7C3AED] hover:bg-purple-700 disabled:opacity-30 text-white p-2.5 rounded-xl font-bold transition-all shadow-2xs"
           >
             <Send size={15} />
           </button>

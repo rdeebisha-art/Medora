@@ -69,10 +69,10 @@ export default function EmergencyPage() {
   const handleFamilyAlert = async () => {
     await db.smsOutbox.add({
       toPhone: 'Family Emergency Contact',
-      message: '🚨 EMERGENCY ALERT from MEDORA: Your family member may need urgent help. Please call them immediately. [Demo SMS — not actually sent]',
+      message: '🚨 EMERGENCY ALERT from MEDORA: Your family member may need urgent help. Please call them immediately. [DEMO — queued in local outbox, not actually sent]',
       type: 'emergency_alert',
       language: 'en',
-      status: 'pending',
+      status: 'PENDING_OFFLINE',
       createdAt: new Date().toISOString(),
     });
     setAlertSent(true);
@@ -81,31 +81,31 @@ export default function EmergencyPage() {
   const handleAmbulanceCall = async () => {
     await db.smsOutbox.add({
       toPhone: '108',
-      message: 'EMERGENCY: Requesting ambulance from Kodaikanal area. [Demo — not actually sent]',
+      message: 'EMERGENCY: Requesting ambulance from Kodaikanal area. [DEMO — queued in local outbox, not actually sent. Please call 108 directly.]',
       type: 'emergency_alert',
       language: 'en',
-      status: 'pending',
+      status: 'PENDING_OFFLINE',
       createdAt: new Date().toISOString(),
     });
     setAmbulanceCalled(true);
   };
 
   return (
-    <div className="min-h-screen bg-red-50">
+    <div className="min-h-screen bg-[#F8FAFC]">
       {/* Header */}
-      <div className="bg-red-600 text-white px-4 py-4 sticky top-0 z-10 shadow-lg">
+      <div className="bg-[#DC2626] text-white px-4 py-4 sticky top-0 z-10 shadow-sm">
         <div className="flex items-center justify-between max-w-2xl mx-auto">
           <div>
             <h1 className="text-xl font-black">🚨 {t('emergency.title')}</h1>
-            <p className="text-xs text-red-200 mt-0.5">No login required — always accessible</p>
+            <p className="text-xs text-red-100 mt-0.5">No login required — always accessible</p>
           </div>
-          <Link to="/dashboard" className="bg-white/20 text-white text-xs px-3 py-1.5 rounded-full font-medium">← Home</Link>
+          <Link to="/dashboard" className="bg-white/20 hover:bg-white/30 text-white text-xs px-3 py-1.5 rounded-full font-bold transition-colors">← Home</Link>
         </div>
       </div>
 
       <div className="px-4 py-4 max-w-2xl mx-auto space-y-3">
         {/* Demo Notice */}
-        <div className="bg-amber-100 border border-amber-300 rounded-2xl p-3 text-sm text-amber-800">
+        <div className="bg-[#FFFBEB] border border-[#D97706]/30 rounded-2xl p-3 text-xs text-[#D97706]">
           ⚠️ <strong>{t('common.demoData')}:</strong> {t('emergency.demoNote')}
         </div>
 
@@ -113,68 +113,68 @@ export default function EmergencyPage() {
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={handleAmbulanceCall}
-            className={`flex flex-col items-center justify-center p-5 rounded-2xl font-bold text-center transition-all shadow-lg active:scale-95 ${ambulanceCalled ? 'bg-green-600 text-white' : 'bg-red-600 text-white hover:bg-red-700'}`}
+            className={`flex flex-col items-center justify-center p-5 rounded-2xl font-bold text-center transition-all shadow-sm active:scale-95 ${ambulanceCalled ? 'bg-[#16A34A] text-white' : 'bg-[#DC2626] text-white hover:bg-[#B91C1C]'}`}
           >
             <span className="text-3xl mb-2">🚑</span>
-            <span className="text-base">{t('emergency.callAmbulance')}</span>
-            {ambulanceCalled && <span className="text-xs mt-1 bg-white/20 px-2 py-0.5 rounded-full">Added to SMS Outbox</span>}
+            <span className="text-base font-black">{t('emergency.callAmbulance')}</span>
+            {ambulanceCalled && <span className="text-xs mt-1 bg-white/20 px-2 py-0.5 rounded-full">Queued in SMS Outbox (Demo)</span>}
           </button>
           <button
             onClick={handleFamilyAlert}
-            className={`flex flex-col items-center justify-center p-5 rounded-2xl font-bold text-center transition-all shadow-lg active:scale-95 ${alertSent ? 'bg-green-600 text-white' : 'bg-orange-500 text-white hover:bg-orange-600'}`}
+            className={`flex flex-col items-center justify-center p-5 rounded-2xl font-bold text-center transition-all shadow-sm active:scale-95 ${alertSent ? 'bg-[#16A34A] text-white' : 'bg-[#EA580C] text-white hover:bg-orange-600'}`}
           >
             <span className="text-3xl mb-2">👪</span>
-            <span className="text-base">{t('emergency.familyAlert')}</span>
-            {alertSent && <span className="text-xs mt-1 bg-white/20 px-2 py-0.5 rounded-full">{t('emergency.alertSent')}</span>}
+            <span className="text-base font-black">{t('emergency.familyAlert')}</span>
+            {alertSent && <span className="text-xs mt-1 bg-white/20 px-2 py-0.5 rounded-full">Queued (Demo)</span>}
           </button>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Link to="/hospitals" className="flex flex-col items-center justify-center p-4 bg-sky-600 text-white rounded-2xl font-bold text-center shadow-md hover:bg-sky-700 active:scale-95">
+          <Link to="/hospitals" className="flex flex-col items-center justify-center p-4 bg-[#2563EB] hover:bg-blue-700 text-white rounded-2xl font-bold text-center shadow-xs active:scale-95 transition-colors">
             <span className="text-2xl mb-1">🏥</span>
-            <span className="text-sm">{t('emergency.nearestHospital')}</span>
+            <span className="text-xs font-black">{t('emergency.nearestHospital')}</span>
           </Link>
-          <Link to="/transport" className="flex flex-col items-center justify-center p-4 bg-purple-600 text-white rounded-2xl font-bold text-center shadow-md hover:bg-purple-700 active:scale-95">
+          <Link to="/transport" className="flex flex-col items-center justify-center p-4 bg-[#4F46E5] hover:bg-indigo-700 text-white rounded-2xl font-bold text-center shadow-xs active:scale-95 transition-colors">
             <span className="text-2xl mb-1">🚗</span>
-            <span className="text-sm">{t('emergency.transportHelp')}</span>
+            <span className="text-xs font-black">{t('emergency.transportHelp')}</span>
           </Link>
         </div>
 
         {/* Hospital Quick Info */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
-          <h2 className="font-bold text-gray-900 mb-3">🏥 Nearest Emergency Hospitals</h2>
+        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-xs">
+          <h2 className="font-extrabold text-[#0F172A] text-sm mb-3">🏥 Nearest Emergency Hospitals</h2>
           {[
             { name: 'Kodaikanal Govt Hospital', phone: '04542-241234', dist: '5 km', emergency: true },
             { name: 'CHC Palani', phone: '04545-241000', dist: '25 km', emergency: true },
             { name: 'AIIMS Madurai', phone: '0452-2530000', dist: '120 km', emergency: true },
           ].map(h => (
-            <div key={h.name} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+            <div key={h.name} className="flex items-center justify-between py-2 border-b border-[#E2E8F0] last:border-0">
               <div>
-                <div className="font-medium text-gray-900 text-sm">{h.name}</div>
-                <div className="text-xs text-gray-500">{h.dist} · {h.phone}</div>
+                <div className="font-bold text-[#0F172A] text-xs">{h.name}</div>
+                <div className="text-[11px] text-[#64748B]">{h.dist} · {h.phone}</div>
               </div>
-              <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium">Emergency ✓</span>
+              <span className="bg-[#FEF2F2] border border-[#DC2626]/30 text-[#DC2626] text-[10px] px-2 py-0.5 rounded-full font-bold">Emergency ✓</span>
             </div>
           ))}
         </div>
 
         {/* First Aid Guides */}
-        <h2 className="font-bold text-gray-900">🩹 {t('emergency.firstAid')}</h2>
+        <h2 className="font-extrabold text-[#0F172A] text-sm pt-1">🩹 {t('emergency.firstAid')}</h2>
         <div className="space-y-2">
           {FIRST_AID.map(item => (
-            <div key={item.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+            <div key={item.id} className="bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden shadow-xs">
               <button
                 onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                className="w-full flex items-center justify-between px-4 py-4 font-bold text-gray-900 text-left"
+                className="w-full flex items-center justify-between px-4 py-3.5 font-bold text-xs text-[#0F172A] text-left hover:bg-slate-50 transition-colors"
               >
                 <span>{item.title}</span>
-                <span className="text-gray-400">{expandedId === item.id ? '▲' : '▼'}</span>
+                <span className="text-[#94A3B8]">{expandedId === item.id ? '▲' : '▼'}</span>
               </button>
               {expandedId === item.id && (
-                <div className="px-4 pb-4 space-y-2">
+                <div className="px-4 pb-4 space-y-2 border-t border-[#E2E8F0] pt-3">
                   {item.steps.map((step, i) => (
-                    <div key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                      <span className="font-bold text-red-600 flex-shrink-0">{i + 1}.</span>
+                    <div key={i} className="flex items-start gap-2 text-xs text-[#475569]">
+                      <span className="font-bold text-[#DC2626] flex-shrink-0">{i + 1}.</span>
                       <span>{step}</span>
                     </div>
                   ))}
@@ -184,11 +184,11 @@ export default function EmergencyPage() {
           ))}
         </div>
 
-        <Link to="/ai" className="block w-full bg-violet-600 text-white text-center py-4 rounded-2xl font-bold text-lg shadow-md hover:bg-violet-700 active:scale-95">
+        <Link to="/ai" className="block w-full bg-[#7C3AED] hover:bg-purple-700 text-white text-center py-3.5 rounded-2xl font-bold text-sm shadow-xs active:scale-95 transition-colors">
           🤖 {t('emergency.callDoctor')} via Medora AI
         </Link>
 
-        <p className="text-xs text-center text-gray-400 pb-4">{t('common.disclaimer')}</p>
+        <p className="text-[11px] text-center text-[#64748B] pb-4">{t('common.disclaimer')}</p>
       </div>
     </div>
   );

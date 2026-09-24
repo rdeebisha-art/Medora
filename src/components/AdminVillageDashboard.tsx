@@ -120,6 +120,41 @@ export const AdminVillageDashboard: React.FC<AdminVillageDashboardProps> = ({
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  // 2. Dynamic Population Calculations (Unconditional Hooks)
+  const activePatients = useMemo(() => patients.filter(p => !p.isArchived), [patients]);
+  const archivedPatients = useMemo(() => patients.filter(p => p.isArchived), [patients]);
+
+  const stats = useMemo(() => {
+    return {
+      totalPopulation: activePatients.length,
+      totalFamilies: families.length,
+      totalPatients: patients.length,
+      activeCount: activePatients.length,
+      archivedCount: archivedPatients.length,
+      adults: activePatients.filter(p => p.category === 'adult').length,
+      children: activePatients.filter(p => p.category === 'child').length,
+      elderly: activePatients.filter(p => p.category === 'elderly').length,
+      maternal: activePatients.filter(p => p.category === 'maternity').length,
+      highRiskCount: activePatients.filter(p => p.hasCareGap || p.chronicConditions.length > 1).length,
+      recentRegistrations: activePatients.slice(0, 4),
+    };
+  }, [activePatients, archivedPatients, families, patients]);
+
+  // Filtered Patients List
+  const filteredPatients = useMemo(() => {
+    const list = registryView === 'active' ? activePatients : archivedPatients;
+    return list.filter(p => {
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch = !q || 
+        p.name.toLowerCase().includes(q) || 
+        p.patientId.toLowerCase().includes(q) || 
+        p.healthId.toLowerCase().includes(q);
+      const matchesCategory = selectedCategoryFilter === 'ALL' || p.category === selectedCategoryFilter;
+      const matchesFamily = selectedFamilyFilter === 'ALL' || p.familyId === selectedFamilyFilter;
+      return matchesSearch && matchesCategory && matchesFamily;
+    });
+  }, [registryView, activePatients, archivedPatients, searchQuery, selectedCategoryFilter, selectedFamilyFilter]);
+
   // 1. Strict Role Protection Guard
   if (activeRole !== 'admin') {
     return (
@@ -154,41 +189,6 @@ export const AdminVillageDashboard: React.FC<AdminVillageDashboardProps> = ({
       </div>
     );
   }
-
-  // 2. Dynamic Population Calculations
-  const activePatients = useMemo(() => patients.filter(p => !p.isArchived), [patients]);
-  const archivedPatients = useMemo(() => patients.filter(p => p.isArchived), [patients]);
-
-  const stats = useMemo(() => {
-    return {
-      totalPopulation: activePatients.length,
-      totalFamilies: families.length,
-      totalPatients: patients.length,
-      activeCount: activePatients.length,
-      archivedCount: archivedPatients.length,
-      adults: activePatients.filter(p => p.category === 'adult').length,
-      children: activePatients.filter(p => p.category === 'child').length,
-      elderly: activePatients.filter(p => p.category === 'elderly').length,
-      maternal: activePatients.filter(p => p.category === 'maternity').length,
-      highRiskCount: activePatients.filter(p => p.hasCareGap || p.chronicConditions.length > 1).length,
-      recentRegistrations: activePatients.slice(0, 4),
-    };
-  }, [activePatients, archivedPatients, families, patients]);
-
-  // Filtered Patients List
-  const filteredPatients = useMemo(() => {
-    const list = registryView === 'active' ? activePatients : archivedPatients;
-    return list.filter(p => {
-      const q = searchQuery.toLowerCase().trim();
-      const matchesSearch = !q || 
-        p.name.toLowerCase().includes(q) || 
-        p.patientId.toLowerCase().includes(q) || 
-        p.healthId.toLowerCase().includes(q);
-      const matchesCategory = selectedCategoryFilter === 'ALL' || p.category === selectedCategoryFilter;
-      const matchesFamily = selectedFamilyFilter === 'ALL' || p.familyId === selectedFamilyFilter;
-      return matchesSearch && matchesCategory && matchesFamily;
-    });
-  }, [registryView, activePatients, archivedPatients, searchQuery, selectedCategoryFilter, selectedFamilyFilter]);
 
   // Handle Add Patient Submit
   const handleAddPatientSubmit = (e: React.FormEvent) => {

@@ -1,71 +1,66 @@
 @import "tailwindcss";
 
 @theme {
-  --color-medora-bg: #F8FAFC;
-  --color-medora-card: #FFFFFF;
+  --color-medora-bg: #071A1A;
+  --color-medora-bg-to: #0B2424;
+  --color-medora-card: #111827;
+  --color-medora-card-alt: #16212B;
+  --color-medora-card-teal: #132A2A;
   --color-medora-primary: #0F766E;
   --color-medora-primary-hover: #115E59;
   --color-medora-voice: #14B8A6;
-  --color-medora-voice-bg: #F0FDFA;
+  --color-medora-voice-bg: #0E3834;
   --color-medora-blue: #2563EB;
-  --color-medora-blue-bg: #EFF6FF;
+  --color-medora-blue-bg: #102A43;
   --color-medora-green: #16A34A;
-  --color-medora-green-bg: #F0FDF4;
+  --color-medora-green-bg: #0D3320;
   --color-medora-ai: #7C3AED;
-  --color-medora-ai-bg: #F5F3FF;
+  --color-medora-ai-bg: #26174D;
   --color-medora-orange: #EA580C;
-  --color-medora-orange-bg: #FFF7ED;
+  --color-medora-orange-bg: #3B1C0B;
   --color-medora-amber: #D97706;
-  --color-medora-amber-bg: #FFFBEB;
+  --color-medora-amber-bg: #382405;
   --color-medora-rose: #DB2777;
-  --color-medora-rose-bg: #FDF2F8;
+  --color-medora-rose-bg: #3B0E23;
   --color-medora-emergency: #DC2626;
   --color-medora-emergency-dark: #B91C1C;
-  --color-medora-emergency-bg: #FEF2F2;
+  --color-medora-emergency-bg: #380D0D;
   --color-medora-indigo: #4F46E5;
-  --color-medora-border: #E2E8F0;
-  --color-medora-text: #0F172A;
-  --color-medora-muted: #64748B;
+  --color-medora-border: rgba(148, 163, 184, 0.20);
+  --color-medora-text: #F8FAFC;
+  --color-medora-secondary: #CBD5E1;
+  --color-medora-muted: #94A3B8;
 }
 
 :root {
-  --medora-bg: #F8FAFC;
-  --medora-card: #FFFFFF;
-  --medora-text: #0F172A;
-  --medora-text-secondary: #475569;
-  --medora-text-muted: #64748B;
-  --medora-border: #E2E8F0;
-  --medora-disabled: #94A3B8;
-  --medora-primary: #0F766E;
-  --medora-primary-hover: #115E59;
-  --medora-voice: #14B8A6;
-  --medora-voice-bg: #F0FDFA;
-  --medora-blue: #2563EB;
-  --medora-blue-bg: #EFF6FF;
-  --medora-green: #16A34A;
-  --medora-green-bg: #F0FDF4;
-  --medora-ai: #7C3AED;
-  --medora-ai-bg: #F5F3FF;
-  --medora-orange: #EA580C;
-  --medora-orange-bg: #FFF7ED;
-  --medora-amber: #D97706;
-  --medora-amber-bg: #FFFBEB;
-  --medora-rose: #DB2777;
-  --medora-rose-bg: #FDF2F8;
-  --medora-emergency: #DC2626;
-  --medora-emergency-dark: #B91C1C;
-  --medora-emergency-bg: #FEF2F2;
-  --medora-indigo: #4F46E5;
-  --medora-icon-teal: #CCFBF1;
-}
-
-.dark {
-  --medora-bg: #0F172A;
-  --medora-card: #1E293B;
+  --medora-bg: #071A1A;
+  --medora-card: #111827;
   --medora-text: #F8FAFC;
   --medora-text-secondary: #CBD5E1;
   --medora-text-muted: #94A3B8;
-  --medora-border: #334155;
+  --medora-border: rgba(148, 163, 184, 0.20);
+  --medora-disabled: #475569;
+  --medora-primary: #0F766E;
+  --medora-primary-hover: #115E59;
+  --medora-voice: #14B8A6;
+  --medora-voice-bg: #0E3834;
+  --medora-blue: #2563EB;
+  --medora-blue-bg: #102A43;
+  --medora-green: #16A34A;
+  --medora-green-bg: #0D3320;
+  --medora-ai: #7C3AED;
+  --medora-ai-bg: #26174D;
+  --medora-orange: #EA580C;
+  --medora-orange-bg: #3B1C0B;
+  --medora-amber: #D97706;
+  --medora-amber-bg: #382405;
+  --medora-rose: #DB2777;
+  --medora-rose-bg: #3B0E23;
+  --medora-emergency: #DC2626;
+  --medora-emergency-dark: #B91C1C;
+  --medora-emergency-bg: #380D0D;
+  --medora-indigo: #4F46E5;
+  --medora-icon-teal: #0D3D3A;
 }
 
 @layer base {
@@ -73,6 +68,7 @@
   html, body, #root {
     min-height: 100%;
     background-color: var(--medora-bg);
+    background-image: radial-gradient(circle at 50% 0%, #0F2F2F 0%, #071A1A 85%);
     color: var(--medora-text);
   }
   body {
@@ -89,6 +85,16 @@
   .print-only { display: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+.medora-glass {
+  background: rgba(17, 24, 39, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(148, 163, 184, 0.20);
+}
+
+.medora-glow {
+  box-shadow: 0 0 15px -3px rgba(20, 184, 166, 0.25);
 }
 
 .voice-wave {

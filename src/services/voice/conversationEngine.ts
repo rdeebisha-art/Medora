@@ -3,6 +3,7 @@ import { HEALTH_KNOWLEDGE_BASE, HealthcareIntent } from '../../data/healthKnowle
 import { languageDetectionService, LanguageDetectionResult } from './languageDetectionService';
 import { intentClassifier, IntentClassificationResult } from './intentClassifier';
 import { conversationMemory, ConversationState } from './conversationMemory';
+import { medicalSafetyEngine } from '../medicalSafety/medicalSafetyEngine';
 import { db } from '../../db/db';
 
 export interface ProcessedConversationTurn {
@@ -64,7 +65,10 @@ export class ConversationEngine {
       lowerText.includes('ரத்த அழுத்தம்') ||
       lowerText.includes('బీపీ') ||
       lowerText.includes('രക്തസമ്മർദ്ദം') ||
-      lowerText.includes('ರಕ್ತದೊತ್ತಡ')
+      lowerText.includes('ರಕ್ತದೊತ್ತಡ') ||
+      lowerText.includes('रक्तचाप') ||
+      lowerText.includes('ब्लड प्रेशर') ||
+      lowerText.includes('बीपी')
     ) {
       if (state.patientContext?.recentVitals) {
         const bp = state.patientContext.recentVitals.find((v) => v.type === 'blood_pressure');
@@ -75,6 +79,7 @@ export class ConversationEngine {
             `మీ చివరిగా నమోదైన రక్తపోటు ${bp.value} ${bp.unit} (${bp.date.slice(0, 10)}).`,
             `നിങ്ങളുടെ അവസാന രക്തസമ്മർദ്ദം ${bp.value} ${bp.unit} (${bp.date.slice(0, 10)}) ആയിരുന്നു.`,
             `ನಿಮ್ಮ ಕೊನೆಯ ರಕ್ತದೊತ್ತಡ ${bp.value} ${bp.unit} (${bp.date.slice(0, 10)}) ಇತ್ತು.`,
+            `आपका अंतिम दर्ज रक्तचाप ${bp.value} ${bp.unit} (${bp.date.slice(0, 10)}) था।`,
             currentLang
           );
         }
@@ -87,7 +92,11 @@ export class ConversationEngine {
       lowerText.includes('என் மாத்திரை') ||
       lowerText.includes('నా మందులు') ||
       lowerText.includes('എന്റെ മരുന്ന്') ||
-      lowerText.includes('ನನ್ನ ಔಷಧಿ')
+      lowerText.includes('ನನ್ನ ಔಷಧಿ') ||
+      lowerText.includes('मेरी दवा') ||
+      lowerText.includes('मेरी दवाई') ||
+      lowerText.includes('दवाइयाँ') ||
+      lowerText.includes('गोलियां')
     ) {
       if (state.patientContext?.activeMedicines && state.patientContext.activeMedicines.length > 0) {
         const medNames = state.patientContext.activeMedicines.map((m) => `${m.name} (${m.dose})`).join(', ');
@@ -97,18 +106,27 @@ export class ConversationEngine {
           `మీ ప్రస్తుత మందులు: ${medNames}. సమయానికి వేసుకోండి.`,
           `നിങ്ങളുടെ നിലവിലെ മരുന്നുകൾ: ${medNames}. സമയത്തിന് കഴിക്കുക.`,
           `ನಿಮ್ಮ ಸಕ್ರಿಯ ಔಷಧಗಳು: ${medNames}. ಸಮಯಕ್ಕೆ ಸೇವಿಸಿ.`,
+          `आपकी सक्रिय निर्धारित दवाइयाँ हैं: ${medNames}। कृपया इन्हें समय पर लें।`,
           currentLang
         );
       }
     }
 
-    // 4. Retrieve Knowledge Base Template
+    // 4. Retrieve Evidence-Based Clinical Guidance from Medical Knowledge Base
+    const clinicalGuidance = medicalSafetyEngine.generateClinicalGuidance(
+      text,
+      currentLang,
+      state.patientContext
+    );
+
     const templateObj = HEALTH_KNOWLEDGE_BASE[classification.intent] || HEALTH_KNOWLEDGE_BASE['GENERAL_HEALTH'];
     const localized = templateObj.templates[currentLang] || templateObj.templates['en-IN'];
 
-    let finalResponseText = customContextResponse || `${localized.primaryText} ${localized.followUpQuestion}`;
-    if (classification.isEmergency) {
-      finalResponseText = `${localized.primaryText}\n\n${localized.safetyGuidance}`;
+    let finalResponseText = customContextResponse || clinicalGuidance.fullFormattedResponse;
+    const isEmergency = classification.isEmergency || clinicalGuidance.isEmergency;
+
+    if (classification.isEmergency && !customContextResponse) {
+      finalResponseText = clinicalGuidance.fullFormattedResponse;
     }
 
     // 5. Update Conversation State in Memory
@@ -124,7 +142,7 @@ export class ConversationEngine {
       language: currentLang,
       intent: classification.intent,
       agentName: templateObj.agentName,
-      isEmergency: classification.isEmergency
+      isEmergency: isEmergency
     });
 
     // 6. Save turn to IndexedDB
@@ -154,7 +172,7 @@ export class ConversationEngine {
       confidenceLevel: detection.confidenceLevel,
       intent: classification.intent,
       agentName: templateObj.agentName,
-      isEmergency: classification.isEmergency,
+      isEmergency: isEmergency,
       responseText: finalResponseText,
       followUpQuestion: localized.followUpQuestion,
       safetyGuidance: localized.safetyGuidance
@@ -167,6 +185,7 @@ export class ConversationEngine {
     te: string,
     ml: string,
     kn: string,
+    hi: string,
     lang: SupportedLanguageCode
   ): string {
     switch (lang) {
@@ -178,6 +197,8 @@ export class ConversationEngine {
         return ml;
       case 'kn-IN':
         return kn;
+      case 'hi-IN':
+        return hi;
       case 'en-IN':
       default:
         return en;

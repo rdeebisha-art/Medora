@@ -38,23 +38,23 @@ export default function VaccinationPage() {
   };
 
   const statusBadge = (s: string) => s === 'given' ? '✅ Given' : s === 'overdue' ? '⚠️ Overdue' : '📅 Due';
-  const statusColor = (s: string) => s === 'given' ? 'bg-green-50 border-green-200' : s === 'overdue' ? 'bg-red-50 border-red-200' : 'bg-yellow-50 border-yellow-200';
+  const statusColor = (s: string) => s === 'given' ? 'bg-[#F0FDF4] border-[#16A34A]/30 text-[#16A34A]' : s === 'overdue' ? 'bg-[#FEF2F2] border-[#DC2626]/30 text-[#DC2626]' : 'bg-[#FFFBEB] border-[#D97706]/30 text-[#D97706]';
 
   return (
     <Layout>
       <div className="px-4 py-4 max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold text-gray-900">💉 {t('vaccination.title')}</h1>
+          <h1 className="text-xl font-black text-[#16A34A]">💉 {t('vaccination.title')}</h1>
           <div className="flex items-center gap-2">
             <DemoDataBadge />
-            <button onClick={() => setShowAdd(true)} className="bg-sky-600 text-white text-sm px-3 py-1.5 rounded-xl font-medium">+ Add</button>
+            <button onClick={() => setShowAdd(true)} className="bg-[#16A34A] hover:bg-green-700 text-white text-xs px-3.5 py-2 rounded-xl font-bold shadow-2xs transition-colors">+ Add</button>
           </div>
         </div>
 
-        <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
+        <div className="flex bg-slate-100 border border-[#E2E8F0] rounded-xl p-1 mb-4">
           {[{k:'records',l:'My Records'},{k:'schedule',l:'UIP Schedule'}].map(t => (
             <button key={t.k} onClick={() => setTab(t.k as any)}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${tab === t.k ? 'bg-white shadow font-bold text-sky-700' : 'text-gray-500'}`}>
+              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${tab === t.k ? 'bg-white shadow-xs text-[#16A34A]' : 'text-[#64748B] hover:text-[#0F172A]'}`}>
               {t.l}
             </button>
           ))}
@@ -63,16 +63,16 @@ export default function VaccinationPage() {
         {tab === 'records' && (
           <>
             {vaccinations.length === 0 ? (
-              <div className="text-center py-12 text-gray-400"><div className="text-5xl mb-3">💉</div><p>No vaccination records</p></div>
+              <div className="text-center py-12 text-[#64748B]"><div className="text-5xl mb-3">💉</div><p>No vaccination records</p></div>
             ) : (
               <div className="space-y-2">
                 {vaccinations.map(v => (
-                  <div key={v.id} className={`border rounded-2xl p-3 ${statusColor(v.status)}`}>
+                  <div key={v.id} className={`border rounded-2xl p-3.5 shadow-2xs ${statusColor(v.status)}`}>
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-gray-900 text-sm">{v.vaccineName}</span>
-                      <span className="text-xs font-medium">{statusBadge(v.status)}</span>
+                      <span className="font-extrabold text-[#0F172A] text-xs">{v.vaccineName}</span>
+                      <span className="text-xs font-bold">{statusBadge(v.status)}</span>
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className="text-xs text-[#64748B] mt-1">
                       {v.dueDate && `Due: ${v.dueDate}`}
                       {v.givenDate && ` · Given: ${v.givenDate}`}
                     </div>
@@ -85,13 +85,13 @@ export default function VaccinationPage() {
 
         {tab === 'schedule' && (
           <div className="space-y-2">
-            <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-xs text-green-700 mb-2">
+            <div className="bg-[#F0FDF4] border border-[#16A34A]/20 rounded-xl p-3 text-xs text-[#16A34A] font-bold mb-2">
               🇮🇳 Universal Immunisation Programme (UIP) — All vaccines are FREE at govt facilities
             </div>
             {UIP_SCHEDULE.map((s, i) => (
-              <div key={i} className="bg-white border border-gray-200 rounded-xl p-3 flex items-center justify-between shadow-sm">
-                <span className="text-sm font-medium text-gray-800">{s.name}</span>
-                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">{s.when}</span>
+              <div key={i} className="bg-white border border-[#E2E8F0] rounded-xl p-3 flex items-center justify-between shadow-2xs">
+                <span className="text-xs font-bold text-[#0F172A]">{s.name}</span>
+                <span className="text-xs bg-[#EFF6FF] text-[#2563EB] border border-[#2563EB]/20 px-2 py-0.5 rounded-full font-bold">{s.when}</span>
               </div>
             ))}
           </div>
@@ -100,24 +100,24 @@ export default function VaccinationPage() {
         {showAdd && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
             <div className="bg-white rounded-t-3xl w-full p-6">
-              <h2 className="font-bold text-lg mb-4">{t('vaccination.addRecord')}</h2>
+              <h2 className="font-extrabold text-[#0F172A] text-base mb-4">{t('vaccination.addRecord')}</h2>
               <div className="space-y-3">
                 <input value={form.vaccineName} onChange={e => setForm(p => ({...p, vaccineName: e.target.value}))}
-                  placeholder={t('vaccination.vaccine')} className="w-full border border-gray-300 rounded-xl px-3 py-2.5" />
+                  placeholder={t('vaccination.vaccine')} className="w-full border border-[#E2E8F0] text-xs text-[#0F172A] rounded-xl px-3 py-2.5" />
                 <input type="date" value={form.dueDate} onChange={e => setForm(p => ({...p, dueDate: e.target.value}))}
-                  className="w-full border border-gray-300 rounded-xl px-3 py-2.5" placeholder="Due Date" />
+                  className="w-full border border-[#E2E8F0] text-xs text-[#0F172A] rounded-xl px-3 py-2.5" placeholder="Due Date" />
                 <input type="date" value={form.givenDate} onChange={e => setForm(p => ({...p, givenDate: e.target.value}))}
-                  className="w-full border border-gray-300 rounded-xl px-3 py-2.5" placeholder="Given Date (if done)" />
+                  className="w-full border border-[#E2E8F0] text-xs text-[#0F172A] rounded-xl px-3 py-2.5" placeholder="Given Date (if done)" />
                 <select value={form.status} onChange={e => setForm(p => ({...p, status: e.target.value as any}))}
-                  className="w-full border border-gray-300 rounded-xl px-3 py-2.5">
+                  className="w-full border border-[#E2E8F0] text-xs text-[#0F172A] rounded-xl px-3 py-2.5">
                   <option value="due">Due</option>
                   <option value="given">Given</option>
                   <option value="overdue">Overdue</option>
                 </select>
               </div>
               <div className="flex gap-3 mt-4">
-                <button onClick={() => setShowAdd(false)} className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-xl font-medium">{t('common.cancel')}</button>
-                <button onClick={handleAdd} className="flex-1 bg-sky-600 text-white py-3 rounded-xl font-bold">{t('common.save')}</button>
+                <button onClick={() => setShowAdd(false)} className="flex-1 border border-[#E2E8F0] text-[#475569] py-2.5 rounded-xl font-bold text-xs hover:bg-slate-50">{t('common.cancel')}</button>
+                <button onClick={handleAdd} className="flex-1 bg-[#16A34A] hover:bg-green-700 text-white py-2.5 rounded-xl font-bold text-xs shadow-2xs">{t('common.save')}</button>
               </div>
             </div>
           </div>

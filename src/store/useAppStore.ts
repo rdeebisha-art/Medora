@@ -44,15 +44,41 @@ export const useAppStore = create<AppState>((set) => ({
 
   toggleSimpleMode: () => set((state) => ({ isSimpleMode: !state.isSimpleMode })),
 
-  login: (user) => set({
-    currentUser: user,
-    currentRole: user.role,
-    language: (user.language as string) || 'en',
-  }),
+  login: (user) => {
+    const lang = (user.language as string) || 'en';
+    const bcpMap: Record<string, string> = {
+      ta: 'ta-IN',
+      te: 'te-IN',
+      hi: 'hi-IN',
+      kn: 'kn-IN',
+      ml: 'ml-IN',
+      en: 'en-IN'
+    };
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = bcpMap[lang] || 'en-IN';
+    }
+    i18n.changeLanguage(lang);
+    set({
+      currentUser: user,
+      currentRole: user.role,
+      language: lang,
+    });
+  },
 
   logout: () => set({ currentUser: null, currentRole: null }),
 
   setLanguage: (lang) => {
+    const bcpMap: Record<string, string> = {
+      ta: 'ta-IN',
+      te: 'te-IN',
+      hi: 'hi-IN',
+      kn: 'kn-IN',
+      ml: 'ml-IN',
+      en: 'en-IN'
+    };
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = bcpMap[lang] || 'en-IN';
+    }
     i18n.changeLanguage(lang);
     set({ language: lang });
   },

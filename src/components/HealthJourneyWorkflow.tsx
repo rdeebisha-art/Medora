@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Sparkles, CheckCircle2, ArrowRight, Stethoscope, Building2, FileText, Calendar, Bell, ShieldCheck, Heart, AlertTriangle } from 'lucide-react';
 import { CareGap, LanguageCode } from '../types';
 

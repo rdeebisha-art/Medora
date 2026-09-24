@@ -1,5 +1,5 @@
 export interface LanguageDictionary {
-  code: 'ta-IN' | 'te-IN' | 'ml-IN' | 'kn-IN' | 'en-IN';
+  code: 'ta-IN' | 'te-IN' | 'ml-IN' | 'kn-IN' | 'en-IN' | 'hi-IN';
   name: string;
   nativeName: string;
   commonWords: string[];

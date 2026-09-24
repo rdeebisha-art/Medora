@@ -4,6 +4,9 @@ import { useAppStore } from '../store/useAppStore';
 import { db, SmsOutbox } from '../db/db';
 import Layout from '../components/Layout';
 import DemoDataBadge from '../components/DemoDataBadge';
+import { activeSmsProvider } from '../services/sms/smsProvider';
+import { SmsDeliveryStatus } from '../services/sms/smsTypes';
+import { Send, Clock, CheckCircle2, AlertCircle, RefreshCw, MessageSquare } from 'lucide-react';
 
 const MSG_TYPES = ['doctor_summary', 'emergency_alert', 'appointment', 'medicine_reminder', 'vaccination', 'family_alert', 'hospital_info'];
 const LANGUAGES = [
@@ -14,7 +17,7 @@ const LANGUAGES = [
 
 export default function SmsPage() {
   const { t } = useTranslation();
-  const { language } = useAppStore();
+  const { language, currentUser } = useAppStore();
   const [messages, setMessages] = useState<SmsOutbox[]>([]);
   const [showCompose, setShowCompose] = useState(false);
   const [form, setForm] = useState({ toPhone: '', type: 'family_alert', language: language, message: '' });
@@ -26,102 +29,169 @@ export default function SmsPage() {
 
   const handleSend = async () => {
     if (!form.toPhone || !form.message) return;
-    
-    const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
-    
-    if (isMobile) {
-      // MODE A: Native SMS intent
-      window.open(`sms:${form.toPhone}?body=${encodeURIComponent(form.message)}`, '_blank');
-      await db.smsOutbox.add({ ...form, status: 'sent', createdAt: new Date().toISOString() });
-    } else {
-      // MODE B: Save to outbox for offline/later syncing
-      await db.smsOutbox.add({ ...form, status: 'PENDING_OFFLINE', createdAt: new Date().toISOString() });
-    }
-    
+
+    await activeSmsProvider.sendSMS(form.toPhone, form.message, currentUser?.id, form.language);
+
     setForm({ toPhone: '', type: 'family_alert', language: language, message: '' });
     setShowCompose(false);
-    setRefresh(r => r + 1);
+    setRefresh((r) => r + 1);
   };
 
-  const statusColor = (s: string) => s === 'sent' ? 'bg-green-100 text-green-700' : s === 'failed' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700';
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'Delivered':
+        return <span className="bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle2 size={10} /> Delivered</span>;
+      case 'Sent':
+        return <span className="bg-blue-950/80 text-blue-300 border border-blue-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle2 size={10} /> Sent</span>;
+      case 'Sending':
+        return <span className="bg-teal-950/80 text-teal-300 border border-teal-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse"><RefreshCw size={10} /> Sending</span>;
+      case 'Queued':
+        return <span className="bg-amber-950/80 text-amber-300 border border-amber-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><Clock size={10} /> Queued</span>;
+      case 'Pending Sync':
+      case 'PENDING_OFFLINE':
+        return <span className="bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><Clock size={10} /> Pending Sync</span>;
+      case 'Failed':
+        return <span className="bg-red-950/80 text-red-300 border border-red-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><AlertCircle size={10} /> Failed</span>;
+      default:
+        return <span className="bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full">{status}</span>;
+    }
+  };
 
   return (
     <Layout>
-      <div className="px-4 py-4 max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold text-gray-900">📱 {t('sms.title')}</h1>
+      <div className="px-4 py-5 max-w-2xl mx-auto space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-black text-slate-100">📱 {t('sms.title')}</h1>
+              <span className="text-[10px] bg-teal-900/60 text-teal-300 font-bold px-2 py-0.5 rounded-full border border-teal-700">
+                SMS Outbox
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Local health SMS outbox with offline queueing and delivery status tracking
+            </p>
+          </div>
           <div className="flex items-center gap-2">
             <DemoDataBadge />
-            <button onClick={() => setShowCompose(true)} className="bg-sky-600 text-white text-sm px-3 py-1.5 rounded-xl font-medium">
+            <button
+              onClick={() => setShowCompose(true)}
+              className="bg-teal-600 hover:bg-teal-500 text-white text-xs px-3.5 py-2 rounded-xl font-bold flex items-center gap-1 shadow-md active:scale-95 transition-all"
+            >
               + {t('sms.compose')}
             </button>
           </div>
         </div>
 
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-xs text-amber-700">
-          📱 {t('sms.demoNote')}
+        {/* Informational Banner */}
+        <div className="bg-[#0B2424] border border-[#14B8A6]/40 rounded-2xl p-3.5 text-xs text-slate-300 space-y-1">
+          <div className="text-teal-300 font-bold flex items-center gap-1.5">
+            <MessageSquare size={14} />
+            <span>SMS Delivery Architecture</span>
+          </div>
+          <p className="text-[11px] text-slate-300 leading-relaxed">
+            Real SMS requires a telecom provider and network connection. In offline mode, outgoing notifications are queued locally as <strong>Pending Sync</strong> and dispatched once connectivity resumes.
+          </p>
         </div>
 
         {/* Message List */}
-        <h2 className="font-semibold text-gray-700 mb-3">{t('sms.outbox')}</h2>
-        {messages.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
-            <div className="text-5xl mb-3">📤</div>
-            <p>No messages yet. Compose a message or use Emergency/Transport features.</p>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-400">
+            <span>OUTBOX MESSAGES ({messages.length})</span>
+            <button onClick={() => setRefresh((r) => r + 1)} className="text-teal-400 hover:underline flex items-center gap-1">
+              <RefreshCw size={11} /> Refresh
+            </button>
           </div>
-        ) : (
-          <div className="space-y-2">
-            {messages.map(msg => (
-              <div key={msg.id} className="bg-white border border-gray-200 rounded-2xl p-3 shadow-sm">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full font-medium">{msg.type.replace('_', ' ')}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor(msg.status)}`}>{msg.status}</span>
+
+          {messages.length === 0 ? (
+            <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-8 text-center text-slate-400">
+              <div className="text-4xl mb-2">📤</div>
+              <p className="text-sm font-bold text-slate-300">No outgoing messages</p>
+              <p className="text-xs text-slate-500 mt-1">Compose a health reminder, alert or doctor summary to view delivery status.</p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {messages.map((msg) => (
+                <div key={msg.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 shadow-sm space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] bg-slate-800 text-teal-300 border border-slate-700 px-2 py-0.5 rounded-full font-bold uppercase">
+                      {msg.type.replace('_', ' ')}
+                    </span>
+                    {getStatusBadge(msg.status)}
+                  </div>
+                  <div className="text-xs font-bold text-slate-200">Recipient: {msg.toPhone}</div>
+                  <div className="text-xs text-slate-300 bg-slate-950/60 border border-slate-800/80 rounded-xl p-2.5">
+                    {msg.message}
+                  </div>
+                  <div className="text-[10px] text-slate-500 flex items-center justify-between pt-0.5">
+                    <span>Language: {msg.language?.toUpperCase() || 'EN'}</span>
+                    <span>{msg.createdAt?.slice(0, 16)}</span>
+                  </div>
                 </div>
-                <div className="text-sm font-medium text-gray-700">To: {msg.toPhone}</div>
-                <div className="text-xs text-gray-500 mt-1 line-clamp-2">{msg.message}</div>
-                <div className="text-xs text-gray-400 mt-1">{msg.createdAt?.slice(0, 16)}</div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Compose Modal */}
         {showCompose && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-            <div className="bg-white rounded-t-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
-              <h2 className="font-bold text-lg mb-4">{t('sms.compose')}</h2>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('sms.to')}</label>
-                  <input type="tel" value={form.toPhone} onChange={e => setForm(p => ({ ...p, toPhone: e.target.value }))}
-                    placeholder="e.g. 9876543210 or ASHA Worker" className="w-full border border-gray-300 rounded-xl px-3 py-2.5" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('sms.type')}</label>
-                  <select value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5">
-                    {MSG_TYPES.map(mt => <option key={mt} value={mt}>{t(`sms.types.${mt}`, mt)}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('sms.language')}</label>
-                  <select value={form.language} onChange={e => setForm(p => ({ ...p, language: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5">
-                    {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('sms.message')}</label>
-                  <textarea rows={4} value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))}
-                    placeholder="Type your message..." className="w-full border border-gray-300 rounded-xl px-3 py-2.5 resize-none" />
-                </div>
-                <div className="bg-gray-50 rounded-xl p-3 text-xs text-gray-500">
-                  <strong>{t('sms.preview')}:</strong> To: {form.toPhone || '...'} | {form.message.slice(0, 50) || '...'}
-                </div>
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end justify-center p-3">
+            <div className="bg-slate-900 border border-slate-700 text-white rounded-3xl w-full max-w-lg p-5 max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 className="text-sm font-black text-slate-100 flex items-center gap-2">
+                  <Send size={15} className="text-teal-400" />
+                  <span>Compose Health Message</span>
+                </h3>
+                <button onClick={() => setShowCompose(false)} className="text-slate-400 hover:text-white text-xs">
+                  Cancel
+                </button>
               </div>
-              <div className="flex gap-3 mt-4">
-                <button onClick={() => setShowCompose(false)} className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-xl font-medium">{t('common.cancel')}</button>
-                <button onClick={handleSend} className="flex-1 bg-sky-600 text-white py-3 rounded-xl font-bold">{t('sms.addToOutbox')}</button>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="block text-slate-400 font-bold mb-1">Recipient Phone Number</label>
+                  <input
+                    type="tel"
+                    value={form.toPhone}
+                    onChange={(e) => setForm({ ...form, toPhone: e.target.value })}
+                    placeholder="+91 98765 43210"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 font-bold mb-1">Message Type</label>
+                  <select
+                    value={form.type}
+                    onChange={(e) => setForm({ ...form, type: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500"
+                  >
+                    {MSG_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t.replace('_', ' ').toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 font-bold mb-1">Message Content</label>
+                  <textarea
+                    rows={4}
+                    value={form.message}
+                    onChange={(e) => setForm({ ...form, message: e.target.value })}
+                    placeholder="Enter message text (e.g. reminder, doctor advice, care task)..."
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+
+                <button
+                  onClick={handleSend}
+                  className="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-teal-900/40 active:scale-95 transition-all"
+                >
+                  <Send size={14} />
+                  <span>Queue in Outbox</span>
+                </button>
               </div>
             </div>
           </div>

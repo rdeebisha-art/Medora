@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { X, Phone, Calendar, Building2, MapPin, Award, CheckCircle, Video, Clock, DollarSign, Send, Check } from 'lucide-react';
 import { Doctor, LanguageCode } from '../types';
 import { TRANSLATIONS } from '../i18n/translations';

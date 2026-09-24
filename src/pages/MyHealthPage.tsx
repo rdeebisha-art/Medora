@@ -66,23 +66,23 @@ export default function MyHealthPage() {
     <Layout>
       <div className="px-4 py-4 max-w-2xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900">{t('health.myHealth')}</h1>
+          <h1 className="text-xl font-black text-[#0F766E]">{t('health.myHealth')}</h1>
           <DemoDataBadge />
         </div>
 
         {/* Patient Profile */}
         {patient && (
-          <div className="bg-sky-50 border border-sky-200 rounded-2xl p-4">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-xs">
             <div className="flex items-center gap-3">
-              <div className="bg-sky-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold">
+              <div className="bg-[#0F766E] text-white rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold shadow-xs">
                 {patient.name[0]}
               </div>
               <div>
-                <div className="font-bold text-gray-900">{patient.name}</div>
-                <div className="text-sm text-gray-600">
+                <div className="font-extrabold text-[#0F172A]">{patient.name}</div>
+                <div className="text-xs text-[#475569]">
                   {patient.age} {t('common.years')} · {t(`common.${patient.gender}`)} · {patient.village}
                 </div>
-                <div className="text-xs text-sky-700 font-medium">
+                <div className="text-xs text-[#0F766E] font-bold mt-0.5">
                   {patient.bloodGroup && `🩸 ${patient.bloodGroup} · `}
                   {patient.isPregnant && `🤰 ${patient.pregnancyWeeks}w pregnant · `}
                   {patient.isElderly && '👴 Elderly · '}
@@ -99,17 +99,17 @@ export default function MyHealthPage() {
         {/* Conditions & Allergies */}
         {patient && (
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-3">
-              <h3 className="font-bold text-red-800 text-sm mb-2">⚠️ {t('health.conditions')}</h3>
+            <div className="bg-[#FEF2F2] border border-[#DC2626]/30 rounded-2xl p-3.5 shadow-2xs">
+              <h3 className="font-bold text-[#DC2626] text-xs mb-2">⚠️ {t('health.conditions')}</h3>
               {patient.conditions?.length ? patient.conditions.map((c, i) => (
-                <div key={i} className="text-sm text-red-700">• {c}</div>
-              )) : <div className="text-sm text-gray-400">{t('health.noConditions')}</div>}
+                <div key={i} className="text-xs font-medium text-[#0F172A]">• {c}</div>
+              )) : <div className="text-xs text-[#64748B]">{t('health.noConditions')}</div>}
             </div>
-            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-3">
-              <h3 className="font-bold text-orange-800 text-sm mb-2">🚫 {t('health.allergies')}</h3>
+            <div className="bg-[#FFFBEB] border border-[#D97706]/30 rounded-2xl p-3.5 shadow-2xs">
+              <h3 className="font-bold text-[#D97706] text-xs mb-2">🚫 {t('health.allergies')}</h3>
               {patient.allergies?.length ? patient.allergies.map((a, i) => (
-                <div key={i} className="text-sm text-orange-700">• {a}</div>
-              )) : <div className="text-sm text-gray-400">{t('health.noAllergies')}</div>}
+                <div key={i} className="text-xs font-medium text-[#0F172A]">• {a}</div>
+              )) : <div className="text-xs text-[#64748B]">{t('health.noAllergies')}</div>}
             </div>
           </div>
         )}
@@ -117,7 +117,7 @@ export default function MyHealthPage() {
         {/* Care Gaps */}
         {careGaps.length > 0 && (
           <div>
-            <h2 className="font-bold text-gray-800 mb-2">⚠️ {t('health.careGaps')}</h2>
+            <h2 className="font-extrabold text-sm text-[#0F172A] mb-2">⚠️ {t('health.careGaps')}</h2>
             <CareGapAlert gaps={careGaps} />
           </div>
         )}
@@ -126,15 +126,15 @@ export default function MyHealthPage() {
         {vitals.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h2 className="font-bold text-gray-800">📊 {t('health.vitals')}</h2>
-              <Link to="/health-tests" className="text-xs text-sky-600 font-medium">{t('common.viewAll')}</Link>
+              <h2 className="font-extrabold text-sm text-[#0F172A]">📊 {t('health.vitals')}</h2>
+              <Link to="/health-tests" className="text-xs text-[#0F766E] font-bold hover:underline">{t('common.viewAll')}</Link>
             </div>
             <div className="grid grid-cols-2 gap-2">
               {vitals.slice(0, 4).map(v => (
-                <div key={v.id} className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
-                  <div className="text-xs text-gray-500 capitalize">{v.type.replace('_', ' ')}</div>
-                  <div className="font-bold text-gray-900 text-lg">{v.value} <span className="text-sm font-normal text-gray-500">{v.unit}</span></div>
-                  <div className="text-xs text-gray-400">{v.date}</div>
+                <div key={v.id} className="bg-white border border-[#E2E8F0] rounded-xl p-3 shadow-xs">
+                  <div className="text-xs text-[#64748B] capitalize">{v.type.replace('_', ' ')}</div>
+                  <div className="font-black text-[#0F172A] text-lg">{v.value} <span className="text-xs font-normal text-[#64748B]">{v.unit}</span></div>
+                  <div className="text-[10px] text-[#94A3B8]">{v.date}</div>
                 </div>
               ))}
             </div>
@@ -145,8 +145,8 @@ export default function MyHealthPage() {
         {medicines.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h2 className="font-bold text-gray-800">💊 {t('health.medicines')}</h2>
-              <Link to="/medicines" className="text-xs text-sky-600 font-medium">{t('common.viewAll')}</Link>
+              <h2 className="font-extrabold text-sm text-[#0F172A]">💊 {t('health.medicines')}</h2>
+              <Link to="/medicines" className="text-xs text-[#16A34A] font-bold hover:underline">{t('common.viewAll')}</Link>
             </div>
             <div className="space-y-3">
               {medicines.slice(0, 2).map(m => (
@@ -160,15 +160,15 @@ export default function MyHealthPage() {
         {vaccinations.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h2 className="font-bold text-gray-800">💉 {t('health.vaccinations')}</h2>
-              <Link to="/vaccination" className="text-xs text-sky-600 font-medium">{t('common.viewAll')}</Link>
+              <h2 className="font-extrabold text-sm text-[#0F172A]">💉 {t('health.vaccinations')}</h2>
+              <Link to="/vaccination" className="text-xs text-[#16A34A] font-bold hover:underline">{t('common.viewAll')}</Link>
             </div>
             <div className="space-y-2">
               {vaccinations.slice(0, 3).map(v => (
-                <div key={v.id} className={`flex items-center justify-between p-3 rounded-xl border text-sm
-                  ${v.status === 'given' ? 'bg-green-50 border-green-200' : v.status === 'overdue' ? 'bg-red-50 border-red-200' : 'bg-yellow-50 border-yellow-200'}`}>
-                  <span className="font-medium">{v.vaccineName}</span>
-                  <span>{v.status === 'given' ? '✅' : v.status === 'overdue' ? '⚠️' : '📅'} {v.status}</span>
+                <div key={v.id} className={`flex items-center justify-between p-3 rounded-xl border text-xs font-semibold
+                  ${v.status === 'given' ? 'bg-[#F0FDF4] border-[#16A34A]/30 text-[#16A34A]' : v.status === 'overdue' ? 'bg-[#FEF2F2] border-[#DC2626]/30 text-[#DC2626]' : 'bg-[#FFFBEB] border-[#D97706]/30 text-[#D97706]'}`}>
+                  <span className="text-[#0F172A]">{v.vaccineName}</span>
+                  <span className="font-bold">{v.status === 'given' ? '✅ Given' : v.status === 'overdue' ? '⚠️ Overdue' : '📅 Due'}</span>
                 </div>
               ))}
             </div>
@@ -178,12 +178,12 @@ export default function MyHealthPage() {
         {/* Upcoming Appointments */}
         {appointments.filter(a => a.status === 'scheduled').length > 0 && (
           <div>
-            <h2 className="font-bold text-gray-800 mb-2">📅 {t('dashboard.upcomingAppts')}</h2>
+            <h2 className="font-extrabold text-sm text-[#0F172A] mb-2">📅 {t('dashboard.upcomingAppts')}</h2>
             {appointments.filter(a => a.status === 'scheduled').map(a => (
-              <div key={a.id} className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-sm mb-2">
-                <div className="font-bold text-blue-800">{a.reason}</div>
-                <div className="text-blue-600">{a.date}</div>
-                {a.notes && <div className="text-blue-500 text-xs mt-1">{a.notes}</div>}
+              <div key={a.id} className="bg-[#FFF7ED] border border-[#EA580C]/30 rounded-xl p-3 text-xs mb-2">
+                <div className="font-bold text-[#EA580C]">{a.reason}</div>
+                <div className="text-[#475569] mt-0.5">{a.date}</div>
+                {a.notes && <div className="text-[#64748B] text-[11px] mt-1">{a.notes}</div>}
               </div>
             ))}
           </div>
@@ -191,8 +191,8 @@ export default function MyHealthPage() {
 
         {/* Quick links */}
         <div className="grid grid-cols-2 gap-2 pb-4">
-          <Link to="/ai" className="bg-violet-600 text-white rounded-2xl p-3 text-center font-bold text-sm">🤖 Ask Medora AI</Link>
-          <Link to="/doctor-summary" className="bg-cyan-600 text-white rounded-2xl p-3 text-center font-bold text-sm">📄 Doctor Summary</Link>
+          <Link to="/ai" className="bg-[#7C3AED] hover:bg-purple-700 text-white rounded-2xl p-3 text-center font-bold text-xs shadow-xs transition-colors">🤖 Ask Medora AI</Link>
+          <Link to="/doctor-summary" className="bg-[#2563EB] hover:bg-blue-700 text-white rounded-2xl p-3 text-center font-bold text-xs shadow-xs transition-colors">📄 Doctor Summary</Link>
         </div>
       </div>
     </Layout>

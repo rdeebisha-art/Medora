@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { CheckCircle2, Circle, Clock, ArrowRight, UserCheck, Calendar, Building2, Stethoscope, AlertCircle, Plus, FileText } from 'lucide-react';
 import { Referral, ReferralStatus, ReferralPriority, Specialization, Doctor, Hospital, LanguageCode, FamilyMember } from '../types';
 import { TRANSLATIONS } from '../i18n/translations';

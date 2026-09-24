@@ -1,4 +1,4 @@
-﻿import React, { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { MedicineReminder } from './MedicineReminder';
 import { DoctorStatusBanner } from './DoctorStatusBanner';
 import { FamilyHealthSelector } from './FamilyHealthSelector';

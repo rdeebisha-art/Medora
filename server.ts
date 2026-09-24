@@ -1,10 +1,18 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const genAI = process.env.GEMINI_API_KEY ? new GoogleGenAI() : null;
+
 const app = express();
-const port = process.env.PORT || 3001;
+const port = Number(process.env.PORT) || 3000;
 const host = process.env.HOST || '0.0.0.0';
 
 app.use(express.json());
@@ -40,7 +48,18 @@ View Health Graph.`;
 
 const normalizeQuestion = (value = '') => value.toLowerCase();
 
-const createFallbackResponse = (question, patient) => {
+interface PatientData {
+  name?: string;
+  currentReferral?: any;
+  appointments?: any[];
+  dueTests?: string[];
+  preventiveTasks?: any[];
+  medicines?: Array<{ name: string; frequency?: string; status?: string }>;
+  recentMeasurements?: any;
+  [key: string]: any;
+}
+
+const createFallbackResponse = (question: string, patient: PatientData) => {
   const q = normalizeQuestion(question);
   const appointment = patient.currentReferral || patient.appointments?.[0] || null;
   const dueTests = patient.dueTests || [];
@@ -155,7 +174,7 @@ const createFallbackResponse = (question, patient) => {
     };
   }
 
-  const topicResponses = [
+  const topicResponses: [string[], string][] = [
     [['snake bite', 'snakebite', 'snake venom'], 'SNAKE BITE FIRST AID\nDo: Move away from the snake, keep the person calm and still, keep the bitten limb supported and below heart level if possible, remove rings or tight items, note the time and snake appearance from a safe distance, and call emergency services or reach the nearest hospital immediately for antivenom assessment.\nDo not: Do not cut or suck the wound, apply a tourniquet, ice, electric shock, alcohol, chemicals, herbs, paste, or tight bandages. Do not chase or handle the snake and do not give food, drink, or medicine unless a professional advises it.\nHerbal medicine: No herb can safely replace emergency assessment or antivenom. Do not delay transport for herbal treatment. Warning signs include swelling, bleeding, vomiting, weakness, drooping eyelids, difficulty breathing, or collapse.'],
     [['dog bite', 'dogbite'], 'DOG BITE FIRST AID\nDo: Move to safety, wash the wound under running water with soap for 15 minutes, control bleeding with clean pressure if safe, cover loosely with a clean dressing, and go to a healthcare facility urgently for rabies vaccination assessment, tetanus review, and wound care. Record the animal details only from a safe distance.\nDo not: Do not apply herbs, chili, oil, ash, soil, toothpaste, or other substances. Do not close a deep bite yourself and do not wait for symptoms; rabies prevention must start promptly when indicated.\nHerbal medicine: Herbs cannot prevent rabies or replace vaccines, immunoglobulin, antibiotics, or professional wound care.'],
     [['animal bite', 'animal scratch', 'cat bite', 'monkey bite'], 'ANIMAL BITE OR SCRATCH FIRST AID\nDo: Wash the wound with soap and running water for 15 minutes, apply gentle clean pressure for bleeding, and seek urgent professional care for rabies and tetanus assessment. Mention the animal, location, time, and whether the skin was broken.\nDo not: Do not use herbs, ash, soil, oil, chemicals, or tight coverings, and do not wait for the animal to become sick before seeking advice. Do not handle or capture the animal.\nHerbal medicine: No herbal remedy prevents rabies. Vaccination and professional assessment are the safe next steps.'],
@@ -174,6 +193,7 @@ const createFallbackResponse = (question, patient) => {
     [['typhoid'], 'Typhoid requires clinical assessment and appropriate testing. Use safe food and water, wash hands, and take antibiotics only when prescribed. Severe abdominal pain, confusion, bleeding, or inability to drink needs urgent care.'],
     [['malaria', 'dengue', 'chikungunya', 'chickenpox', 'smallpox'], 'Fever with rash, chills, severe body or joint pain, bleeding, or mosquito exposure needs clinical assessment and testing. Drink safe fluids, prevent mosquito bites, and avoid aspirin or ibuprofen until dengue has been ruled out. Smallpox is rare but a suspected case needs immediate public-health and hospital assessment.'],
   ];
+
   const topicResponse = topicResponses.find(([keywords]) => keywords.some((keyword) => q.includes(keyword)));
   if (topicResponse) {
     return {
@@ -208,58 +228,85 @@ const createFallbackResponse = (question, patient) => {
   }
 
   return {
-    response: `Based on the current Medora health record for ${patient.name}, I can help you understand the selected person’s medicines, upcoming checkups, tests, preventive tasks and referrals. Please ask about a specific area such as medicines, checkups, tests or BP trends.`,
+    response: `Based on the current Medora health record for ${patient.name || 'the patient'}, I can help you understand the selected person’s medicines, upcoming checkups, tests, preventive tasks and referrals. Please ask about a specific area such as medicines, checkups, tests or BP trends.`,
     actions: [{ label: '📅 View Appointments', action: 'appointment' }, { label: '💊 View Medicines', action: 'medicines' }, { label: '👨‍⚕️ Find Doctor', action: 'doctor' }],
     workflow: ['Patient Data', 'Medora AI', 'Health Record Agent', 'Medication Agent', 'Preventive Care Agent', 'Referral/Follow-Up Agent', 'Health Education Agent', 'Final Response']
   };
 };
 
-app.post('/api/ask', async (req, res) => {
+app.post('/api/ask', async (req: Request, res: Response) => {
   try {
     const { patientId, question, relevantHealthData, language = 'en' } = req.body || {};
     const patient = relevantHealthData || { name: 'Patient', conditions: [], medicines: [], appointments: [], preventiveTasks: [], dueTests: [] };
     const systemPrompt = MEDORA_SYSTEM_PROMPT;
 
-    if (!process.env.AI_API_KEY) {
-      const result = createFallbackResponse(question || '', patient);
-      return res.json({
-        mode: 'DEMO/FALLBACK',
-        systemPrompt,
-        response: result.response,
-        actions: result.actions,
-        workflow: result.workflow,
-        patientId,
-      });
+    if (genAI) {
+      try {
+        const prompt = `Patient information:\n${JSON.stringify({ patientId, question, relevantHealthData: patient }, null, 2)}\n\nPatient question: ${question}\nRespond in language code: ${language}. Keep medicine names, measurements, and emergency phone numbers unchanged. If translation quality is uncertain, use simple English rather than inventing medical facts.`;
+        const aiResponse = await genAI.models.generateContent({
+          model: process.env.AI_MODEL || 'gemini-3.6-flash',
+          contents: prompt,
+          config: {
+            systemInstruction: systemPrompt,
+          },
+        });
+        const text = aiResponse.text || '';
+        if (text.trim()) {
+          return res.json({
+            mode: 'AI',
+            response: text,
+            actions: [],
+            workflow: ['Patient Data', 'Medora AI', 'Health Record Agent', 'Medication Agent', 'Preventive Care Agent', 'Referral/Follow-Up Agent', 'Health Education Agent', 'Final Response'],
+            patientId,
+          });
+        }
+      } catch (err) {
+        console.warn('[Medora] Gemini generation error, falling back to local guidance:', err);
+      }
     }
 
-    const modelResponse = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.AI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: process.env.AI_MODEL || 'gpt-4o-mini',
-        input: [
-          { role: 'system', content: `${systemPrompt}\nRespond in the selected language code: ${language}. Keep medicine names, measurements, and emergency phone numbers unchanged. If translation quality is uncertain, use simple English rather than inventing medical facts.` },
-          { role: 'user', content: JSON.stringify({ patientId, question, relevantHealthData: patient }) }
-        ],
-      }),
-    });
+    if (process.env.AI_API_KEY) {
+      try {
+        const modelResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.AI_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: process.env.AI_MODEL || 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: `${systemPrompt}\nRespond in the selected language code: ${language}. Keep medicine names, measurements, and emergency phone numbers unchanged. If translation quality is uncertain, use simple English rather than inventing medical facts.` },
+              { role: 'user', content: JSON.stringify({ patientId, question, relevantHealthData: patient }) }
+            ],
+          }),
+        });
 
-    if (!modelResponse.ok) {
-      const fallback = createFallbackResponse(question || '', patient);
-      return res.json({ mode: 'DEMO/FALLBACK', ...fallback, patientId });
+        if (modelResponse.ok) {
+          const data = await modelResponse.json();
+          const text = data.choices?.[0]?.message?.content || data.output_text;
+          if (text) {
+            return res.json({
+              mode: 'AI',
+              response: text,
+              actions: [],
+              workflow: ['Patient Data', 'Medora AI', 'Health Record Agent', 'Medication Agent', 'Preventive Care Agent', 'Referral/Follow-Up Agent', 'Health Education Agent', 'Final Response'],
+              patientId,
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('[Medora] OpenAI fallback error:', err);
+      }
     }
 
-    const data = await modelResponse.json();
-    const text = data.output_text || data.output?.[0]?.content?.[0]?.text || 'I could not generate a response.';
-
+    const result = createFallbackResponse(question || '', patient);
     return res.json({
-      mode: 'AI',
-      response: text,
-      actions: [],
-      workflow: ['Patient Data', 'Medora AI', 'Health Record Agent', 'Medication Agent', 'Preventive Care Agent', 'Referral/Follow-Up Agent', 'Health Education Agent', 'Final Response'],
+      mode: 'DEMO/FALLBACK',
+      systemPrompt,
+      response: result.response,
+      actions: result.actions,
+      workflow: result.workflow,
       patientId,
     });
   } catch {
@@ -268,52 +315,71 @@ app.post('/api/ask', async (req, res) => {
   }
 });
 
-app.post('/api/translate', async (req, res) => {
+app.post('/api/translate', async (req: Request, res: Response) => {
   const { texts = [], language = 'en' } = req.body || {};
   if (!SUPPORTED_LANGUAGES.has(language) || !Array.isArray(texts) || texts.length > 80) {
     return res.status(400).json({ error: 'Invalid translation request' });
   }
-  if (language === 'en' || !process.env.AI_API_KEY) {
+  if (language === 'en') {
     return res.json({ translations: texts });
   }
 
-  try {
-    const modelResponse = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.AI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: process.env.AI_MODEL || 'gpt-4o-mini',
-        input: [{
-          role: 'system',
-          content: `Translate each input string into language code ${language}. Preserve medicine names, numbers, units, emergency numbers, and formatting. Return JSON only in the form {"translations":["..."]}. Do not add explanations.`,
-        }, { role: 'user', content: JSON.stringify(texts) }],
-      }),
-    });
-    if (!modelResponse.ok) return res.json({ translations: texts });
-    const data = await modelResponse.json();
-    const parsed = JSON.parse(data.output_text || '{}');
-    if (!Array.isArray(parsed.translations) || parsed.translations.length !== texts.length) {
-      return res.json({ translations: texts });
+  if (genAI) {
+    try {
+      const prompt = `Translate each string in this JSON array into language code ${language}. Preserve medicine names, numbers, units, emergency numbers, and formatting. Return ONLY valid JSON format: {"translations":["..."]}. Do not add explanations or markdown wrapping.\nInput: ${JSON.stringify(texts)}`;
+      const aiResponse = await genAI.models.generateContent({
+        model: process.env.AI_MODEL || 'gemini-3.6-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+        },
+      });
+      const parsed = JSON.parse(aiResponse.text || '{}');
+      if (Array.isArray(parsed.translations) && parsed.translations.length === texts.length) {
+        return res.json({ translations: parsed.translations });
+      }
+    } catch (err) {
+      console.warn('[Medora] Gemini translate error, falling back:', err);
     }
-    return res.json({ translations: parsed.translations });
-  } catch {
-    return res.json({ translations: texts });
   }
+
+  if (process.env.AI_API_KEY) {
+    try {
+      const modelResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.AI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: process.env.AI_MODEL || 'gpt-4o-mini',
+          messages: [{
+            role: 'system',
+            content: `Translate each input string into language code ${language}. Preserve medicine names, numbers, units, emergency numbers, and formatting. Return JSON only in the form {"translations":["..."]}. Do not add explanations.`,
+          }, { role: 'user', content: JSON.stringify(texts) }],
+        }),
+      });
+      if (modelResponse.ok) {
+        const data = await modelResponse.json();
+        const content = data.choices?.[0]?.message?.content || data.output_text;
+        const parsed = JSON.parse(content || '{}');
+        if (Array.isArray(parsed.translations) && parsed.translations.length === texts.length) {
+          return res.json({ translations: parsed.translations });
+        }
+      }
+    } catch {
+      // Continue to fallback
+    }
+  }
+
+  return res.json({ translations: texts });
 });
 
 // ─── SMS / Voice Communication ───────────────────────────────────────────────
 
-/** In-memory store: messageId → message object */
-const smsStore = new Map();
+const smsStore = new Map<string, any>();
 
-/**
- * Normalize an Indian mobile number to E.164 (+91XXXXXXXXXX).
- * Returns null when the number cannot be recognized.
- */
-function normalizeToE164(phone) {
+function normalizeToE164(phone: string): string | null {
   const digits = phone.replace(/\D/g, '');
   if (digits.length === 10 && /^[6-9]/.test(digits)) return `+91${digits}`;
   if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
@@ -322,16 +388,11 @@ function normalizeToE164(phone) {
   return null;
 }
 
-/**
- * POST /api/communications/sms
- * Send a real SMS via Twilio if credentials are configured, otherwise return
- * NOT_CONFIGURED so the frontend can show a meaningful message.
- */
-app.post('/api/communications/sms', async (req, res) => {
+app.post('/api/communications/sms', async (req: Request, res: Response) => {
   const { recipientPhone, messageText, patientId } = req.body || {};
 
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken  = process.env.TWILIO_AUTH_TOKEN;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
   const fromNumber = process.env.TWILIO_FROM_NUMBER;
 
   if (!accountSid || !authToken || !fromNumber) {
@@ -342,7 +403,6 @@ app.post('/api/communications/sms', async (req, res) => {
     });
   }
 
-  // Validate & normalize phone number
   const e164 = normalizeToE164(recipientPhone || '');
   if (!e164) {
     return res.status(400).json({
@@ -353,13 +413,13 @@ app.post('/api/communications/sms', async (req, res) => {
   }
 
   const messageId = `MSG-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-  const createdAt  = new Date().toISOString();
+  const createdAt = new Date().toISOString();
 
   try {
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
 
     const formBody = new URLSearchParams({
-      To:   e164,
+      To: e164,
       From: fromNumber,
       Body: messageText || '',
     });
@@ -405,7 +465,7 @@ app.post('/api/communications/sms', async (req, res) => {
     smsStore.set(messageId, record);
 
     return res.status(200).json({ configured: true, ...record });
-  } catch (err) {
+  } catch (err: any) {
     const record = {
       messageId,
       patientId,
@@ -421,29 +481,18 @@ app.post('/api/communications/sms', async (req, res) => {
   }
 });
 
-/**
- * GET /api/communications/messages
- * Return all stored messages (for debugging / outbox sync).
- */
-app.get('/api/communications/messages', (_req, res) => {
+app.get('/api/communications/messages', (_req: Request, res: Response) => {
   return res.json(Array.from(smsStore.values()));
 });
 
-/**
- * POST /api/communications/sms/status
- * Twilio status-callback webhook. Updates message status in smsStore.
- * Must return TwiML <Response/> to keep Twilio happy.
- */
-app.post('/api/communications/sms/status', express.urlencoded({ extended: false }), (req, res) => {
+app.post('/api/communications/sms/status', express.urlencoded({ extended: false }), (req: Request, res: Response) => {
   const { MessageSid, MessageStatus } = req.body || {};
 
   if (MessageSid && MessageStatus) {
-    // Find the record by providerMessageId
     for (const [id, record] of smsStore.entries()) {
       if (record.providerMessageId === MessageSid) {
         record.providerStatus = MessageStatus;
         record.updatedAt = new Date().toISOString();
-        // Map Twilio status to our internal status
         if (MessageStatus === 'delivered') record.status = 'DELIVERED';
         else if (MessageStatus === 'failed' || MessageStatus === 'undelivered') record.status = 'FAILED';
         else if (MessageStatus === 'sent') record.status = 'SENT';
@@ -457,15 +506,11 @@ app.post('/api/communications/sms/status', express.urlencoded({ extended: false 
   res.send('<?xml version="1.0" encoding="UTF-8"?><Response/>');
 });
 
-/**
- * POST /api/communications/voice/call
- * Initiate a voice call via Twilio Calls API.
- */
-app.post('/api/communications/voice/call', async (req, res) => {
+app.post('/api/communications/voice/call', async (req: Request, res: Response) => {
   const { recipientPhone, twimlUrl, patientId } = req.body || {};
 
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken  = process.env.TWILIO_AUTH_TOKEN;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
   const fromNumber = process.env.TWILIO_FROM_NUMBER;
 
   if (!accountSid || !authToken || !fromNumber) {
@@ -492,10 +537,9 @@ app.post('/api/communications/voice/call', async (req, res) => {
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Calls.json`;
 
     const formBody = new URLSearchParams({
-      To:   e164,
+      To: e164,
       From: fromNumber,
-      // Use a safe TwiML fallback if no twimlUrl provided
-      Url:  twimlUrl || 'http://demo.twilio.com/docs/voice.xml',
+      Url: twimlUrl || 'http://demo.twilio.com/docs/voice.xml',
     });
 
     const twilioRes = await fetch(twilioUrl, {
@@ -530,7 +574,7 @@ app.post('/api/communications/voice/call', async (req, res) => {
       status: twilioData.status || 'QUEUED',
       createdAt,
     });
-  } catch (err) {
+  } catch (err: any) {
     return res.status(200).json({
       configured: true,
       callId,
@@ -543,8 +587,25 @@ app.post('/api/communications/voice/call', async (req, res) => {
   }
 });
 
-// ─── Server ──────────────────────────────────────────────────────────────────
+// Vite dev middleware or static serving
+async function startServer() {
+  if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, 'dist')));
+    app.get('*', (_req: Request, res: Response) => {
+      res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    });
+  } else {
+    const { createServer: createViteServer } = await import('vite');
+    const vite = await createViteServer({
+      server: { middlewareMode: true, host: '0.0.0.0', allowedHosts: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  }
 
-app.listen(port, host, () => {
-  console.log(`Medora AI server running on http://${host}:${port}`);
-});
+  app.listen(port, host, () => {
+    console.log(`Medora server running on http://${host}:${port}`);
+  });
+}
+
+startServer();

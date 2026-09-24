@@ -8,6 +8,7 @@ export default function SchemesPage() {
   const { t } = useTranslation();
   const [schemes, setSchemes] = useState<Scheme[]>([]);
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [smsSent, setSmsSent] = useState(false);
 
   useEffect(() => { db.schemes.toArray().then(setSchemes); }, []);
 
@@ -23,54 +24,60 @@ export default function SchemesPage() {
     <Layout>
       <div className="px-4 py-4 max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold text-gray-900">🏛️ {t('schemes.title')}</h1>
+          <h1 className="text-xl font-black text-[#4F46E5]">🏛️ {t('schemes.title')}</h1>
           <DemoDataBadge />
         </div>
 
-        <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4 text-xs text-green-700">
+        {smsSent && (
+          <div className="bg-[#F0FDF4] border border-[#16A34A]/30 text-[#16A34A] text-xs font-bold p-3 rounded-xl mb-4">
+            ✅ Application request added to SMS Outbox (Demo)
+          </div>
+        )}
+
+        <div className="bg-[#F0FDF4] border border-[#16A34A]/20 rounded-xl p-3 mb-4 text-xs text-[#16A34A] font-bold">
           ℹ️ {t('schemes.disclaimer')}
         </div>
 
         <div className="space-y-3">
           {schemes.map(scheme => (
-            <div key={scheme.id} className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <div key={scheme.id} className="bg-white border border-[#E2E8F0] rounded-2xl shadow-xs overflow-hidden">
               <button
                 onClick={() => setExpanded(expanded === scheme.id ? null : scheme.id!)}
-                className="w-full flex items-center gap-3 p-4 text-left"
+                className="w-full flex items-center gap-3 p-4 text-left hover:bg-slate-50 transition-colors"
               >
                 <span className="text-2xl">{SCHEME_ICONS[scheme.name] || '🏛️'}</span>
                 <div className="flex-1">
-                  <div className="font-bold text-gray-900">{scheme.name}</div>
-                  <div className="text-sm text-gray-500 line-clamp-1">{scheme.description}</div>
+                  <div className="font-extrabold text-[#0F172A] text-sm">{scheme.name}</div>
+                  <div className="text-xs text-[#64748B] line-clamp-1">{scheme.description}</div>
                 </div>
-                <span className="text-gray-400">{expanded === scheme.id ? '▲' : '▼'}</span>
+                <span className="text-[#94A3B8] text-xs">{expanded === scheme.id ? '▲' : '▼'}</span>
               </button>
 
               {expanded === scheme.id && (
-                <div className="px-4 pb-4 space-y-3 border-t border-gray-100">
+                <div className="px-4 pb-4 space-y-3 border-t border-[#E2E8F0] pt-3">
                   <div>
-                    <h4 className="font-semibold text-gray-700 text-sm mb-1">📋 {t('schemes.eligibility')}</h4>
-                    <p className="text-sm text-gray-600">{scheme.eligibility}</p>
+                    <h4 className="font-bold text-[#0F172A] text-xs mb-1">📋 {t('schemes.eligibility')}</h4>
+                    <p className="text-xs text-[#475569]">{scheme.eligibility}</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-700 text-sm mb-1">✅ {t('schemes.benefits')}</h4>
-                    <p className="text-sm text-gray-600">{scheme.benefits}</p>
+                    <h4 className="font-bold text-[#0F172A] text-xs mb-1">✅ {t('schemes.benefits')}</h4>
+                    <p className="text-xs text-[#475569]">{scheme.benefits}</p>
                   </div>
                   {scheme.documents?.length > 0 && (
                     <div>
-                      <h4 className="font-semibold text-gray-700 text-sm mb-1">📄 {t('schemes.documents')}</h4>
+                      <h4 className="font-bold text-[#0F172A] text-xs mb-1">📄 {t('schemes.documents')}</h4>
                       <ul className="space-y-1">
                         {scheme.documents.map((doc, i) => (
-                          <li key={i} className="text-sm text-gray-600 flex items-center gap-1">
-                            <span className="text-green-500">•</span> {doc}
+                          <li key={i} className="text-xs text-[#475569] flex items-center gap-1">
+                            <span className="text-[#16A34A] font-bold">•</span> {doc}
                           </li>
                         ))}
                       </ul>
                     </div>
                   )}
                   <div>
-                    <h4 className="font-semibold text-gray-700 text-sm mb-1">🔗 {t('schemes.howToApply')}</h4>
-                    <p className="text-sm text-gray-600">{scheme.source}</p>
+                    <h4 className="font-bold text-[#0F172A] text-xs mb-1">🔗 {t('schemes.howToApply')}</h4>
+                    <p className="text-xs text-[#475569]">{scheme.source}</p>
                   </div>
                   <button
                     onClick={async () => {
@@ -79,12 +86,12 @@ export default function SchemesPage() {
                         message: `Please help me apply for: ${scheme.name}. [Demo message]`,
                         type: 'doctor_summary',
                         language: 'en',
-                        status: 'pending',
+                        status: 'PENDING_OFFLINE',
                         createdAt: new Date().toISOString(),
                       });
-                      alert('Application request added to SMS Outbox (Demo)');
+                      setSmsSent(true);
                     }}
-                    className="w-full bg-green-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-green-700"
+                    className="w-full bg-[#4F46E5] hover:bg-indigo-700 text-white py-2.5 rounded-xl text-xs font-bold shadow-2xs transition-colors"
                   >
                     📱 Request Help via SMS (Demo)
                   </button>

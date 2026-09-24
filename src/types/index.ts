@@ -1,4 +1,4 @@
-﻿export type Specialization = 
+export type Specialization = 
   | 'General Physician'
   | 'Pediatrician'
   | 'Gynecologist / Obstetrician'

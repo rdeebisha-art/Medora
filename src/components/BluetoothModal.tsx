@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Bluetooth, X, Info, Activity, CheckCircle2, AlertTriangle, RefreshCcw } from 'lucide-react';
 
 interface BluetoothModalProps {

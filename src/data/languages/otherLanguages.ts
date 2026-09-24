@@ -146,3 +146,53 @@ export const englishDictionary: LanguageDictionary = {
     grandparent: ['grandfather', 'grandmother', 'grandpa', 'grandma']
   }
 };
+
+export const hindiDictionary: LanguageDictionary = {
+  code: 'hi-IN',
+  name: 'Hindi',
+  nativeName: 'हिन्दी',
+  commonWords: [
+    'मुझे', 'है', 'हैं', 'था', 'मेरी', 'मेरा', 'मां', 'पिताजी', 'बच्चा',
+    'बहुत', 'दिनों', 'से', 'दवा', 'ली', 'नहीं', 'चाहिए', 'क्या', 'करना',
+    'बताएं', 'दर्द', 'शरीर', 'डॉक्टर', 'अस्पताल', 'बुखार'
+  ],
+  healthcareTerms: {
+    fever: ['बुखार', 'तापमान', 'गर्म', 'fever', 'ताप'],
+    cough: ['खांसी', 'बलगम', 'सूखी खांसी', 'cough'],
+    cold: ['जुकाम', 'सर्दी', 'छींक', 'नाक बहना', 'cold'],
+    pain: ['दर्द', 'पीड़ा', 'कष्ट', 'pain'],
+    stomach: ['पेट दर्द', 'पेट', 'मरोड़', 'गैस', 'stomach ache'],
+    headache: ['सिरदर्द', 'सिर में दर्द', 'माथा दर्द', 'headache'],
+    vomiting: ['उल्टी', 'जी मिचलाना', 'मतली', 'vomiting'],
+    diarrhea: ['दस्त', 'पेट खराब', 'पतले दस्त', 'diarrhea', 'loose motion'],
+    dizziness: ['चक्कर', 'कमजोरी', 'बेहोशी', 'dizziness'],
+    breathing: ['सांस लेने में तकलीफ', 'सांस फूलना', 'दम घुटना', 'breathing problem'],
+    chestPain: ['सीने में दर्द', 'छाती में दर्द', 'हार्ट', 'chest pain'],
+    bloodPressure: ['ब्लड प्रेशर', 'बीपी', 'रक्तचाप', 'bp'],
+    bloodSugar: ['शुगर', 'डायबिटीज', 'मधुमेह', 'sugar'],
+    medicine: ['दवा', 'दवाई', 'गोली', 'कैप्सूल', 'medicine', 'tablet'],
+    doctor: ['डॉक्टर', 'वैद्य', 'चिकित्सक', 'doctor'],
+    hospital: ['अस्पताल', 'हॉस्पिटल', 'स्वास्थ्य केंद्र', 'hospital'],
+    pregnancy: ['गर्भावस्था', 'गर्भवती', 'प्रसव', 'pregnant', 'pregnancy'],
+    child: ['बच्चा', 'बच्ची', 'बेटा', 'बेटी', 'बालक', 'child'],
+    newborn: ['नवजात', 'शिशु', 'छोटा बच्चा', 'newborn'],
+    elderly: ['बुजुर्ग', 'वृद्ध', 'दादा', 'दादी', 'नाना', 'नानी', 'elderly'],
+    emergency: ['आपातकाल', 'इमरजेंसी', 'खतरा', 'तुरंत', 'emergency'],
+    ambulance: ['एम्बुलेंस', '108', 'ambulance'],
+    bleeding: ['खून बहना', 'रक्तस्राव', 'चोट', 'bleeding'],
+    unconscious: ['बेहोश', 'मूर्छित', 'अचेत', 'unconscious']
+  },
+  explicitSwitchPhrases: [
+    'हिंदी में बोलो', 'हिंदी में बात करो', 'हिंदी', 'speak in hindi', 'switch to hindi', 'hindi'
+  ],
+  familyTerms: {
+    mother: ['मां', 'माताजी', 'अम्मी', 'mother'],
+    father: ['पिताजी', 'पापा', 'बाबूजी', 'father'],
+    child: ['बच्चा', 'बेटा', 'बेटी', 'child'],
+    baby: ['शिशु', 'छोटा बच्चा', 'baby'],
+    husband: ['पति', 'husband'],
+    wife: ['पत्नी', 'wife'],
+    grandparent: ['दादाजी', 'दादीजी', 'नानाजी', 'नानीजी', 'grandpa', 'grandma']
+  }
+};
+

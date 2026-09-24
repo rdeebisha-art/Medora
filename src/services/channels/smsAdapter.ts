@@ -1,4 +1,4 @@
-﻿import { OutgoingSMSMessage, SharedResponseObject } from './channelTypes';
+import { OutgoingSMSMessage, SharedResponseObject } from './channelTypes';
 
 const smsLog: OutgoingSMSMessage[] = [];
 

@@ -14,10 +14,10 @@ export default function TransportPage() {
   const handleRequest = async (transport: Transport) => {
     await db.smsOutbox.add({
       toPhone: transport.phone,
-      message: `Transport Request: Need ${transport.name} from ${transport.from} to ${transport.to}. Please call me. [Demo — not actually sent]`,
+      message: `Transport Request: Need ${transport.name} from ${transport.from} to ${transport.to}. Please call me. [DEMO — not actually sent, queued in local outbox]`,
       type: 'emergency_alert',
       language: 'en',
-      status: 'pending',
+      status: 'PENDING_OFFLINE',
       createdAt: new Date().toISOString(),
     });
     setRequested(prev => [...prev, transport.id!]);
@@ -77,7 +77,7 @@ export default function TransportPage() {
                   disabled={!tr.available || requested.includes(tr.id!)}
                   className={`text-sm font-medium py-2.5 rounded-xl transition-all ${requested.includes(tr.id!) ? 'bg-green-100 text-green-700' : 'bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40'}`}
                 >
-                  {requested.includes(tr.id!) ? '✅ Requested' : t('transport.book')}
+                  {requested.includes(tr.id!) ? 'Queued (Demo)' : t('transport.book')}
                 </button>
               </div>
             </div>

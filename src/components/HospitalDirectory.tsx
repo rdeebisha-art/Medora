@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Building2, Phone, ExternalLink, Navigation, Users, ArrowRight, ShieldCheck, HeartPulse, MapPin } from 'lucide-react';
 import { Hospital, LanguageCode } from '../types';
 import { TRANSLATIONS } from '../i18n/translations';

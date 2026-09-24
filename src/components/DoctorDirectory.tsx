@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Phone, User, Calendar, PlusCircle, CheckCircle, Video, MapPin, Award, Clock } from 'lucide-react';
 import { Doctor, LanguageCode } from '../types';
 import { TRANSLATIONS } from '../i18n/translations';
