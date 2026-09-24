@@ -20,7 +20,7 @@ export class LanguageDetectionService {
   };
 
   /**
-   * Detects the language from input text using multiple independent signals.
+   * Detects the language from input text using multiple independent signals with strict language locking.
    * @param text The input utterance or transcript
    * @param lockedLanguage Optional currently locked language in conversation state
    */
@@ -38,7 +38,7 @@ export class LanguageDetectionService {
       };
     }
 
-    // 1. Check for EXPLICIT user language switch requests
+    // 1. Check for EXPLICIT user language switch requests (always takes precedence)
     for (const [code, dict] of Object.entries(ALL_DICTIONARIES) as [SupportedLanguageCode, any][]) {
       for (const phrase of dict.explicitSwitchPhrases) {
         if (cleanText.includes(phrase.toLowerCase())) {
@@ -80,20 +80,52 @@ export class LanguageDetectionService {
       });
 
       if (maxIndicCount > 0) {
-        const ratio = maxIndicCount / Math.max(1, totalChars);
-        const confidence = Math.min(0.98, 0.70 + ratio * 0.28);
-        return {
-          language: dominantIndic,
-          confidence,
-          confidenceLevel: confidence >= 0.85 ? 'high' : 'medium',
-          method: 'script',
-          detectedScripts: scriptCounts,
-          matchedKeywords: []
-        };
+        // If locked language is set and user types in a DIFFERENT Indic script with significant characters
+        if (!lockedLanguage || dominantIndic === lockedLanguage || maxIndicCount >= 4) {
+          const ratio = maxIndicCount / Math.max(1, totalChars);
+          const confidence = Math.min(0.98, 0.70 + ratio * 0.28);
+          return {
+            language: dominantIndic,
+            confidence,
+            confidenceLevel: confidence >= 0.85 ? 'high' : 'medium',
+            method: 'script',
+            detectedScripts: scriptCounts,
+            matchedKeywords: []
+          };
+        }
       }
     }
 
-    // 3. Keyword / Vocabulary matching against local healthcare dictionaries
+    // 3. STRICT LANGUAGE LOCKING:
+    // If a session already has a locked language, preserve it against loanwords or brief utterances
+    if (lockedLanguage) {
+      // Check if text has any keywords from the locked language dictionary
+      const lockedDict = ALL_DICTIONARIES[lockedLanguage];
+      const matchedLocked: string[] = [];
+      if (lockedDict) {
+        lockedDict.commonWords.forEach((w: string) => {
+          if (cleanText.includes(w.toLowerCase())) matchedLocked.push(w);
+        });
+        Object.values(lockedDict.healthcareTerms).forEach((terms: any) => {
+          if (Array.isArray(terms)) {
+            terms.forEach((t: string) => {
+              if (cleanText.includes(t.toLowerCase())) matchedLocked.push(t);
+            });
+          }
+        });
+      }
+
+      return {
+        language: lockedLanguage,
+        confidence: 0.95,
+        confidenceLevel: 'high',
+        method: 'locked',
+        detectedScripts: scriptCounts,
+        matchedKeywords: matchedLocked
+      };
+    }
+
+    // 4. Keyword / Vocabulary matching against local healthcare dictionaries (no locked language yet)
     const langScores: Record<SupportedLanguageCode, number> = {
       'ta-IN': 0,
       'te-IN': 0,
@@ -139,26 +171,13 @@ export class LanguageDetectionService {
     }
 
     // Determine highest scoring language
-    let bestLang: SupportedLanguageCode = lockedLanguage || 'en-IN';
+    let bestLang: SupportedLanguageCode = 'en-IN';
     let highestScore = 0;
 
     for (const [code, score] of Object.entries(langScores) as [SupportedLanguageCode, number][]) {
       if (score > highestScore) {
         highestScore = score;
         bestLang = code;
-      }
-    }
-
-    // 4. Handle Mixed-Language Logic:
-    // If user has a locked Indic language and says a mixed English word (e.g. "fever", "sugar"), retain Indic language!
-    if (lockedLanguage && lockedLanguage !== 'en-IN' && bestLang === 'en-IN') {
-      const englishMedicalLoanwords = ['fever', 'cough', 'cold', 'pain', 'bp', 'sugar', 'doctor', 'tablet', 'medicine', 'hospital', 'baby'];
-      const isJustLoanwords = tokens.every(
-        (token) => englishMedicalLoanwords.includes(token) || ['my', 'has', 'i', 'the', 'is'].includes(token)
-      );
-      if (!isJustLoanwords || langScores[lockedLanguage] > 0) {
-        bestLang = lockedLanguage;
-        highestScore += 2;
       }
     }
 
@@ -183,8 +202,8 @@ export class LanguageDetectionService {
       };
     }
 
-    // If script is pure Latin and no specific Indic keywords matched (but could be Hindi in Latin script)
-    if (scriptCounts['en-IN'] > 3 && totalIndicChars === 0 && !lockedLanguage) {
+    // If script is pure Latin and no specific Indic keywords matched
+    if (scriptCounts['en-IN'] > 3 && totalIndicChars === 0) {
       return {
         language: 'en-IN',
         confidence: 0.88,
@@ -195,13 +214,12 @@ export class LanguageDetectionService {
       };
     }
 
-    // Fallback to locked language or uncertain
-    const fallbackLang = lockedLanguage || 'en-IN';
+    // Fallback to English or uncertain
     return {
-      language: fallbackLang,
-      confidence: lockedLanguage ? 0.70 : 0.50,
-      confidenceLevel: lockedLanguage ? 'medium' : 'uncertain',
-      method: lockedLanguage ? 'locked' : 'combined',
+      language: 'en-IN',
+      confidence: 0.50,
+      confidenceLevel: 'uncertain',
+      method: 'combined',
       detectedScripts: scriptCounts,
       matchedKeywords: []
     };

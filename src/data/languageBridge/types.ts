@@ -1,6 +1,6 @@
 import { SupportedLanguageCode } from '../languages';
 
-export type BridgeLang = 'en' | 'ta' | 'te' | 'ml' | 'kn';
+export type BridgeLang = 'en' | 'ta' | 'te' | 'ml' | 'kn' | 'hi';
 
 export type TranslationConfidence = 'HIGH' | 'MEDIUM' | 'LOW';
 
@@ -45,7 +45,7 @@ export interface BridgeTranslationResult {
   needsConfirmation: boolean;
 }
 
-export const BRIDGE_LANGS: BridgeLang[] = ['en', 'ta', 'te', 'ml', 'kn'];
+export const BRIDGE_LANGS: BridgeLang[] = ['en', 'ta', 'te', 'ml', 'kn', 'hi'];
 
 export const MEDICINE_NAMES = [
   'Paracetamol',

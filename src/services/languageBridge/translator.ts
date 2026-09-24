@@ -49,7 +49,7 @@ function findBestPhrase(sourceText: string, sourceLang: BridgeLang): MedicalPhra
 }
 
 function findPhraseAnyLanguage(sourceText: string): { phrase: MedicalPhrase; lang: BridgeLang } | null {
-  const langs: BridgeLang[] = ['ta', 'te', 'ml', 'kn', 'en'];
+  const langs: BridgeLang[] = ['ta', 'te', 'ml', 'kn', 'hi', 'en'];
   for (const lang of langs) {
     const phrase = findBestPhrase(sourceText, lang);
     if (phrase) return { phrase, lang };

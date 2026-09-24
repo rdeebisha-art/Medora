@@ -64,7 +64,10 @@ export class ConversationEngine {
       lowerText.includes('ரத்த அழுத்தம்') ||
       lowerText.includes('బీపీ') ||
       lowerText.includes('രക്തസമ്മർദ്ദം') ||
-      lowerText.includes('ರಕ್ತದೊತ್ತಡ')
+      lowerText.includes('ರಕ್ತದೊತ್ತಡ') ||
+      lowerText.includes('रक्तचाप') ||
+      lowerText.includes('ब्लड प्रेशर') ||
+      lowerText.includes('बीपी')
     ) {
       if (state.patientContext?.recentVitals) {
         const bp = state.patientContext.recentVitals.find((v) => v.type === 'blood_pressure');
@@ -75,6 +78,7 @@ export class ConversationEngine {
             `మీ చివరిగా నమోదైన రక్తపోటు ${bp.value} ${bp.unit} (${bp.date.slice(0, 10)}).`,
             `നിങ്ങളുടെ അവസാന രക്തസമ്മർദ്ദം ${bp.value} ${bp.unit} (${bp.date.slice(0, 10)}) ആയിരുന്നു.`,
             `ನಿಮ್ಮ ಕೊನೆಯ ರಕ್ತದೊತ್ತಡ ${bp.value} ${bp.unit} (${bp.date.slice(0, 10)}) ಇತ್ತು.`,
+            `आपका अंतिम दर्ज रक्तचाप ${bp.value} ${bp.unit} (${bp.date.slice(0, 10)}) था।`,
             currentLang
           );
         }
@@ -87,7 +91,11 @@ export class ConversationEngine {
       lowerText.includes('என் மாத்திரை') ||
       lowerText.includes('నా మందులు') ||
       lowerText.includes('എന്റെ മരുന്ന്') ||
-      lowerText.includes('ನನ್ನ ಔಷಧಿ')
+      lowerText.includes('ನನ್ನ ಔಷಧಿ') ||
+      lowerText.includes('मेरी दवा') ||
+      lowerText.includes('मेरी दवाई') ||
+      lowerText.includes('दवाइयाँ') ||
+      lowerText.includes('गोलियां')
     ) {
       if (state.patientContext?.activeMedicines && state.patientContext.activeMedicines.length > 0) {
         const medNames = state.patientContext.activeMedicines.map((m) => `${m.name} (${m.dose})`).join(', ');
@@ -97,6 +105,7 @@ export class ConversationEngine {
           `మీ ప్రస్తుత మందులు: ${medNames}. సమయానికి వేసుకోండి.`,
           `നിങ്ങളുടെ നിലവിലെ മരുന്നുകൾ: ${medNames}. സമയത്തിന് കഴിക്കുക.`,
           `ನಿಮ್ಮ ಸಕ್ರಿಯ ಔಷಧಗಳು: ${medNames}. ಸಮಯಕ್ಕೆ ಸೇವಿಸಿ.`,
+          `आपकी सक्रिय निर्धारित दवाइयाँ हैं: ${medNames}। कृपया इन्हें समय पर लें।`,
           currentLang
         );
       }
@@ -167,6 +176,7 @@ export class ConversationEngine {
     te: string,
     ml: string,
     kn: string,
+    hi: string,
     lang: SupportedLanguageCode
   ): string {
     switch (lang) {
@@ -178,6 +188,8 @@ export class ConversationEngine {
         return ml;
       case 'kn-IN':
         return kn;
+      case 'hi-IN':
+        return hi;
       case 'en-IN':
       default:
         return en;

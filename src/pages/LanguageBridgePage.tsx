@@ -22,7 +22,7 @@ import { LanguageBridgeMessage } from '../db/db';
 import { BridgeTranslationResult } from '../data/languageBridge/types';
 import { Mic, Keyboard, Volume2, Square, Pause, Play, Send } from 'lucide-react';
 
-const BRIDGE_LANGS: SupportedLanguageCode[] = ['ta-IN', 'te-IN', 'ml-IN', 'kn-IN', 'en-IN'];
+const BRIDGE_LANGS: SupportedLanguageCode[] = ['ta-IN', 'te-IN', 'ml-IN', 'kn-IN', 'hi-IN', 'en-IN'];
 
 type ViewMode = 'patient' | 'doctor';
 type SpeakTarget = 'patient' | 'doctor' | null;
@@ -60,7 +60,7 @@ export default function LanguageBridgePage() {
   useEffect(() => {
     if (currentUser?.language) {
       const map: Record<string, SupportedLanguageCode> = {
-        ta: 'ta-IN', te: 'te-IN', ml: 'ml-IN', kn: 'kn-IN', en: 'en-IN', hi: 'en-IN',
+        ta: 'ta-IN', te: 'te-IN', ml: 'ml-IN', kn: 'kn-IN', en: 'en-IN', hi: 'hi-IN',
       };
       setPatientLanguage(map[currentUser.language] || 'ta-IN');
     }
