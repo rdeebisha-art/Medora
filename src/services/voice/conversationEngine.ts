@@ -3,6 +3,7 @@ import { HEALTH_KNOWLEDGE_BASE, HealthcareIntent } from '../../data/healthKnowle
 import { languageDetectionService, LanguageDetectionResult } from './languageDetectionService';
 import { intentClassifier, IntentClassificationResult } from './intentClassifier';
 import { conversationMemory, ConversationState } from './conversationMemory';
+import { medicalSafetyEngine } from '../medicalSafety/medicalSafetyEngine';
 import { db } from '../../db/db';
 
 export interface ProcessedConversationTurn {
@@ -111,13 +112,21 @@ export class ConversationEngine {
       }
     }
 
-    // 4. Retrieve Knowledge Base Template
+    // 4. Retrieve Evidence-Based Clinical Guidance from Medical Knowledge Base
+    const clinicalGuidance = medicalSafetyEngine.generateClinicalGuidance(
+      text,
+      currentLang,
+      state.patientContext
+    );
+
     const templateObj = HEALTH_KNOWLEDGE_BASE[classification.intent] || HEALTH_KNOWLEDGE_BASE['GENERAL_HEALTH'];
     const localized = templateObj.templates[currentLang] || templateObj.templates['en-IN'];
 
-    let finalResponseText = customContextResponse || `${localized.primaryText} ${localized.followUpQuestion}`;
-    if (classification.isEmergency) {
-      finalResponseText = `${localized.primaryText}\n\n${localized.safetyGuidance}`;
+    let finalResponseText = customContextResponse || clinicalGuidance.fullFormattedResponse;
+    const isEmergency = classification.isEmergency || clinicalGuidance.isEmergency;
+
+    if (classification.isEmergency && !customContextResponse) {
+      finalResponseText = clinicalGuidance.fullFormattedResponse;
     }
 
     // 5. Update Conversation State in Memory
@@ -133,7 +142,7 @@ export class ConversationEngine {
       language: currentLang,
       intent: classification.intent,
       agentName: templateObj.agentName,
-      isEmergency: classification.isEmergency
+      isEmergency: isEmergency
     });
 
     // 6. Save turn to IndexedDB
@@ -163,7 +172,7 @@ export class ConversationEngine {
       confidenceLevel: detection.confidenceLevel,
       intent: classification.intent,
       agentName: templateObj.agentName,
-      isEmergency: classification.isEmergency,
+      isEmergency: isEmergency,
       responseText: finalResponseText,
       followUpQuestion: localized.followUpQuestion,
       safetyGuidance: localized.safetyGuidance

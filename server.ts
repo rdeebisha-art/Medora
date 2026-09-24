@@ -2,11 +2,14 @@ import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const genAI = process.env.GEMINI_API_KEY ? new GoogleGenAI() : null;
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
@@ -237,46 +240,73 @@ app.post('/api/ask', async (req: Request, res: Response) => {
     const patient = relevantHealthData || { name: 'Patient', conditions: [], medicines: [], appointments: [], preventiveTasks: [], dueTests: [] };
     const systemPrompt = MEDORA_SYSTEM_PROMPT;
 
-    if (!process.env.AI_API_KEY) {
-      const result = createFallbackResponse(question || '', patient);
-      return res.json({
-        mode: 'DEMO/FALLBACK',
-        systemPrompt,
-        response: result.response,
-        actions: result.actions,
-        workflow: result.workflow,
-        patientId,
-      });
+    if (genAI) {
+      try {
+        const prompt = `Patient information:\n${JSON.stringify({ patientId, question, relevantHealthData: patient }, null, 2)}\n\nPatient question: ${question}\nRespond in language code: ${language}. Keep medicine names, measurements, and emergency phone numbers unchanged. If translation quality is uncertain, use simple English rather than inventing medical facts.`;
+        const aiResponse = await genAI.models.generateContent({
+          model: process.env.AI_MODEL || 'gemini-3.6-flash',
+          contents: prompt,
+          config: {
+            systemInstruction: systemPrompt,
+          },
+        });
+        const text = aiResponse.text || '';
+        if (text.trim()) {
+          return res.json({
+            mode: 'AI',
+            response: text,
+            actions: [],
+            workflow: ['Patient Data', 'Medora AI', 'Health Record Agent', 'Medication Agent', 'Preventive Care Agent', 'Referral/Follow-Up Agent', 'Health Education Agent', 'Final Response'],
+            patientId,
+          });
+        }
+      } catch (err) {
+        console.warn('[Medora] Gemini generation error, falling back to local guidance:', err);
+      }
     }
 
-    const modelResponse = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.AI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: process.env.AI_MODEL || 'gpt-4o-mini',
-        input: [
-          { role: 'system', content: `${systemPrompt}\nRespond in the selected language code: ${language}. Keep medicine names, measurements, and emergency phone numbers unchanged. If translation quality is uncertain, use simple English rather than inventing medical facts.` },
-          { role: 'user', content: JSON.stringify({ patientId, question, relevantHealthData: patient }) }
-        ],
-      }),
-    });
+    if (process.env.AI_API_KEY) {
+      try {
+        const modelResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.AI_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: process.env.AI_MODEL || 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: `${systemPrompt}\nRespond in the selected language code: ${language}. Keep medicine names, measurements, and emergency phone numbers unchanged. If translation quality is uncertain, use simple English rather than inventing medical facts.` },
+              { role: 'user', content: JSON.stringify({ patientId, question, relevantHealthData: patient }) }
+            ],
+          }),
+        });
 
-    if (!modelResponse.ok) {
-      const fallback = createFallbackResponse(question || '', patient);
-      return res.json({ mode: 'DEMO/FALLBACK', ...fallback, patientId });
+        if (modelResponse.ok) {
+          const data = await modelResponse.json();
+          const text = data.choices?.[0]?.message?.content || data.output_text;
+          if (text) {
+            return res.json({
+              mode: 'AI',
+              response: text,
+              actions: [],
+              workflow: ['Patient Data', 'Medora AI', 'Health Record Agent', 'Medication Agent', 'Preventive Care Agent', 'Referral/Follow-Up Agent', 'Health Education Agent', 'Final Response'],
+              patientId,
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('[Medora] OpenAI fallback error:', err);
+      }
     }
 
-    const data = await modelResponse.json();
-    const text = data.output_text || data.output?.[0]?.content?.[0]?.text || 'I could not generate a response.';
-
+    const result = createFallbackResponse(question || '', patient);
     return res.json({
-      mode: 'AI',
-      response: text,
-      actions: [],
-      workflow: ['Patient Data', 'Medora AI', 'Health Record Agent', 'Medication Agent', 'Preventive Care Agent', 'Referral/Follow-Up Agent', 'Health Education Agent', 'Final Response'],
+      mode: 'DEMO/FALLBACK',
+      systemPrompt,
+      response: result.response,
+      actions: result.actions,
+      workflow: result.workflow,
       patientId,
     });
   } catch {
@@ -290,35 +320,59 @@ app.post('/api/translate', async (req: Request, res: Response) => {
   if (!SUPPORTED_LANGUAGES.has(language) || !Array.isArray(texts) || texts.length > 80) {
     return res.status(400).json({ error: 'Invalid translation request' });
   }
-  if (language === 'en' || !process.env.AI_API_KEY) {
+  if (language === 'en') {
     return res.json({ translations: texts });
   }
 
-  try {
-    const modelResponse = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.AI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: process.env.AI_MODEL || 'gpt-4o-mini',
-        input: [{
-          role: 'system',
-          content: `Translate each input string into language code ${language}. Preserve medicine names, numbers, units, emergency numbers, and formatting. Return JSON only in the form {"translations":["..."]}. Do not add explanations.`,
-        }, { role: 'user', content: JSON.stringify(texts) }],
-      }),
-    });
-    if (!modelResponse.ok) return res.json({ translations: texts });
-    const data = await modelResponse.json();
-    const parsed = JSON.parse(data.output_text || '{}');
-    if (!Array.isArray(parsed.translations) || parsed.translations.length !== texts.length) {
-      return res.json({ translations: texts });
+  if (genAI) {
+    try {
+      const prompt = `Translate each string in this JSON array into language code ${language}. Preserve medicine names, numbers, units, emergency numbers, and formatting. Return ONLY valid JSON format: {"translations":["..."]}. Do not add explanations or markdown wrapping.\nInput: ${JSON.stringify(texts)}`;
+      const aiResponse = await genAI.models.generateContent({
+        model: process.env.AI_MODEL || 'gemini-3.6-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+        },
+      });
+      const parsed = JSON.parse(aiResponse.text || '{}');
+      if (Array.isArray(parsed.translations) && parsed.translations.length === texts.length) {
+        return res.json({ translations: parsed.translations });
+      }
+    } catch (err) {
+      console.warn('[Medora] Gemini translate error, falling back:', err);
     }
-    return res.json({ translations: parsed.translations });
-  } catch {
-    return res.json({ translations: texts });
   }
+
+  if (process.env.AI_API_KEY) {
+    try {
+      const modelResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.AI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: process.env.AI_MODEL || 'gpt-4o-mini',
+          messages: [{
+            role: 'system',
+            content: `Translate each input string into language code ${language}. Preserve medicine names, numbers, units, emergency numbers, and formatting. Return JSON only in the form {"translations":["..."]}. Do not add explanations.`,
+          }, { role: 'user', content: JSON.stringify(texts) }],
+        }),
+      });
+      if (modelResponse.ok) {
+        const data = await modelResponse.json();
+        const content = data.choices?.[0]?.message?.content || data.output_text;
+        const parsed = JSON.parse(content || '{}');
+        if (Array.isArray(parsed.translations) && parsed.translations.length === texts.length) {
+          return res.json({ translations: parsed.translations });
+        }
+      }
+    } catch {
+      // Continue to fallback
+    }
+  }
+
+  return res.json({ translations: texts });
 });
 
 // ─── SMS / Voice Communication ───────────────────────────────────────────────
@@ -543,7 +597,7 @@ async function startServer() {
   } else {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: { middlewareMode: true, host: '0.0.0.0' },
+      server: { middlewareMode: true, host: '0.0.0.0', allowedHosts: true },
       appType: 'spa',
     });
     app.use(vite.middlewares);

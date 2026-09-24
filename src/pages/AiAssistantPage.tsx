@@ -16,7 +16,38 @@ import { Link } from 'react-router-dom';
 
 export default function AiAssistantPage() {
   const { t } = useTranslation();
-  const { currentUser } = useAppStore();
+  const { currentUser, language } = useAppStore();
+
+  const getInitialLanguage = (): SupportedLanguageCode => {
+    switch (language) {
+      case 'ta': return 'ta-IN';
+      case 'te': return 'te-IN';
+      case 'hi': return 'hi-IN';
+      case 'kn': return 'kn-IN';
+      case 'ml': return 'ml-IN';
+      default: return 'en-IN';
+    }
+  };
+
+  const getInitialGreeting = (code: SupportedLanguageCode): string => {
+    switch (code) {
+      case 'ta-IN':
+        return 'வணக்கம்! நான் மெடோரா, உங்கள் கிராமப்புற சுகாதார உதவியாளர். உங்கள் உடல்நலப் பிரச்சனையை என்னிடம் கூறவும்.';
+      case 'te-IN':
+        return 'నమస్కారం! నేను మెడోరా, మీ గ్రామీణ ఆరోగ్య సహాయకుడిని. మీ ఆరోగ్య సమస్యను నాకు చెప్పండి.';
+      case 'hi-IN':
+        return 'नमस्ते! मैं मेडोरा हूँ, आपका ग्रामीण स्वास्थ्य सहायक। मुझे अपनी स्वास्थ्य समस्या बताएं।';
+      case 'kn-IN':
+        return 'ನಮಸ್ಕಾರ! ನಾನು ಮೆಡೋರಾ, ನಿಮ್ಮ ಗ್ರಾಮೀಣ ಆರೋಗ್ಯ ಸಹಾಯಕ. ನಿಮ್ಮ ಆರೋಗ್ಯ ಸಮಸ್ಯೆಯನ್ನು ತಿಳಿಸಿ.';
+      case 'ml-IN':
+        return 'നമസ്കാരം! ഞാൻ മെഡോറ, നിങ്ങളുടെ ഗ്രാമീണ ആരോഗ്യ സഹായി. നിങ്ങളുടെ ആരോഗ്യ പ്രശ്നം പറയൂ.';
+      default:
+        return 'Hello! I am Medora, your rural healthcare companion. Speak to me naturally in Tamil, Telugu, Hindi, Malayalam, Kannada, or English. Tell me what is wrong.';
+    }
+  };
+
+  const initialLang = getInitialLanguage();
+
   const [messages, setMessages] = useState<Array<{
     role: 'user' | 'assistant';
     text: string;
@@ -26,15 +57,15 @@ export default function AiAssistantPage() {
   }>>([
     {
       role: 'assistant',
-      text: 'Hello! I am Medora, your rural healthcare companion. Speak to me naturally in Tamil, Telugu, Malayalam, Kannada, or English. Tell me what is wrong.',
+      text: getInitialGreeting(initialLang),
       agentName: 'Medora Triage Assistant',
-      language: 'en-IN'
+      language: initialLang
     }
   ]);
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [detectedLang, setDetectedLang] = useState<SupportedLanguageCode>('en-IN');
+  const [detectedLang, setDetectedLang] = useState<SupportedLanguageCode>(initialLang);
   const [confidenceLevel, setConfidenceLevel] = useState<'high' | 'medium' | 'uncertain'>('high');
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusNotice, setStatusNotice] = useState<string | null>(null);
@@ -200,6 +231,22 @@ export default function AiAssistantPage() {
               <span>{currentLangMeta.flag}</span>
               <span>{currentLangMeta.nativeName}</span>
             </div>
+          </div>
+        </div>
+
+        {/* Medora Medical Knowledge Badge */}
+        <div className="bg-[#0B2424] border border-[#14B8A6]/40 rounded-xl px-3 py-2 mb-2 text-[#CBD5E1]">
+          <div className="flex items-center justify-between text-xs font-bold text-[#14B8A6] mb-1">
+            <span>MEDORA MEDICAL KNOWLEDGE</span>
+            <span className="text-[10px] text-teal-200">Version 1.2.0 • Reviewed Feb 2026</span>
+          </div>
+          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px]">
+            <span>✓ Evidence-based knowledge</span>
+            <span>✓ Offline available</span>
+            <span>✓ Source-linked (WHO/MoHFW)</span>
+            <span>✓ Multilingual (6 Languages)</span>
+            <span>✓ Emergency warning detection</span>
+            <span>✓ Patient data isolation</span>
           </div>
         </div>
 
