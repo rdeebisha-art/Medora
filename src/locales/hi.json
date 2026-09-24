@@ -97,7 +97,7 @@
     "speakCardTapToSpeak": "🎤 बोलने के लिए टैप करें",
     "speakCardStopSpeaking": "बोलना बंद करें",
     "speakCardTypePlaceholder": "या अपनी भाषा में लिखें (उदा. मुझे बुखार है, सिरदर्द है)...",
-    "speakCardWorksOffline": "100% स्थानीय रूप से ऑफलाइन काम करता है",
+    "speakCardWorksOffline": "जहाँ समर्थित है, वहाँ स्थानीय/ऑफ़लाइन आवाज़ सुविधाएँ काम करती हैं। यदि आवाज़ उपलब्ध नहीं है, तो आप टाइप कर सकते हैं या त्वरित क्रियाओं का उपयोग कर सकते हैं।",
     "speakCardTelephoneMode": "टेलीफोन मोड सिमुलेशन",
     "conf_high": "उच्च",
     "conf_medium": "मध्यम",
@@ -184,7 +184,12 @@
     "fromLocalDb": "स्थानीय डेटाबेस से",
     "noRecentAlerts": "कोई हालिया स्वास्थ्य अलर्ट नहीं। सभी निर्धारित दवाइयाँ और परीक्षण अद्यतित हैं।",
     "footerTagline": "मेडोरा — ग्रामीण स्वास्थ्य साथी • ऑफलाइन-प्रथम स्वास्थ्य मंच",
-    "footerDemoDisclaimer": "सभी डेमो डेटा काल्पनिक हैं। वास्तविक दूरसंचार एकीकरण सिमुलेशन के रूप में दिखाए गए हैं।"
+    "footerDemoDisclaimer": "सभी डेमो डेटा काल्पनिक हैं। वास्तविक दूरसंचार एकीकरण सिमुलेशन के रूप में दिखाए गए हैं।",
+    "selectedLanguageLabel": "चुनी गई भाषा",
+    "detectedLanguageLabel": "पहचानी गई भाषा",
+    "conf_low": "निम्न",
+    "conf_statusSelected": "चुनी गई भाषा",
+    "conf_statusReady": "सुनने के लिए तैयार"
   },
   "health": {
     "myHealth": "मेरा स्वास्थ्य",
@@ -763,5 +768,19 @@
     "languageChanged": "भाषा {{language}} हो गई। जारी रखें?",
     "lockState": "रोगी: {{patient}} · डॉक्टर: {{doctor}}",
     "ivrNote": "टेलीफोन / IVR केवल स्थानीय सिमुलेशन है।"
+  },
+  "vitals": {
+    "blood_pressure": "रक्तचाप (BP)",
+    "blood_sugar": "रक्त शर्करा (शुगर)",
+    "weight": "वजन",
+    "bmi": "बीएमआई (BMI)",
+    "temperature": "शरीर का तापमान",
+    "pulse": "नाड़ी की गति",
+    "spo2": "SpO2 (ऑक्सीजन)"
+  },
+  "medicineFreq": {
+    "onceDaily": "दिन में एक बार",
+    "twiceDaily": "दिन में दो बार",
+    "thriceDaily": "दिन में तीन बार"
   }
 }

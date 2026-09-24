@@ -1,5 +1,6 @@
 import { ALL_DICTIONARIES, SupportedLanguageCode } from '../../data/languages';
 import { HealthcareIntent } from '../../data/healthKnowledge/knowledgeBase';
+import { MULTILINGUAL_HEALTHCARE_VOCABULARY } from '../../data/languages/multilingualHealthcareVocabulary';
 
 export interface IntentClassificationResult {
   intent: HealthcareIntent;
@@ -126,16 +127,22 @@ export class IntentClassifier {
     };
 
     // Specialized Care & Symptom checks
-    checkTerms([...dict.healthcareTerms.fever, ...englishDict.healthcareTerms.fever], 'FEVER');
-    checkTerms([...dict.healthcareTerms.cough, ...dict.healthcareTerms.cold, ...englishDict.healthcareTerms.cough, ...englishDict.healthcareTerms.cold], 'COUGH_COLD');
-    checkTerms([...dict.healthcareTerms.stomach, ...dict.healthcareTerms.diarrhea, ...dict.healthcareTerms.vomiting, ...englishDict.healthcareTerms.stomach, ...englishDict.healthcareTerms.diarrhea, ...englishDict.healthcareTerms.vomiting], 'STOMACH_PAIN');
-    checkTerms([...dict.healthcareTerms.headache, ...dict.healthcareTerms.dizziness, ...englishDict.healthcareTerms.headache, ...englishDict.healthcareTerms.dizziness], 'HEADACHE_DIZZINESS');
-    checkTerms([...dict.healthcareTerms.pregnancy, ...englishDict.healthcareTerms.pregnancy], 'PREGNANCY_CARE');
-    checkTerms([...dict.healthcareTerms.newborn, ...englishDict.healthcareTerms.newborn], 'NEWBORN_CARE');
-    checkTerms([...dict.healthcareTerms.child, ...englishDict.healthcareTerms.child], 'CHILD_CARE');
-    checkTerms([...dict.healthcareTerms.elderly, ...englishDict.healthcareTerms.elderly], 'ELDERLY_CARE');
-    checkTerms([...dict.healthcareTerms.bloodSugar, ...englishDict.healthcareTerms.bloodSugar], 'DIABETES_CARE');
-    checkTerms([...dict.healthcareTerms.medicine, ...dict.healthcareTerms.bloodPressure, ...englishDict.healthcareTerms.medicine, ...englishDict.healthcareTerms.bloodPressure], 'MEDICINE_INQUIRY');
+    const getVocab = (cat: keyof typeof MULTILINGUAL_HEALTHCARE_VOCABULARY) => {
+      const langVocab = MULTILINGUAL_HEALTHCARE_VOCABULARY[cat]?.[language]?.terms || [];
+      const enVocab = MULTILINGUAL_HEALTHCARE_VOCABULARY[cat]?.['en-IN']?.terms || [];
+      return [...langVocab, ...enVocab];
+    };
+
+    checkTerms([...dict.healthcareTerms.fever, ...englishDict.healthcareTerms.fever, ...getVocab('FEVER')], 'FEVER');
+    checkTerms([...dict.healthcareTerms.cough, ...dict.healthcareTerms.cold, ...englishDict.healthcareTerms.cough, ...englishDict.healthcareTerms.cold, ...getVocab('COUGH'), ...getVocab('COLD'), ...getVocab('SORE_THROAT')], 'COUGH_COLD');
+    checkTerms([...dict.healthcareTerms.stomach, ...dict.healthcareTerms.diarrhea, ...dict.healthcareTerms.vomiting, ...englishDict.healthcareTerms.stomach, ...englishDict.healthcareTerms.diarrhea, ...englishDict.healthcareTerms.vomiting, ...getVocab('STOMACH_PAIN'), ...getVocab('VOMITING'), ...getVocab('DIARRHEA')], 'STOMACH_PAIN');
+    checkTerms([...dict.healthcareTerms.headache, ...dict.healthcareTerms.dizziness, ...englishDict.healthcareTerms.headache, ...englishDict.healthcareTerms.dizziness, ...getVocab('HEADACHE'), ...getVocab('DIZZINESS'), ...getVocab('WEAKNESS'), ...getVocab('BODY_PAIN')], 'HEADACHE_DIZZINESS');
+    checkTerms([...dict.healthcareTerms.pregnancy, ...englishDict.healthcareTerms.pregnancy, ...getVocab('PREGNANCY')], 'PREGNANCY_CARE');
+    checkTerms([...dict.healthcareTerms.newborn, ...englishDict.healthcareTerms.newborn, ...getVocab('NEWBORN')], 'NEWBORN_CARE');
+    checkTerms([...dict.healthcareTerms.child, ...englishDict.healthcareTerms.child, ...getVocab('CHILD_HEALTH')], 'CHILD_CARE');
+    checkTerms([...dict.healthcareTerms.elderly, ...englishDict.healthcareTerms.elderly, ...getVocab('ELDERLY_HEALTH')], 'ELDERLY_CARE');
+    checkTerms([...dict.healthcareTerms.bloodSugar, ...englishDict.healthcareTerms.bloodSugar, ...getVocab('HIGH_BLOOD_SUGAR'), ...getVocab('LOW_BLOOD_SUGAR')], 'DIABETES_CARE');
+    checkTerms([...dict.healthcareTerms.medicine, ...dict.healthcareTerms.bloodPressure, ...englishDict.healthcareTerms.medicine, ...englishDict.healthcareTerms.bloodPressure, ...getVocab('MEDICINE'), ...getVocab('BLOOD_PRESSURE')], 'MEDICINE_INQUIRY');
 
     // Multilingual Nutrition keywords
     const nutritionKeywords = [

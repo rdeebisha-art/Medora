@@ -9,7 +9,7 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const genAI = process.env.GEMINI_API_KEY ? new GoogleGenAI() : null;
+const genAI = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
@@ -244,7 +244,7 @@ app.post('/api/ask', async (req: Request, res: Response) => {
       try {
         const prompt = `Patient information:\n${JSON.stringify({ patientId, question, relevantHealthData: patient }, null, 2)}\n\nPatient question: ${question}\nRespond in language code: ${language}. Keep medicine names, measurements, and emergency phone numbers unchanged. If translation quality is uncertain, use simple English rather than inventing medical facts.`;
         const aiResponse = await genAI.models.generateContent({
-          model: process.env.AI_MODEL || 'gemini-3.6-flash',
+          model: process.env.AI_MODEL || 'gemini-2.5-flash',
           contents: prompt,
           config: {
             systemInstruction: systemPrompt,
@@ -328,7 +328,7 @@ app.post('/api/translate', async (req: Request, res: Response) => {
     try {
       const prompt = `Translate each string in this JSON array into language code ${language}. Preserve medicine names, numbers, units, emergency numbers, and formatting. Return ONLY valid JSON format: {"translations":["..."]}. Do not add explanations or markdown wrapping.\nInput: ${JSON.stringify(texts)}`;
       const aiResponse = await genAI.models.generateContent({
-        model: process.env.AI_MODEL || 'gemini-3.6-flash',
+        model: process.env.AI_MODEL || 'gemini-2.5-flash',
         contents: prompt,
         config: {
           responseMimeType: 'application/json',

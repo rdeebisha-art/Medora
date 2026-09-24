@@ -97,7 +97,7 @@
     "speakCardTapToSpeak": "🎤 మాట్లాడటానికి నొక్కండి",
     "speakCardStopSpeaking": "మాట్లాడటం ఆపండి",
     "speakCardTypePlaceholder": "లేదా మీ భాషలో టైప్ చేయండి (ఉదా. నాకు జ్వరం, తలనొప్పి)...",
-    "speakCardWorksOffline": "100% స్థానికంగా ఆఫ్‌లైన్‌లో పనిచేస్తుంది",
+    "speakCardWorksOffline": "మద్దతు ఉన్న చోట ఆఫ్‌లైన్ వాయిస్ ఫీచర్లు పనిచేస్తాయి. వాయిస్ అందుబాటులో లేకపోతే, మీరు టైప్ చేయవచ్చు లేదా శీఘ్ర చర్యలను ఉపయోగించవచ్చు.",
     "speakCardTelephoneMode": "టెలిఫోన్ మోడ్ అనుకరణ",
     "conf_high": "ఎక్కువ",
     "conf_medium": "మధ్యస్థం",
@@ -184,7 +184,12 @@
     "fromLocalDb": "స్థానిక డేటాబేస్ నుండి",
     "noRecentAlerts": "ఇటీవలి ఆరోగ్య హెచ్చరికలు లేవు. అన్ని షెడ్యూల్ చేసిన మందులు అప్‌డేట్ చేయబడ్డాయి.",
     "footerTagline": "మెడోరా — గ్రామీణ ఆరోగ్య సహచరుడు • ఆఫ్‌లైన్-మొదటి ఆరోగ్య వేదిక",
-    "footerDemoDisclaimer": "డెమో డేటా అంతా కల్పితం. వాస్తవ టెలికాం అనుసంధానాలు అనుకరణలుగా చూపబడ్డాయి."
+    "footerDemoDisclaimer": "డెమో డేటా అంతా కల్పితం. వాస్తవ టెలికాం అనుసంధానాలు అనుకరణలుగా చూపబడ్డాయి.",
+    "selectedLanguageLabel": "ఎంచుకున్న భాష",
+    "detectedLanguageLabel": "గుర్తించిన భాష",
+    "conf_low": "తక్కువ",
+    "conf_statusSelected": "ఎంచుకున్న భాష",
+    "conf_statusReady": "వినడానికి సిద్ధంగా ఉంది"
   },
   "health": {
     "myHealth": "నా ఆరోగ్యం",
@@ -763,5 +768,19 @@
     "languageChanged": "భాష {{language}}కి మారింది. కొనసాగించాలా?",
     "lockState": "రోగి: {{patient}} · వైద్యుడు: {{doctor}}",
     "ivrNote": "టెలిఫోన్ / IVR అనుకరణ మాత్రమే."
+  },
+  "vitals": {
+    "blood_pressure": "రక్తపోటు (BP)",
+    "blood_sugar": "రక్తంలో చక్కెర",
+    "weight": "బరువు",
+    "bmi": "బీఎమ్‌ఐ (BMI)",
+    "temperature": "శరీర ఉష్ణోగ్రత",
+    "pulse": "నాడి వేగం",
+    "spo2": "SpO2 (ఆక్సిజన్)"
+  },
+  "medicineFreq": {
+    "onceDaily": "రోజుకు ఒకసారి",
+    "twiceDaily": "రోజుకు రెండుసార్లు",
+    "thriceDaily": "రోజుకు మూడుసార్లు"
   }
 }

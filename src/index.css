@@ -1,78 +1,89 @@
 @import "tailwindcss";
 
 @theme {
-  --color-medora-bg: #071A1A;
-  --color-medora-bg-to: #0B2424;
-  --color-medora-card: #111827;
-  --color-medora-card-alt: #16212B;
-  --color-medora-card-teal: #132A2A;
+  --color-medora-bg: #F8FAFC;
+  --color-medora-bg-to: #F0FDFA;
+  --color-medora-card: #FFFFFF;
+  --color-medora-card-alt: #F1F5F9;
+  --color-medora-card-teal: #F0FDFA;
   --color-medora-primary: #0F766E;
   --color-medora-primary-hover: #115E59;
   --color-medora-voice: #14B8A6;
-  --color-medora-voice-bg: #0E3834;
+  --color-medora-voice-bg: #F0FDFA;
   --color-medora-blue: #2563EB;
-  --color-medora-blue-bg: #102A43;
+  --color-medora-blue-bg: #EFF6FF;
   --color-medora-green: #16A34A;
-  --color-medora-green-bg: #0D3320;
+  --color-medora-green-bg: #F0FDF4;
   --color-medora-ai: #7C3AED;
-  --color-medora-ai-bg: #26174D;
+  --color-medora-ai-bg: #F5F3FF;
   --color-medora-orange: #EA580C;
-  --color-medora-orange-bg: #3B1C0B;
+  --color-medora-orange-bg: #FFF7ED;
   --color-medora-amber: #D97706;
-  --color-medora-amber-bg: #382405;
+  --color-medora-amber-bg: #FFFBEB;
   --color-medora-rose: #DB2777;
-  --color-medora-rose-bg: #3B0E23;
+  --color-medora-rose-bg: #FDF2F8;
   --color-medora-emergency: #DC2626;
   --color-medora-emergency-dark: #B91C1C;
-  --color-medora-emergency-bg: #380D0D;
+  --color-medora-emergency-bg: #FEF2F2;
   --color-medora-indigo: #4F46E5;
-  --color-medora-border: rgba(148, 163, 184, 0.20);
-  --color-medora-text: #F8FAFC;
-  --color-medora-secondary: #CBD5E1;
-  --color-medora-muted: #94A3B8;
+  --color-medora-border: #E2E8F0;
+  --color-medora-text: #0F172A;
+  --color-medora-secondary: #475569;
+  --color-medora-muted: #64748B;
 }
 
 :root {
-  --medora-bg: #071A1A;
-  --medora-card: #111827;
-  --medora-text: #F8FAFC;
-  --medora-text-secondary: #CBD5E1;
-  --medora-text-muted: #94A3B8;
-  --medora-border: rgba(148, 163, 184, 0.20);
-  --medora-disabled: #475569;
+  --medora-bg: #F8FAFC;
+  --medora-card: #FFFFFF;
+  --medora-text: #0F172A;
+  --medora-text-secondary: #475569;
+  --medora-text-muted: #64748B;
+  --medora-border: #E2E8F0;
+  --medora-disabled: #94A3B8;
   --medora-primary: #0F766E;
   --medora-primary-hover: #115E59;
   --medora-voice: #14B8A6;
-  --medora-voice-bg: #0E3834;
+  --medora-voice-bg: #F0FDFA;
   --medora-blue: #2563EB;
-  --medora-blue-bg: #102A43;
+  --medora-blue-bg: #EFF6FF;
   --medora-green: #16A34A;
-  --medora-green-bg: #0D3320;
+  --medora-green-bg: #F0FDF4;
   --medora-ai: #7C3AED;
-  --medora-ai-bg: #26174D;
+  --medora-ai-bg: #F5F3FF;
   --medora-orange: #EA580C;
-  --medora-orange-bg: #3B1C0B;
+  --medora-orange-bg: #FFF7ED;
   --medora-amber: #D97706;
-  --medora-amber-bg: #382405;
+  --medora-amber-bg: #FFFBEB;
   --medora-rose: #DB2777;
-  --medora-rose-bg: #3B0E23;
+  --medora-rose-bg: #FDF2F8;
   --medora-emergency: #DC2626;
   --medora-emergency-dark: #B91C1C;
-  --medora-emergency-bg: #380D0D;
+  --medora-emergency-bg: #FEF2F2;
   --medora-indigo: #4F46E5;
-  --medora-icon-teal: #0D3D3A;
+  --medora-icon-teal: #0F766E;
 }
 
 @layer base {
-  * { box-sizing: border-box; }
-  html, body, #root {
-    min-height: 100%;
-    background-color: var(--medora-bg);
-    background-image: radial-gradient(circle at 50% 0%, #0F2F2F 0%, #071A1A 85%);
-    color: var(--medora-text);
+  * {
+    box-sizing: border-box;
   }
-  body {
-    font-family: system-ui, -apple-system, sans-serif;
+  html {
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  body, #root {
+    min-height: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+    background-color: #F8FAFC;
+    background-image:
+      radial-gradient(at 0% 0%, rgba(15, 118, 110, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(20, 184, 166, 0.04) 0px, transparent 50%),
+      radial-gradient(at 50% 100%, rgba(240, 253, 250, 0.6) 0px, transparent 50%);
+    background-attachment: fixed;
+    color: #0F172A;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     -webkit-tap-highlight-color: transparent;
   }
   @media print {

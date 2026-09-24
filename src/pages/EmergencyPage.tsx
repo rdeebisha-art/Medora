@@ -94,16 +94,21 @@ export default function EmergencyPage() {
     <div className="min-h-screen bg-[#F8FAFC]">
       {/* Header */}
       <div className="bg-[#DC2626] text-white px-4 py-4 sticky top-0 z-10 shadow-sm">
-        <div className="flex items-center justify-between max-w-2xl mx-auto">
+        <div className="flex items-center justify-between max-w-4xl mx-auto">
           <div>
             <h1 className="text-xl font-black">🚨 {t('emergency.title')}</h1>
             <p className="text-xs text-red-100 mt-0.5">No login required — always accessible</p>
           </div>
-          <Link to="/dashboard" className="bg-white/20 hover:bg-white/30 text-white text-xs px-3 py-1.5 rounded-full font-bold transition-colors">← Home</Link>
+          <Link
+            to="/dashboard"
+            className="bg-white/20 hover:bg-white/30 text-white text-xs px-3.5 py-2 rounded-full font-bold transition-colors min-h-11 inline-flex items-center"
+          >
+            ← Home
+          </Link>
         </div>
       </div>
 
-      <div className="px-4 py-4 max-w-2xl mx-auto space-y-3">
+      <div className="px-3 sm:px-4 py-4 max-w-4xl mx-auto space-y-3 pb-16">
         {/* Demo Notice */}
         <div className="bg-[#FFFBEB] border border-[#D97706]/30 rounded-2xl p-3 text-xs text-[#D97706]">
           ⚠️ <strong>{t('common.demoData')}:</strong> {t('emergency.demoNote')}

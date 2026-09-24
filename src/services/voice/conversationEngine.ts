@@ -32,6 +32,10 @@ export class ConversationEngine {
     const state = conversationMemory.getState();
     const effectivePreferred = preferredLanguage || (state.detectedLanguage as SupportedLanguageCode) || 'en-IN';
 
+    if (preferredLanguage && state.detectedLanguage !== preferredLanguage) {
+      conversationMemory.updateLanguage(preferredLanguage, 0.90, false);
+    }
+
     // 1. Automatic Language Detection
     let detection: LanguageDetectionResult;
     if (overrideLanguage) {
@@ -47,7 +51,7 @@ export class ConversationEngine {
     } else {
       detection = languageDetectionService.detectLanguage(
         text,
-        state.languageLocked ? state.detectedLanguage : undefined,
+        undefined,
         effectivePreferred
       );
       conversationMemory.updateLanguage(detection.language, detection.confidence);

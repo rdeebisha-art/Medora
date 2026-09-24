@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
 import {
-  Home, Heart, Users, Mic, MoreHorizontal, X, Bell, Wifi, WifiOff,
+  Home, Heart, Users, Mic, MoreHorizontal, X, Wifi, WifiOff,
   Globe, LogOut, User, Settings, HelpCircle, BookOpen, LogIn, ChevronDown
 } from 'lucide-react';
 import NotificationBell from './NotificationBell';
@@ -65,7 +65,7 @@ export default function Layout({ children }: LayoutProps) {
   const showBack = location.pathname !== '/dashboard';
 
   return (
-    <div className={`min-h-screen flex flex-col bg-[#F8FAFC] text-[#0F172A] ${is2GMode ? 'text-base' : ''} ${isSimpleMode ? 'text-lg' : ''}`}>
+    <div className={`min-h-screen flex flex-col bg-[#F8FAFC] text-[#0F172A] overflow-x-hidden ${is2GMode ? 'text-base' : ''} ${isSimpleMode ? 'text-lg' : ''}`}>
       {isOffline && (
         <div className="bg-[#D97706] text-white text-center py-1.5 px-4 text-xs font-bold sticky top-0 z-50 flex items-center justify-center gap-1.5 shadow-sm">
           <WifiOff size={13} />
@@ -73,40 +73,40 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       )}
 
-      <header className="bg-[#0F766E] text-white px-4 py-3 shadow-md sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+      <header className="bg-[#0F766E] text-white px-3 sm:px-4 py-2.5 sm:py-3 shadow-md sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
           {/* Logo & Tagline */}
-          <Link to="/dashboard" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-teal-400 to-teal-600 text-teal-950 font-black text-xl flex items-center justify-center shadow-sm">
+          <Link to="/dashboard" className="flex items-center gap-2 group min-w-0 flex-shrink-1">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-gradient-to-br from-teal-400 to-teal-600 text-teal-950 font-black text-lg sm:text-xl flex items-center justify-center shadow-sm flex-shrink-0">
               +
             </div>
-            <div>
-              <div className="text-lg font-black tracking-tight leading-none group-hover:text-teal-200 transition-colors">
+            <div className="min-w-0">
+              <div className="text-base sm:text-lg font-black tracking-tight leading-none group-hover:text-teal-200 transition-colors truncate">
                 MEDORA
               </div>
-              <div className="text-[10px] text-teal-200/90 font-medium mt-0.5 tracking-wide">
+              <div className="text-[10px] text-teal-200/90 font-medium mt-0.5 tracking-wide hidden md:block truncate">
                 {t('app.tagline')}
               </div>
             </div>
           </Link>
 
           {/* Header Controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {/* Connectivity Pill */}
             <div
-              className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${
+              className={`flex items-center gap-1 text-[10px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full ${
                 isOffline ? 'bg-white/15 text-white border border-white/30' : 'bg-white/20 text-white border border-white/30'
               }`}
               title={isOffline ? t('common.offline') : t('common.online')}
             >
               {isOffline ? <WifiOff size={11} /> : <Wifi size={11} />}
-              <span>{isOffline ? `🔴 ${t('common.offline')}` : `🟢 ${t('common.online')}`}</span>
+              <span className="hidden sm:inline">{isOffline ? `🔴 ${t('common.offline')}` : `🟢 ${t('common.online')}`}</span>
             </div>
 
             {/* 2G Toggle */}
             <button
               onClick={toggle2GMode}
-              className={`text-[10px] px-2 py-1 rounded-xl border font-bold transition-all ${
+              className={`text-[10px] px-2 py-1 rounded-xl border font-bold transition-all min-h-[32px] sm:min-h-[36px] ${
                 is2GMode ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm' : 'bg-teal-900/60 border-teal-600/50 text-teal-200 hover:bg-teal-700'
               }`}
               title="Toggle Ultra Low-Bandwidth Mode"
@@ -118,7 +118,7 @@ export default function Layout({ children }: LayoutProps) {
             <div className="relative">
               <button
                 onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                className="flex items-center gap-1 bg-teal-900/80 hover:bg-teal-700 border border-teal-600/50 px-2.5 py-1 rounded-xl text-xs font-bold text-teal-100 transition-colors"
+                className="flex items-center gap-1 bg-teal-900/80 hover:bg-teal-700 border border-teal-600/50 px-2 sm:px-2.5 py-1 rounded-xl text-xs font-bold text-teal-100 transition-colors min-h-[32px] sm:min-h-[36px]"
               >
                 <Globe size={13} className="text-teal-300" />
                 <span>{LANGUAGES.find((l) => l.code === language)?.label || 'EN'}</span>
@@ -137,7 +137,7 @@ export default function Layout({ children }: LayoutProps) {
                         setLanguage(l.code);
                         setLangDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-3.5 py-2.5 text-xs hover:bg-teal-50 flex items-center justify-between transition-colors ${
+                      className={`w-full text-left px-3.5 py-2.5 text-xs hover:bg-teal-50 flex items-center justify-between transition-colors min-h-10 ${
                         language === l.code ? 'bg-teal-50 font-bold text-teal-800' : 'text-slate-700'
                       }`}
                     >
@@ -155,7 +155,7 @@ export default function Layout({ children }: LayoutProps) {
             {/* Profile Avatar / More Toggle */}
             <button
               onClick={() => setMoreDrawerOpen(true)}
-              className="w-8 h-8 rounded-full bg-teal-700 hover:bg-teal-600 border border-teal-500/50 flex items-center justify-center text-xs font-bold text-teal-100 transition-colors"
+              className="w-8 h-8 rounded-full bg-teal-700 hover:bg-teal-600 border border-teal-500/50 flex items-center justify-center text-xs font-bold text-teal-100 transition-colors min-h-[32px] min-w-[32px]"
               title="More Menu"
             >
               {currentUser?.name ? currentUser.name[0].toUpperCase() : <User size={15} />}
@@ -298,49 +298,53 @@ export default function Layout({ children }: LayoutProps) {
       )}
 
       {showBack && (
-        <div className="px-4 pt-3 max-w-4xl mx-auto w-full">
+        <div className="px-3 sm:px-4 md:px-6 pt-3 max-w-7xl mx-auto w-full">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-1 min-h-11 text-[#0F766E] font-bold text-sm"
+            className="inline-flex items-center gap-1 min-h-11 text-[#0F766E] font-bold text-sm hover:underline"
           >
             ← {t('common.back')}
           </button>
         </div>
       )}
 
-      <main className={`flex-1 pb-24 ${isSimpleMode ? 'text-lg' : ''}`}>{children}</main>
+      <main className={`flex-1 pb-28 sm:pb-32 w-full max-w-7xl mx-auto min-w-0 break-words ${isSimpleMode ? 'text-lg' : ''}`}>
+        {children}
+      </main>
 
       <button
         onClick={() => setEmergencyOpen(true)}
-        className="fixed bottom-[76px] right-3 z-40 min-h-14 px-3.5 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-full shadow-lg flex items-center justify-center gap-1.5 active:scale-95 transition-all border-2 border-[#FEF2F2]"
+        className="fixed bottom-[72px] sm:bottom-[76px] right-3 sm:right-4 md:right-6 z-40 min-h-12 sm:min-h-14 px-3.5 sm:px-4 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-full shadow-lg flex items-center justify-center gap-1.5 active:scale-95 transition-all border-2 border-[#FEF2F2]"
         title={t('nav.emergency')}
       >
-        <span className="text-xl">🚨</span>
-        <span className="text-xs font-black pr-1">{t('nav.emergency')}</span>
+        <span className="text-lg sm:text-xl">🚨</span>
+        <span className="text-xs font-black pr-0.5">{t('nav.emergency')}</span>
       </button>
 
       {emergencyOpen && <EmergencyOverlay onClose={() => setEmergencyOpen(false)} />}
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0] flex items-center justify-around z-40 shadow-lg py-1.5 no-print">
-        {navItems.map((item, i) => {
-          const isActive = location.pathname === item.path && !item.action;
-          return (
-            <button
-              key={i}
-              onClick={() => {
-                if (item.action) item.action();
-                else navigate(item.path);
-              }}
-              className={`flex flex-col items-center justify-center flex-1 py-1 text-[11px] gap-0.5 min-h-12 transition-colors ${
-                isActive ? 'text-[#0F766E] font-bold' : 'text-[#475569]'
-              }`}
-            >
-              <div className={isActive ? 'p-1 rounded-xl bg-[#F0FDFA]' : 'p-1'}>{item.icon}</div>
-              <span className="truncate max-w-full">{item.label}</span>
-            </button>
-          );
-        })}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-[#E2E8F0] z-40 shadow-lg py-1 no-print">
+        <div className="max-w-7xl mx-auto flex items-center justify-around px-1">
+          {navItems.map((item, i) => {
+            const isActive = location.pathname === item.path && !item.action;
+            return (
+              <button
+                key={i}
+                onClick={() => {
+                  if (item.action) item.action();
+                  else navigate(item.path);
+                }}
+                className={`flex flex-col items-center justify-center flex-1 py-1 text-[10px] sm:text-[11px] gap-0.5 min-h-[48px] min-w-0 transition-colors ${
+                  isActive ? 'text-[#0F766E] font-bold' : 'text-[#475569]'
+                }`}
+              >
+                <div className={isActive ? 'p-1 rounded-xl bg-[#F0FDFA]' : 'p-1'}>{item.icon}</div>
+                <span className="truncate max-w-full px-0.5">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </nav>
     </div>
   );

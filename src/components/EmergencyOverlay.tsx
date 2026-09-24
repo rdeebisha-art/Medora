@@ -28,7 +28,11 @@ export default function EmergencyOverlay({ onClose }: EmergencyOverlayProps) {
             <span className="text-2xl animate-pulse">🚨</span>
             <span className="font-black text-xl tracking-tight">EMERGENCY MODE</span>
           </div>
-          <button onClick={onClose} className="p-2 bg-[#B91C1C] hover:bg-red-800 rounded-full transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2.5 bg-[#B91C1C] hover:bg-red-800 rounded-full transition-colors min-h-11 min-w-11 flex items-center justify-center"
+            title="Close Emergency Mode"
+          >
             <X size={20} />
           </button>
         </div>

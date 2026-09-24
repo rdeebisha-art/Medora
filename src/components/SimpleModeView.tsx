@@ -37,7 +37,7 @@ export const SimpleModeView: React.FC<SimpleModeViewProps> = ({
       <div className="bg-amber-500 text-white p-6 sm:p-8 rounded-3xl shadow-md space-y-2">
         <div className="inline-flex items-center gap-2 bg-amber-600/60 px-3 py-1 rounded-full text-xs font-black uppercase">
           <ShieldAlert className="w-4 h-4" />
-          <span>{t.simpleMode} ( )</span>
+          <span>{t.simpleMode} (SIMULATION)</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-black">
           {t.appName} – {t.tagline}
@@ -107,7 +107,7 @@ export const SimpleModeView: React.FC<SimpleModeViewProps> = ({
           <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
             <Phone className="w-10 h-10 text-emerald-400" />
           </div>
-          <span className="text-xl sm:text-2xl font-black">Call ( )</span>
+          <span className="text-xl sm:text-2xl font-black">{t.callHospital || 'Call Hospital'}</span>
           <span className="text-xs sm:text-sm font-medium text-slate-300 mt-1">
             Speak Directly with Clinic Reception
           </span>

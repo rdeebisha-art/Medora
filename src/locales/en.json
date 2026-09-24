@@ -97,7 +97,7 @@
     "speakCardTapToSpeak": "🎤 TAP TO SPEAK",
     "speakCardStopSpeaking": "STOP SPEAKING",
     "speakCardTypePlaceholder": "Or type in your language (e.g. எனக்கு காய்ச்சல், मुझे बुखार है)...",
-    "speakCardWorksOffline": "Works 100% locally offline",
+    "speakCardWorksOffline": "Local/offline voice features are used where supported. If voice recognition is unavailable, you can type or use quick actions.",
     "speakCardTelephoneMode": "Telephone Mode Simulation",
     "conf_high": "high",
     "conf_medium": "medium",
@@ -184,7 +184,12 @@
     "fromLocalDb": "From local database",
     "noRecentAlerts": "No recent health alerts. All scheduled medicines and vitals are up to date.",
     "footerTagline": "MEDORA — Rural Health Companion • Offline-First Healthcare Platform",
-    "footerDemoDisclaimer": "All demo data is fictional. Real telecom integrations are represented as simulations."
+    "footerDemoDisclaimer": "All demo data is fictional. Real telecom integrations are represented as simulations.",
+    "selectedLanguageLabel": "Selected Language",
+    "detectedLanguageLabel": "Detected Language",
+    "conf_low": "low",
+    "conf_statusSelected": "Selected language",
+    "conf_statusReady": "Ready to listen"
   },
   "health": {
     "myHealth": "My Health",
@@ -763,5 +768,19 @@
     "offlineNotice": "All local health records & offline voice are available",
     "profile": "Profile",
     "signOut": "Sign Out"
+  },
+  "vitals": {
+    "blood_pressure": "Blood Pressure",
+    "blood_sugar": "Blood Sugar",
+    "weight": "Weight",
+    "bmi": "BMI",
+    "temperature": "Temperature",
+    "pulse": "Pulse",
+    "spo2": "SpO2"
+  },
+  "medicineFreq": {
+    "onceDaily": "Once daily",
+    "twiceDaily": "Twice daily",
+    "thriceDaily": "Three times daily"
   }
 }

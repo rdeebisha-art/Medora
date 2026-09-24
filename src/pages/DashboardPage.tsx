@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
 import { db, Medicine, Notification, Appointment, HealthTest } from '../db/db';
@@ -8,11 +8,31 @@ import HealthScoreCard from '../components/HealthScoreCard';
 import CareGapAlert from '../components/CareGapAlert';
 import DemoDataBadge from '../components/DemoDataBadge';
 import SpeakToMedoraCard from '../components/SpeakToMedoraCard';
-import { TriangleAlert as AlertTriangle, Heart, Users, Pill, FileText, Activity, Shield, Camera, Image, Stethoscope, Bot, Building as Building2, Syringe, BookOpen, Landmark, Radio, Languages } from 'lucide-react';
+import {
+  TriangleAlert as AlertTriangle,
+  Heart,
+  Users,
+  Pill,
+  FileText,
+  Activity,
+  Shield,
+  Camera,
+  Image,
+  Stethoscope,
+  Bot,
+  Building as Building2,
+  Syringe,
+  BookOpen,
+  Landmark,
+  Radio,
+  Smartphone,
+  Check
+} from 'lucide-react';
 
 export default function DashboardPage() {
   const { t } = useTranslation();
-  const { currentUser, language, isOffline, isSimpleMode } = useAppStore();
+  const navigate = useNavigate();
+  const { currentUser, language, isSimpleMode, toggleSimpleMode } = useAppStore();
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -81,40 +101,328 @@ export default function DashboardPage() {
     year: 'numeric'
   });
 
+  const getLocalizedFrequency = (freq?: string) => {
+    if (!freq) return '';
+    const lower = freq.toLowerCase();
+    if (lower.includes('once')) return t('medicineFreq.onceDaily', 'Once daily');
+    if (lower.includes('twice')) return t('medicineFreq.twiceDaily', 'Twice daily');
+    if (lower.includes('three') || lower.includes('thrice')) return t('medicineFreq.thriceDaily', 'Three times daily');
+    return freq;
+  };
+
+  const getLocalizedNotification = (n: Notification) => {
+    if (language === 'ta' && n.messageTa) return n.messageTa;
+    if (language === 'hi' && n.messageHi) return n.messageHi;
+
+    const msg = n.message || '';
+    if (msg.includes('TT Booster')) {
+      return language === 'ta'
+        ? 'உங்கள் டிடி பூஸ்டர் தடுப்பூசி அடுத்த வாரம் செலுத்தப்பட வேண்டும்'
+        : language === 'te'
+        ? 'మీ TT బూస్టర్ టీకా వచ్చే వారం వేయించుకోవాల్సి ఉంది'
+        : language === 'ml'
+        ? 'നിങ്ങളുടെ ടിടി ബൂസ്റ്റർ വാക്സിനേഷൻ അടുത്ത ആഴ്ച എടുക്കേണ്ടതാണ്'
+        : language === 'kn'
+        ? 'ನಿಮ್ಮ ಟಿಟಿ ಬೂಸ್ಟರ್ ಲಸಿಕೆ ಮುಂದಿನ ವಾರ ಬಾಕಿಯಿದೆ'
+        : language === 'hi'
+        ? 'आपका टीटी बूस्टर टीकाकरण अगले सप्ताह देय है'
+        : msg;
+    }
+    if (msg.includes('Antenatal checkup')) {
+      return language === 'ta'
+        ? 'டாக்டர் அர்ஜுன் மேத்தாவுடன் அடுத்த வாரம் மகப்பேறு பரிசோதனை திட்டமிடப்பட்டுள்ளது'
+        : language === 'te'
+        ? 'డాక్టర్ అర్జున్ మెహతాతో వచ్చే వారం ప్రసవపూర్వ తనిఖీ షెడ్యూల్ చేయబడింది'
+        : language === 'ml'
+        ? 'ഡോ. അർജുൻ മെഹ്തയുമായി അടുത്ത ആഴ്ച പ്രസവപൂർവ്വ പരിശോധന നിശ്ചയിച്ചിട്ടുണ്ട്'
+        : language === 'kn'
+        ? 'ಡಾ. ಅರ್ಜುನ್ ಮೆಹ್ತಾ ಅವರೊಂದಿಗೆ ಮುಂದಿನ ವಾರ ಪ್ರಸವಪೂರ್ವ ತಪಾಸಣೆ ನಿಗದಿಯಾಗಿದೆ'
+        : language === 'hi'
+        ? 'डॉ. अर्जुन मेहता के साथ अगले सप्ताह प्रसवपूर्व जाँच निर्धारित है'
+        : msg;
+    }
+    if (msg.includes('Metformin')) {
+      return language === 'ta'
+        ? 'மெட்ஃபோர்மின் 500 மி.கி இன்று மாலை 7:30 மணிக்கு உட்கொள்ள வேண்டும்'
+        : language === 'te'
+        ? 'మెట్‌ఫార్మిన్ 500mg ఈరోజు రాత్రి 7:30 గంటలకు తీసుకోవాల్సి ఉంది'
+        : language === 'ml'
+        ? 'മെറ്റ്ഫോർമിൻ 500mg ഇന്ന് വൈകുന്നേരം 7:30 ന് കഴിക്കേണ്ടതാണ്'
+        : language === 'kn'
+        ? 'ಮೆಟ್‌ಫಾರ್ಮಿನ್ 500mg ಇಂದು ಸಂಜೆ 7:30 ಕ್ಕೆ ತೆಗೆದುಕೊಳ್ಳಬೇಕಾಗಿದೆ'
+        : language === 'hi'
+        ? 'मेटफॉर्मिन 500mg आज शाम 7:30 बजे देय है'
+        : msg;
+    }
+    if (msg.includes('Influenza')) {
+      return language === 'ta'
+        ? 'இன்ஃப்ளூயன்ஸா தடுப்பூசி நவம்பர் மாதம் செலுத்தப்பட வேண்டும்'
+        : language === 'te'
+        ? 'ఇన్‌ఫ్లుయెంజా వ్యాక్సిన్ నవంబర్‌లో వేయించుకోవాలి'
+        : language === 'ml'
+        ? 'ഇൻഫ്ലുവൻസ വാക്സിൻ നവംബറിൽ എടുക്കേണ്ടതാണ്'
+        : language === 'kn'
+        ? 'ಇನ್ಫ್ಲುಯೆಂಜಾ ಲಸಿಕೆ ನವೆಂಬರ್‌ನಲ್ಲಿ ಬಾಕಿಯಿದೆ'
+        : language === 'hi'
+        ? 'इन्फ्लूएंजा टीका नवंबर में देय है'
+        : msg;
+    }
+    if (msg.includes('Hepatitis B') || msg.includes('Baby Arjun')) {
+      return language === 'ta'
+        ? 'குழந்தை அர்ஜுன் – ஹெபடைடிஸ் பி பிறப்பு டோஸ் செலுத்தப்பட வேண்டும்'
+        : language === 'te'
+        ? 'బేబీ అర్జున్ – హెపటైటిస్ బి జనన డోస్ వేయించాల్సి ఉంది'
+        : language === 'ml'
+        ? 'ബേബി അർജുൻ – ഹെപ്പറ്റൈറ്റിസ് ബി ജനന ഡോസ് നൽകേണ്ടതുണ്ട്'
+        : language === 'kn'
+        ? 'ಬೇಬಿ ಅರ್ಜುನ್ – ಹೆಪಟೈಟಿಸ್ ಬಿ ಜನನ ಡೋಸ್ ಬಾಕಿಯಿದೆ'
+        : language === 'hi'
+        ? 'बेबी अर्जुन – हेपेटाइटिस बी जन्म खुराक देय है'
+        : msg;
+    }
+
+    return msg;
+  };
+
+  const [basicPhoneCursor, setBasicPhoneCursor] = useState<number>(1);
+
+  const basicPhoneMenu = [
+    { num: 1, label: t('nav.myHealth', 'My Health'), path: '/health', desc: 'Blood pressure, Sugar & Vitals' },
+    { num: 2, label: t('nav.family', 'Family Health'), path: '/family', desc: 'Household Members & Care' },
+    { num: 3, label: t('nav.medicines', 'Medicines & Reminders'), path: '/medicines', desc: 'Active Doses & Schedule' },
+    { num: 4, label: t('dashboard.hfDoctorConsultTitle', 'Doctor Consultation'), path: '/doctor-portal', desc: 'PHC Doctors & Consultations' },
+    { num: 5, label: t('dashboard.hfNearbyHospitalsTitle', 'Hospital Directory'), path: '/hospitals', desc: 'Local PHCs, CHCs & Ambulance' },
+    { num: 6, label: `🚨 ${t('nav.emergency', 'Emergency Help')} (108)`, path: '/emergency', desc: 'Instant First Aid & 108 Dispatch' },
+    { num: 7, label: t('nav.education', 'Health Advice / Education'), path: '/education', desc: 'Prevention, Nutrition & Hygiene' },
+    { num: 8, label: t('common.interfaceLanguage', 'Change Language'), path: '/settings', desc: 'Tamil, Telugu, Hindi, Kannada, Malayalam, English' }
+  ];
+
+  // Physical keyboard support for button-phone simulation
+  useEffect(() => {
+    if (!isSimpleMode) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const num = parseInt(e.key, 10);
+      if (num >= 1 && num <= 8) {
+        navigate(basicPhoneMenu[num - 1].path);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setBasicPhoneCursor(prev => (prev > 1 ? prev - 1 : 8));
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setBasicPhoneCursor(prev => (prev < 8 ? prev + 1 : 1));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        navigate(basicPhoneMenu[basicPhoneCursor - 1].path);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSimpleMode, basicPhoneCursor, navigate]);
+
+  // BASIC PHONE MODE SIMULATION (Section 5)
+  if (isSimpleMode) {
+    return (
+      <Layout>
+        <div className="px-3 sm:px-4 py-5 max-w-xl mx-auto space-y-4">
+          {/* Basic Phone Mode Header */}
+          <div className="bg-[#111827] text-white p-5 rounded-3xl border-4 border-[#0F766E] shadow-xl">
+            <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+              <span className="bg-[#0F766E] text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-full tracking-wider">
+                📟 BASIC PHONE MODE [SIMULATION]
+              </span>
+              <button
+                onClick={toggleSimpleMode}
+                className="text-xs bg-white text-[#111827] font-bold px-3 py-1.5 rounded-xl hover:bg-slate-200 transition-colors min-h-8"
+              >
+                ✕ Switch to Standard View
+              </button>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-teal-400">
+              MEDORA BASIC PHONE
+            </h1>
+            <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+              Browser simulation of basic button phone interface demonstrating USSD text menu and keypad navigation for rural low-bandwidth areas. (Simulated experience; does not run on physical legacy phones).
+            </p>
+          </div>
+
+          {/* High-Contrast LCD Screen Display */}
+          <div className="bg-[#0D1B1E] border-4 border-slate-700 rounded-3xl p-4 sm:p-5 shadow-2xl text-[#5EFC82] font-mono space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-700 pb-2 text-xs text-[#8EFEC2]">
+              <span>[BAT: 100%] [📶 2G]</span>
+              <span>MEDORA OS v1.0</span>
+            </div>
+
+            <div className="text-xs text-slate-400 uppercase tracking-wider font-sans font-bold">
+              {t('common.simpleMode', 'Select option (Press 1-8 or use keys below):')}
+            </div>
+
+            <div className="space-y-1.5 divide-y divide-slate-800/80 font-sans">
+              {basicPhoneMenu.map((item) => {
+                const isSelected = basicPhoneCursor === item.num;
+                return (
+                  <button
+                    key={item.num}
+                    onClick={() => navigate(item.path)}
+                    onMouseEnter={() => setBasicPhoneCursor(item.num)}
+                    className={`w-full pt-2 pb-2 px-3 flex items-center gap-3 text-left rounded-xl transition-all min-h-12 ${
+                      isSelected
+                        ? 'bg-[#0F766E] text-white shadow-md ring-2 ring-teal-400'
+                        : 'text-slate-200 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span className={`w-8 h-8 rounded-lg font-black text-sm flex items-center justify-center flex-shrink-0 font-mono ${
+                      isSelected ? 'bg-white text-[#0F766E]' : 'bg-slate-800 text-teal-300 border border-slate-700'
+                    }`}>
+                      {item.num}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-black truncate">
+                        {item.label}
+                      </div>
+                      <div className={`text-[11px] truncate ${isSelected ? 'text-teal-100' : 'text-slate-400'}`}>
+                        {item.desc}
+                      </div>
+                    </div>
+                    <span className="text-sm font-black">
+                      {isSelected ? '▶' : '→'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Physical Phone Keypad Simulation Controls */}
+          <div className="bg-slate-800 border-2 border-slate-700 rounded-3xl p-4 shadow-xl text-white">
+            <div className="text-center text-[11px] text-slate-400 font-bold mb-3 uppercase tracking-wider">
+              🎮 Button Phone Keypad Controls
+            </div>
+
+            {/* Directional & Select Pad */}
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <button
+                onClick={() => setBasicPhoneCursor(prev => (prev > 1 ? prev - 1 : 8))}
+                className="px-4 py-3 bg-slate-700 hover:bg-slate-600 active:scale-95 text-white font-bold rounded-2xl text-xs flex items-center gap-1.5 min-h-11 shadow-sm border border-slate-600"
+              >
+                ▲ UP
+              </button>
+              <button
+                onClick={() => navigate(basicPhoneMenu[basicPhoneCursor - 1].path)}
+                className="px-6 py-3 bg-[#0F766E] hover:bg-teal-600 active:scale-95 text-white font-black rounded-2xl text-xs flex items-center gap-1.5 min-h-11 shadow-md border border-teal-500"
+              >
+                OK [SELECT]
+              </button>
+              <button
+                onClick={() => setBasicPhoneCursor(prev => (prev < 8 ? prev + 1 : 1))}
+                className="px-4 py-3 bg-slate-700 hover:bg-slate-600 active:scale-95 text-white font-bold rounded-2xl text-xs flex items-center gap-1.5 min-h-11 shadow-sm border border-slate-600"
+              >
+                ▼ DOWN
+              </button>
+            </div>
+
+            {/* Number Keypad Grid 1-9, *, 0, # */}
+            <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+                <button
+                  key={num}
+                  onClick={() => navigate(basicPhoneMenu[num - 1].path)}
+                  className="bg-slate-700 hover:bg-slate-600 active:scale-95 py-2.5 rounded-xl text-center border border-slate-600 min-h-11 transition-all"
+                >
+                  <span className="block font-black text-sm text-teal-300">{num}</span>
+                  <span className="block text-[9px] text-slate-400 truncate px-1">
+                    {basicPhoneMenu[num - 1].label.split(' ')[0]}
+                  </span>
+                </button>
+              ))}
+              <Link
+                to="/emergency"
+                className="bg-red-700 hover:bg-red-600 active:scale-95 py-2.5 rounded-xl text-center border border-red-500 min-h-11 transition-all flex flex-col items-center justify-center"
+              >
+                <span className="block font-black text-sm text-white">9 / SOS</span>
+                <span className="block text-[9px] text-red-200">108 Help</span>
+              </Link>
+              <Link
+                to="/ussd"
+                className="bg-slate-700 hover:bg-slate-600 active:scale-95 py-2.5 rounded-xl text-center border border-slate-600 min-h-11 transition-all flex flex-col items-center justify-center"
+              >
+                <span className="block font-black text-sm text-amber-400">*</span>
+                <span className="block text-[9px] text-slate-400">USSD</span>
+              </Link>
+              <Link
+                to="/ivr"
+                className="bg-slate-700 hover:bg-slate-600 active:scale-95 py-2.5 rounded-xl text-center border border-slate-600 min-h-11 transition-all flex flex-col items-center justify-center"
+              >
+                <span className="block font-black text-sm text-teal-300">0</span>
+                <span className="block text-[9px] text-slate-400">Voice IVR</span>
+              </Link>
+              <Link
+                to="/sms"
+                className="bg-slate-700 hover:bg-slate-600 active:scale-95 py-2.5 rounded-xl text-center border border-slate-600 min-h-11 transition-all flex flex-col items-center justify-center"
+              >
+                <span className="block font-black text-sm text-sky-400">#</span>
+                <span className="block text-[9px] text-slate-400">SMS Outbox</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Simulated USSD dialing shortcut */}
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-3.5 text-center text-xs text-[#64748B]">
+            <span className="font-semibold text-[#0F172A]">Demo USSD Code: </span>
+            <code className="bg-[#F0FDFA] px-2 py-0.5 rounded border border-[#0F766E]/30 font-mono text-[#0F766E] font-bold">
+              *141*9999#
+            </code>
+            <p className="text-[10px] text-[#94A3B8] mt-1">
+              Simulated browser demonstration representing telecommunications protocols in low-bandwidth rural health environments.
+            </p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // STANDARD MODE DASHBOARD
   return (
     <Layout>
-      <div className="px-4 py-5 max-w-4xl mx-auto space-y-6">
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-5 sm:space-y-6 overflow-x-hidden min-w-0 break-words">
         {/* ========================================================= */}
         {/* 1. WELCOME SECTION                                        */}
         {/* ========================================================= */}
-        <div className="bg-gradient-to-r from-[#F0FDFA] to-[#EFF6FF] border border-[#E2E8F0] rounded-3xl p-5 shadow-sm relative overflow-hidden">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
+        <div className="bg-gradient-to-r from-[#F0FDFA] via-[#EFF6FF]/60 to-[#F0FDFA] border border-[#E2E8F0] rounded-3xl p-4 sm:p-6 shadow-sm relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                 <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white text-[#0F766E] border border-[#E2E8F0]">
                   📍 {currentUser?.village || t('dashboard.kodaikanalVillage')}
                 </span>
                 <span className="text-xs text-[#64748B] font-medium">🗓️ {currentDateFormatted}</span>
                 <DemoDataBadge />
               </div>
-              <h1 className="text-2xl font-black text-[#0F766E] tracking-tight">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-[#0F766E] tracking-tight">
                 {t('dashboard.greeting', { name: currentUser?.name || t('dashboard.villager') })} 👋
               </h1>
-              <p className="text-sm text-[#475569] mt-1 max-w-xl leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#475569] mt-1 max-w-xl leading-relaxed">
                 {t('app.subtitle')}
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              <button
+                onClick={toggleSimpleMode}
+                className="flex items-center gap-1.5 bg-white hover:bg-slate-50 text-[#0F766E] border border-[#E2E8F0] text-xs font-bold px-3 py-2 rounded-2xl shadow-xs min-h-11"
+                title="Switch to Basic Phone Mode"
+              >
+                <Smartphone size={14} />
+                <span>Basic Phone Mode</span>
+              </button>
               <Link
                 to="/ai"
-                className="flex items-center gap-1.5 bg-[#14B8A6] hover:bg-[#0F766E] text-white text-xs font-bold px-3.5 py-2.5 rounded-2xl shadow-sm min-h-11"
+                className="flex items-center gap-1.5 bg-[#14B8A6] hover:bg-[#0F766E] text-white text-xs font-bold px-3.5 py-2 rounded-2xl shadow-sm min-h-11"
               >
                 <span>🎙️ {t('ai.speak')}</span>
               </Link>
               <Link
                 to="/profile"
-                className="w-10 h-10 rounded-2xl bg-white border border-[#E2E8F0] text-[#0F766E] flex items-center justify-center font-bold text-sm"
+                className="w-10 h-10 rounded-2xl bg-white border border-[#E2E8F0] text-[#0F766E] flex items-center justify-center font-bold text-sm shadow-xs"
                 title={t('dashboard.viewProfile')}
               >
                 {currentUser?.name ? currentUser.name[0] : '👤'}
@@ -124,12 +432,12 @@ export default function DashboardPage() {
         </div>
 
         {/* ========================================================= */}
-        {/* 2. EMERGENCY SECTION (Prominently Near Top)               */}
+        {/* 2. EMERGENCY SECTION (Prominent Red Callout)             */}
         {/* ========================================================= */}
-        <div className="bg-[#FEF2F2] border border-[#E2E8F0] rounded-3xl p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-lg border border-[#E2E8F0]">
+        <div className="bg-[#FEF2F2] border border-[#DC2626]/20 rounded-3xl p-4 sm:p-5 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-lg border border-[#E2E8F0] flex-shrink-0 shadow-2xs">
                 🚨
               </div>
               <div>
@@ -137,63 +445,63 @@ export default function DashboardPage() {
                 <p className="text-[11px] text-[#475569]">{t('dashboard.emergencySubtitle')}</p>
               </div>
             </div>
-            <span className="bg-white text-[#B91C1C] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-[#E2E8F0]">
+            <span className="self-start sm:self-auto bg-white text-[#B91C1C] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-[#E2E8F0]">
               {t('dashboard.noLoginRequired')}
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 pt-1">
             <Link
               to="/emergency"
-              className="bg-[#DC2626] hover:bg-[#B91C1C] rounded-2xl p-2.5 text-center text-xs font-bold text-white min-h-16 flex flex-col items-center justify-center"
+              className="bg-[#DC2626] hover:bg-[#B91C1C] rounded-2xl p-3 text-center text-xs font-bold text-white min-h-14 flex flex-col items-center justify-center shadow-xs active:scale-95 transition-all"
             >
-              <span className="text-lg mb-1">🩹</span>
+              <span className="text-base sm:text-lg mb-0.5">🩹</span>
               <span>🚨 {t('nav.emergency')}</span>
             </Link>
 
             <Link
               to="/emergency"
-              className="bg-white hover:bg-[#FEF2F2] rounded-2xl p-2.5 text-center text-xs font-bold text-[#B91C1C] border border-[#E2E8F0] min-h-16 flex flex-col items-center justify-center"
+              className="bg-white hover:bg-[#FEF2F2] rounded-2xl p-3 text-center text-xs font-bold text-[#B91C1C] border border-[#E2E8F0] min-h-14 flex flex-col items-center justify-center shadow-2xs active:scale-95 transition-all"
             >
-              <span className="text-lg mb-1">🩺</span>
+              <span className="text-base sm:text-lg mb-0.5">🩺</span>
               <span>{t('dashboard.firstAidSteps')}</span>
             </Link>
 
             <Link
               to="/hospitals"
-              className="bg-white hover:bg-[#EFF6FF] rounded-2xl p-2.5 text-center text-xs font-bold text-[#2563EB] border border-[#E2E8F0] min-h-16 flex flex-col items-center justify-center"
+              className="bg-white hover:bg-[#EFF6FF] rounded-2xl p-3 text-center text-xs font-bold text-[#2563EB] border border-[#E2E8F0] min-h-14 flex flex-col items-center justify-center shadow-2xs active:scale-95 transition-all"
             >
-              <span className="text-lg mb-1">🏥</span>
+              <span className="text-base sm:text-lg mb-0.5">🏥</span>
               <span>{t('dashboard.nearbyHealthcare')}</span>
             </Link>
 
             <Link
               to="/transport"
-              className="bg-white hover:bg-[#FFF7ED] rounded-2xl p-2.5 text-center text-xs font-bold text-[#EA580C] border border-[#E2E8F0] min-h-16 flex flex-col items-center justify-center"
+              className="bg-white hover:bg-[#FFF7ED] rounded-2xl p-3 text-center text-xs font-bold text-[#EA580C] border border-[#E2E8F0] min-h-14 flex flex-col items-center justify-center shadow-2xs active:scale-95 transition-all"
             >
-              <span className="text-lg mb-1">🚑</span>
+              <span className="text-base sm:text-lg mb-0.5">🚑</span>
               <span>{t('dashboard.transportHelp')}</span>
             </Link>
 
             <button
               onClick={handleQuickEmergencyAlert}
-              className={`rounded-2xl p-2.5 text-center text-xs font-bold transition-all border border-[#E2E8F0] min-h-16 flex flex-col items-center justify-center ${
-                emergencyAlertSent ? 'bg-[#16A34A] text-white' : 'bg-white text-[#DC2626] hover:bg-[#FEF2F2] shadow-2xs'
+              className={`rounded-2xl p-3 text-center text-xs font-bold transition-all border border-[#E2E8F0] min-h-14 flex flex-col items-center justify-center col-span-2 sm:col-span-1 shadow-2xs active:scale-95 ${
+                emergencyAlertSent ? 'bg-[#16A34A] text-white' : 'bg-white text-[#DC2626] hover:bg-[#FEF2F2]'
               }`}
             >
-              <span className="text-lg mb-1">{emergencyAlertSent ? '✅' : '🔔'}</span>
+              <span className="text-base sm:text-lg mb-0.5">{emergencyAlertSent ? '✅' : '🔔'}</span>
               <span>{emergencyAlertSent ? t('dashboard.alertQueued') : t('dashboard.familyAlertDemo')}</span>
             </button>
           </div>
         </div>
 
         {/* ========================================================= */}
-        {/* 3. STAY CONNECTED — RURAL COMMUNICATION SECTION           */}
+        {/* 3. STAY CONNECTED — RURAL TELECOM INTEGRATION SECTION     */}
         {/* ========================================================= */}
-        <div className="bg-white rounded-3xl p-5 shadow-sm border border-[#E2E8F0] space-y-3">
+        <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-[#E2E8F0] space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-[#F0FDFA] text-[#14B8A6] flex items-center justify-center border border-[#14B8A6]/20">
+              <div className="w-8 h-8 rounded-xl bg-[#F0FDFA] text-[#14B8A6] flex items-center justify-center border border-[#14B8A6]/20 flex-shrink-0">
                 <Radio size={16} />
               </div>
               <div>
@@ -205,10 +513,10 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
             <Link
               to="/ai"
-              className="bg-[#F8FAFC] hover:bg-[#F0FDFA] border border-[#E2E8F0] hover:border-[#14B8A6]/40 rounded-2xl p-3 flex flex-col justify-between transition-all shadow-2xs"
+              className="bg-[#F8FAFC] hover:bg-[#F0FDFA] border border-[#E2E8F0] hover:border-[#14B8A6]/40 rounded-2xl p-3 flex flex-col justify-between transition-all shadow-2xs min-h-24"
             >
               <div>
                 <div className="w-8 h-8 rounded-xl bg-[#F0FDFA] text-[#14B8A6] flex items-center justify-center mb-2 border border-[#14B8A6]/20">
@@ -222,7 +530,7 @@ export default function DashboardPage() {
 
             <Link
               to="/sms"
-              className="bg-[#F8FAFC] hover:bg-[#EFF6FF] border border-[#E2E8F0] hover:border-[#2563EB]/40 rounded-2xl p-3 flex flex-col justify-between transition-all shadow-2xs"
+              className="bg-[#F8FAFC] hover:bg-[#EFF6FF] border border-[#E2E8F0] hover:border-[#2563EB]/40 rounded-2xl p-3 flex flex-col justify-between transition-all shadow-2xs min-h-24"
             >
               <div>
                 <div className="w-8 h-8 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mb-2 border border-[#2563EB]/20">
@@ -236,7 +544,7 @@ export default function DashboardPage() {
 
             <Link
               to="/ussd"
-              className="bg-[#F8FAFC] hover:bg-slate-100 border border-[#E2E8F0] hover:border-slate-300 rounded-2xl p-3 flex flex-col justify-between transition-all shadow-2xs"
+              className="bg-[#F8FAFC] hover:bg-slate-100 border border-[#E2E8F0] hover:border-slate-300 rounded-2xl p-3 flex flex-col justify-between transition-all shadow-2xs min-h-24"
             >
               <div>
                 <div className="w-8 h-8 rounded-xl bg-slate-100 text-[#475569] flex items-center justify-center mb-2 border border-slate-200">
@@ -250,7 +558,7 @@ export default function DashboardPage() {
 
             <Link
               to="/ivr"
-              className="bg-[#F8FAFC] hover:bg-[#F0FDFA] border border-[#E2E8F0] hover:border-[#14B8A6]/40 rounded-2xl p-3 flex flex-col justify-between transition-all shadow-2xs"
+              className="bg-[#F8FAFC] hover:bg-[#F0FDFA] border border-[#E2E8F0] hover:border-[#14B8A6]/40 rounded-2xl p-3 flex flex-col justify-between transition-all shadow-2xs min-h-24"
             >
               <div>
                 <div className="w-8 h-8 rounded-xl bg-[#F0FDFA] text-[#14B8A6] flex items-center justify-center mb-2 border border-[#14B8A6]/20">
@@ -264,7 +572,7 @@ export default function DashboardPage() {
 
             <Link
               to="/sync"
-              className="bg-[#F8FAFC] hover:bg-[#F0FDFA] border border-[#E2E8F0] hover:border-[#0F766E]/40 rounded-2xl p-3 flex flex-col justify-between transition-all shadow-2xs"
+              className="bg-[#F8FAFC] hover:bg-[#F0FDFA] border border-[#E2E8F0] hover:border-[#0F766E]/40 rounded-2xl p-3 flex flex-col justify-between transition-all shadow-2xs min-h-24"
             >
               <div>
                 <div className="w-8 h-8 rounded-xl bg-[#F0FDFA] text-[#0F766E] flex items-center justify-center mb-2 border border-[#0F766E]/20">
@@ -278,7 +586,7 @@ export default function DashboardPage() {
 
             <Link
               to="/village"
-              className="bg-[#F8FAFC] hover:bg-[#F0FDF4] border border-[#E2E8F0] hover:border-[#16A34A]/40 rounded-2xl p-3 flex flex-col justify-between transition-all shadow-2xs"
+              className="bg-[#F8FAFC] hover:bg-[#F0FDF4] border border-[#E2E8F0] hover:border-[#16A34A]/40 rounded-2xl p-3 flex flex-col justify-between transition-all shadow-2xs min-h-24"
             >
               <div>
                 <div className="w-8 h-8 rounded-xl bg-[#F0FDF4] text-[#16A34A] flex items-center justify-center mb-2 border border-[#16A34A]/20">
@@ -293,7 +601,7 @@ export default function DashboardPage() {
         </div>
 
         {/* ========================================================= */}
-        {/* 4. SPEAK TO MEDORA (Direct on front page)                 */}
+        {/* 4. SPEAK TO MEDORA (Multi-lingual Voice Interface)        */}
         {/* ========================================================= */}
         <SpeakToMedoraCard />
 
@@ -301,7 +609,9 @@ export default function DashboardPage() {
         {/* 5. QUICK ACTIONS ROW                                      */}
         {/* ========================================================= */}
         <div>
-          <h2 className="text-xs font-black text-slate-500 uppercase tracking-wider mb-2.5">⚡ {t('dashboard.quickActionsTitle')}</h2>
+          <h2 className="text-xs font-black text-slate-500 uppercase tracking-wider mb-2.5">
+            ⚡ {t('dashboard.quickActionsTitle')}
+          </h2>
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {[
               { path: '/health-tests', label: t('dashboard.qaRecordTest'), emoji: '🧪', color: 'bg-white border-[#E2E8F0] text-[#0F766E]' },
@@ -314,7 +624,7 @@ export default function DashboardPage() {
               <Link
                 key={i}
                 to={action.path}
-                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-2xl border text-xs font-bold whitespace-nowrap shadow-sm hover:shadow-md min-h-11 ${action.color}`}
+                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-2xl border text-xs font-bold whitespace-nowrap shadow-xs hover:shadow-md min-h-11 transition-all ${action.color}`}
               >
                 <span>{action.emoji}</span>
                 <span>{action.label}</span>
@@ -326,13 +636,13 @@ export default function DashboardPage() {
         {/* ========================================================= */}
         {/* 6. HEALTH OVERVIEW SECTION                                */}
         {/* ========================================================= */}
-        <div className="bg-white border border-[#E2E8F0] rounded-3xl p-5 shadow-sm space-y-4">
+        <div className="bg-white border border-[#E2E8F0] rounded-3xl p-4 sm:p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-extrabold text-base text-[#0F172A]">{t('dashboard.healthOverviewTitle')}</h2>
               <p className="text-xs text-[#64748B]">{t('dashboard.healthOverviewSubtitle')}</p>
             </div>
-            <Link to="/health" className="text-xs font-bold text-[#0F766E] hover:underline">
+            <Link to="/health" className="text-xs font-bold text-[#0F766E] hover:underline min-h-9 flex items-center">
               {t('dashboard.viewFullHealth')}
             </Link>
           </div>
@@ -358,7 +668,7 @@ export default function DashboardPage() {
                   <div className="space-y-1 mt-1">
                     {medicines.slice(0, 2).map((m) => (
                       <div key={m.id} className="text-xs text-[#0F172A] font-medium truncate">
-                        • {m.name} ({m.dose}) – {m.frequency}
+                        • {m.name} ({m.dose}) – {getLocalizedFrequency(m.frequency)}
                       </div>
                     ))}
                   </div>
@@ -371,7 +681,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Recent Vitals Monitor */}
+            {/* Recent Vitals Monitor (100% Localized) */}
             <div className="bg-[#EFF6FF] border border-[#2563EB]/30 rounded-2xl p-4 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
@@ -386,7 +696,7 @@ export default function DashboardPage() {
                   <div className="space-y-1 mt-1">
                     {recentTests.slice(0, 2).map((tItem) => (
                       <div key={tItem.id} className="text-xs text-[#0F172A] font-medium">
-                        • <span className="capitalize">{tItem.type.replace('_', ' ')}</span>: <strong>{tItem.value} {tItem.unit}</strong>
+                        • <span>{t('vitals.' + tItem.type, tItem.type.replace('_', ' '))}</span>: <strong>{tItem.value} {tItem.unit}</strong>
                       </div>
                     ))}
                   </div>
@@ -415,7 +725,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {[
               { path: '/health', icon: <Heart size={22} className="text-[#0F766E]" />, iconBg: 'bg-[#F0FDFA]', title: t('dashboard.hfMyHealthTitle'), desc: t('dashboard.hfMyHealthDesc') },
               { path: '/family', icon: <Users size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: t('dashboard.hfFamilyTitle'), desc: t('dashboard.hfFamilyDesc') },
@@ -437,16 +747,18 @@ export default function DashboardPage() {
               <Link
                 key={i}
                 to={card.path}
-                className="bg-white border border-[#E2E8F0] hover:border-slate-300 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
+                className="bg-white border border-[#E2E8F0] hover:border-teal-300 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group min-h-36"
               >
                 <div>
                   <div className={`w-10 h-10 rounded-xl ${card.iconBg} flex items-center justify-center shadow-2xs mb-2.5 border border-black/5 group-hover:scale-105 transition-transform`}>
                     {card.icon}
                   </div>
-                  <h3 className="font-bold text-xs text-[#0F172A] leading-snug">{card.title}</h3>
-                  <p className="text-[11px] text-[#475569] mt-1 leading-normal">{card.desc}</p>
+                  <h3 className="font-bold text-xs sm:text-sm text-[#0F172A] leading-snug break-words">{card.title}</h3>
+                  <p className="text-[11px] text-[#475569] mt-1 leading-normal break-words">{card.desc}</p>
                 </div>
-                <span className="text-[10px] font-extrabold text-[#0F766E] mt-3 block group-hover:translate-x-0.5 transition-transform">{t('dashboard.openCard')}</span>
+                <span className="text-[10px] font-extrabold text-[#0F766E] mt-3 block group-hover:translate-x-0.5 transition-transform">
+                  {t('dashboard.openCard')}
+                </span>
               </Link>
             ))}
           </div>
@@ -463,7 +775,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {[
               { path: '/childcare', emoji: '👶', title: t('dashboard.fcChildTitle'), desc: t('dashboard.fcChildDesc'), iconBg: 'bg-[#EFF6FF]', textColor: 'text-[#2563EB]' },
               { path: '/maternity', emoji: '🤰', title: t('dashboard.fcMaternityTitle'), desc: t('dashboard.fcMaternityDesc'), iconBg: 'bg-[#FDF2F8]', textColor: 'text-[#DB2777]' },
@@ -476,25 +788,27 @@ export default function DashboardPage() {
               <Link
                 key={i}
                 to={care.path}
-                className="bg-white border border-[#E2E8F0] hover:border-slate-300 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
+                className="bg-white border border-[#E2E8F0] hover:border-teal-300 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group min-h-36"
               >
                 <div>
                   <div className={`w-10 h-10 rounded-xl ${care.iconBg} flex items-center justify-center text-xl mb-2.5 border border-black/5 group-hover:scale-105 transition-transform`}>
                     {care.emoji}
                   </div>
-                  <h3 className="font-extrabold text-xs text-[#0F172A] mb-1">{care.title}</h3>
-                  <p className="text-[11px] text-[#475569] leading-normal">{care.desc}</p>
+                  <h3 className="font-extrabold text-xs sm:text-sm text-[#0F172A] mb-1 break-words">{care.title}</h3>
+                  <p className="text-[11px] text-[#475569] leading-normal break-words">{care.desc}</p>
                 </div>
-                <span className={`text-[10px] font-extrabold mt-3 block ${care.textColor}`}>{t('dashboard.viewCareHub')}</span>
+                <span className={`text-[10px] font-extrabold mt-3 block ${care.textColor}`}>
+                  {t('dashboard.viewCareHub')}
+                </span>
               </Link>
             ))}
           </div>
         </div>
 
         {/* ========================================================= */}
-        {/* 9. RECENT HEALTH ACTIVITY (Real Local IndexedDB Data)    */}
+        {/* 9. RECENT HEALTH ACTIVITY (100% Localized Database Data)  */}
         {/* ========================================================= */}
-        <div className="bg-white border border-[#E2E8F0] rounded-3xl p-5 shadow-sm space-y-3">
+        <div className="bg-white border border-[#E2E8F0] rounded-3xl p-4 sm:p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="font-extrabold text-sm text-[#0F172A]">{t('dashboard.recentActivityTitle')}</h2>
             <span className="text-[11px] text-[#64748B]">{t('dashboard.fromLocalDb')}</span>
@@ -507,8 +821,8 @@ export default function DashboardPage() {
                   <div className="w-7 h-7 rounded-lg bg-[#FFFBEB] text-[#D97706] border border-[#D97706]/30 flex items-center justify-center flex-shrink-0 font-bold">
                     🔔
                   </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-[#0F172A]">{n.message}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-[#0F172A] break-words">{getLocalizedNotification(n)}</p>
                     <span className="text-[10px] text-[#64748B]">{n.createdAt?.slice(0, 16)}</span>
                   </div>
                 </div>
@@ -522,7 +836,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Footer Disclaimer */}
-        <div className="text-center py-2 text-[11px] text-[#64748B] space-y-1">
+        <div className="text-center py-3 text-[11px] text-[#64748B] space-y-1">
           <p className="font-semibold text-[#0F172A]">{t('dashboard.footerTagline')}</p>
           <p className="text-[10px] text-[#64748B]">{t('dashboard.footerDemoDisclaimer')}</p>
         </div>

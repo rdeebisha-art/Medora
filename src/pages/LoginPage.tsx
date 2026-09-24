@@ -70,40 +70,45 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-600 to-sky-800 flex flex-col">
-      <div className="flex items-center justify-center pt-8 pb-4 text-white">
+    <div className="min-h-screen bg-gradient-to-b from-[#0F766E] via-[#0D5F58] to-[#042F2E] flex flex-col justify-between overflow-x-hidden">
+      <div className="flex items-center justify-center pt-8 pb-4 text-white px-4">
         <div className="text-center">
-          <div className="text-4xl mb-2">🏥</div>
-          <h1 className="text-2xl font-black">MEDORA</h1>
-          <p className="text-sm opacity-80">{t('app.tagline')}</p>
+          <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 text-3xl flex items-center justify-center mx-auto mb-2 shadow-inner">
+            🏥
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-wide">MEDORA</h1>
+          <p className="text-xs sm:text-sm text-teal-100 font-medium">{t('app.tagline')}</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-t-3xl flex-1 px-6 pt-6 pb-8">
+      <div className="bg-white rounded-t-3xl flex-1 px-4 sm:px-6 pt-6 pb-8 shadow-2xl max-w-lg mx-auto w-full min-w-0 break-words">
         {!selectedRole ? (
           <>
-            <h2 className="text-xl font-bold text-gray-800 mb-1 text-center">{t('auth.login')}</h2>
-            <p className="text-sm text-gray-500 text-center mb-6">{t('auth.selectRole')}</p>
+            <h2 className="text-xl font-bold text-slate-800 mb-1 text-center">{t('auth.login')}</h2>
+            <p className="text-xs sm:text-sm text-slate-500 text-center mb-5">{t('auth.selectRole')}</p>
             <div className="grid grid-cols-2 gap-3">
               {ROLES.map(r => (
                 <button
                   key={r.role}
                   onClick={() => setSelectedRole(r.role)}
-                  className="flex flex-col items-center bg-gray-50 border-2 border-gray-200 hover:border-sky-400 hover:bg-sky-50 rounded-2xl p-5 transition-all"
+                  className="flex flex-col items-center bg-slate-50 border-2 border-slate-200 hover:border-teal-500 hover:bg-teal-50/60 rounded-2xl p-4 sm:p-5 transition-all min-h-[110px] justify-center active:scale-95"
                 >
-                  <span className="text-4xl mb-2">{r.emoji}</span>
-                  <span className="font-bold text-gray-800 capitalize">{t(`auth.${r.role}Login`)}</span>
-                  <span className="text-xs text-gray-400 mt-1">Demo: {r.demoPin}</span>
+                  <span className="text-3xl sm:text-4xl mb-2">{r.emoji}</span>
+                  <span className="font-bold text-xs sm:text-sm text-slate-800 capitalize">{t(`auth.${r.role}Login`)}</span>
+                  <span className="text-[10px] text-slate-400 mt-1 font-mono">Demo: {r.demoPin}</span>
                 </button>
               ))}
             </div>
           </>
         ) : (
           <>
-            <button onClick={() => { setSelectedRole(null); setError(''); setPhone(''); setPin(''); }} className="flex items-center gap-2 text-sky-600 font-medium mb-4">
+            <button
+              onClick={() => { setSelectedRole(null); setError(''); setPhone(''); setPin(''); }}
+              className="inline-flex items-center gap-2 text-[#0F766E] font-bold text-xs sm:text-sm mb-4 min-h-11 py-1"
+            >
               ← {t('common.back')}
             </button>
-            <h2 className="text-xl font-bold text-gray-800 mb-1">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-1">
               {ROLES.find(r => r.role === selectedRole)?.emoji} {t(`auth.${selectedRole}Login`)}
             </h2>
 
@@ -123,7 +128,7 @@ export default function LoginPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">
                   {selectedRole === 'family' ? 'Family Name / ID' : t('auth.phone')}
                 </label>
                 <input
@@ -131,24 +136,25 @@ export default function LoginPage() {
                   value={phone}
                   onChange={e => setPhone(e.target.value)}
                   placeholder={selectedRole === 'family' ? 'e.g. Kumar Family or 2' : '10-digit phone number'}
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:border-sky-400 focus:outline-none"
+                  className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm sm:text-base focus:border-[#0F766E] focus:outline-none min-h-12"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.pin')}</label>
+                <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">{t('auth.pin')}</label>
                 <div className="relative">
                   <input
                     type={showPin ? 'text' : 'password'}
                     value={pin}
                     onChange={e => setPin(e.target.value)}
                     placeholder={t('auth.enterPin')}
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 pr-12 text-base focus:border-sky-400 focus:outline-none"
+                    className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 pr-12 text-sm sm:text-base focus:border-[#0F766E] focus:outline-none min-h-12"
                     onKeyDown={e => e.key === 'Enter' && handleLogin()}
                   />
                   <button 
                     type="button" 
                     onClick={() => setShowPin(!showPin)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none min-h-10 min-w-10 flex items-center justify-center"
+                    title={showPin ? "Hide PIN" : "Show PIN"}
                   >
                     {showPin ? '👁️‍🗨️' : '👁️'}
                   </button>
@@ -157,21 +163,21 @@ export default function LoginPage() {
               
               {/* Validation Feedback */}
               {error && (
-                <div className="flex items-center gap-2 text-red-600 bg-red-50 px-3 py-2 rounded-xl text-sm font-medium border border-red-200">
+                <div className="flex items-center gap-2 text-red-600 bg-red-50 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium border border-red-200">
                   <span className="font-bold">✕</span> {error === t('auth.loginError') ? 'Incorrect password or phone' : error}
                 </div>
               )}
               <button
                 onClick={handleLogin}
                 disabled={loading}
-                className="w-full bg-sky-600 text-white font-bold py-4 rounded-2xl text-lg hover:bg-sky-700 disabled:opacity-50 transition-all shadow-md"
+                className="w-full bg-[#0F766E] hover:bg-[#115E59] text-white font-bold py-3.5 sm:py-4 rounded-2xl text-base sm:text-lg disabled:opacity-50 transition-all shadow-md min-h-12 active:scale-98"
               >
                 {loading ? t('common.loading') : t('auth.login')}
               </button>
             </div>
           </>
         )}
-        <p className="text-xs text-gray-400 text-center mt-6">{t('common.demoData')} · {t('common.disclaimer')}</p>
+        <p className="text-xs text-slate-400 text-center mt-6">{t('common.demoData')} · {t('common.disclaimer')}</p>
       </div>
     </div>
   );
