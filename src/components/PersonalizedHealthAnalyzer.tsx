@@ -364,7 +364,7 @@ export const PersonalizedHealthAnalyzer: React.FC<PersonalizedHealthAnalyzerProp
               phone: profile.consultationReminder.phone,
               category: 'DOCTOR',
               targetUserId: 'DOC-01',
-              location: profile.consultationReminder.hospital,
+              location: profile.consultationReminder.hospitalName,
               emergency: false,
             })}
             className="py-2.5 px-4 bg-white text-slate-900 font-bold rounded-xl flex items-center gap-1.5 shadow-sm hover:bg-blue-50 transition-colors cursor-pointer"

@@ -39,10 +39,12 @@ import FaqPage from './pages/FaqPage';
 import HelpPage from './pages/HelpPage';
 import LanguageBridgePage from './pages/LanguageBridgePage';
 import AppointmentsPage from './pages/AppointmentsPage';
+import CallHistoryPage from './pages/CallHistoryPage';
 
 import MedicalHospitalBackground from './components/layout/MedicalHospitalBackground';
 import { ActiveCallModal } from './components/ActiveCallModal';
 import { IncomingCallModal } from './components/IncomingCallModal';
+import OfflineToast from './components/OfflineToast';
 import { webrtcCallingService } from './services/webrtc/webrtcCallingService';
 import { inAppMessagingService } from './services/messaging/inAppMessagingService';
 import { useEffect } from 'react';
@@ -66,6 +68,7 @@ export default function App() {
 
   return (
     <MedicalHospitalBackground>
+      <OfflineToast />
       {incomingCall && (
         <IncomingCallModal incomingCall={incomingCall} onClose={() => setIncomingCall(null)} />
       )}
@@ -99,6 +102,7 @@ export default function App() {
       <Route path="/ussd" element={<ProtectedRoute><UssdPage /></ProtectedRoute>} />
       <Route path="/village" element={<ProtectedRoute><VillagePage /></ProtectedRoute>} />
       <Route path="/appointments" element={<ProtectedRoute><AppointmentsPage /></ProtectedRoute>} />
+      <Route path="/call-history" element={<ProtectedRoute><CallHistoryPage /></ProtectedRoute>} />
       <Route path="/doctor-portal" element={<ProtectedRoute><DoctorPortalPage /></ProtectedRoute>} />
       <Route path="/admin-portal" element={<ProtectedRoute><AdminPortalPage /></ProtectedRoute>} />
       <Route path="/doctor-summary" element={<ProtectedRoute><DoctorSummaryPage /></ProtectedRoute>} />

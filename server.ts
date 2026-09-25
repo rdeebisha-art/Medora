@@ -89,6 +89,30 @@ const createFallbackResponse = (question: string, patient: PatientData) => {
   // 0. Conversational Greetings & General Inquiries (Natural Chatbot responses like ChatGPT / Gemini)
   const isGreeting = /^(hi|hello|hey|namaste|vanakkam|namaskaram|greetings|good\s*(morning|afternoon|evening|day)|howdy|how are you|who are you|what can you do|help)\b/i.test(q) || q === 'hi' || q === 'hello' || q === 'hey';
   if (isGreeting) {
+    if (q === 'good morning' || q.startsWith('good morning')) {
+      return {
+        response: 'Good morning! How can I help?',
+        actions: [
+          { label: '💊 Today\'s Medicines', action: 'medicines' },
+          { label: '📅 View Appointments', action: 'appointment' },
+          { label: '🧪 Lab Reports', action: 'tests' },
+          { label: '👨‍⚕️ Find Doctor', action: 'doctor' }
+        ],
+        workflow: ['Conversational Agent', 'Medora AI', 'Final Response']
+      };
+    }
+    if (q === 'hi' || q.startsWith('hi ') || q.startsWith('hello')) {
+      return {
+        response: 'Hello! How can I help you today?',
+        actions: [
+          { label: '💊 Today\'s Medicines', action: 'medicines' },
+          { label: '📅 View Appointments', action: 'appointment' },
+          { label: '🧪 Lab Reports', action: 'tests' },
+          { label: '👨‍⚕️ Find Doctor', action: 'doctor' }
+        ],
+        workflow: ['Conversational Agent', 'Medora AI', 'Final Response']
+      };
+    }
     const greetingName = patient.name ? `, ${patient.name}` : '';
     return {
       response: `Hello${greetingName}! I am Medora AI, your healthcare companion. How are you feeling today? You can ask me about your symptoms, medication reminders, upcoming appointments, lab test reports, or emergency first aid.`,
@@ -1227,6 +1251,8 @@ app.post('/api/chat', async (req: Request, res: Response) => {
 
   let systemInstruction = `You are Medora AI, a compassionate healthcare assistant for rural communities.
 Language code: ${language}.
+For casual greetings such as "Hi", "Hello", "Good morning", respond naturally and briefly (e.g. "Hello! How can I help you today?" or "Good morning! How can I help?"). Do NOT classify simple greetings as emergencies or suggest allergic reactions.
+Only activate medical guidance or emergency warnings when the user actually reports medical symptoms or conditions.
 Always communicate clearly, respectfully, and simply in the specified language (${language}). If the user types in Hindi, Tamil, Telugu, Kannada, Malayalam, or English, reply in that exact language and script.
 Preserve exact medicine names, measurements (e.g. 102°F, 120/80, 180 mg/dL), and dates.
 If red flag symptoms appear (chest pain, breathing difficulty, severe bleeding, newborn fever, unconsciousness), instruct immediate emergency medical care (dial 108) without waiting.`;

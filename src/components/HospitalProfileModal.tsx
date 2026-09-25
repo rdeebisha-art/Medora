@@ -25,9 +25,9 @@ export const HospitalProfileModal: React.FC<HospitalProfileModalProps> = ({
   currentLang,
   isSelectedForReferral,
 }) => {
+  const [callFeedback, setCallFeedback] = useState<string | null>(null);
   if (!hospital) return null;
   const t = TRANSLATIONS[currentLang];
-  const [callFeedback, setCallFeedback] = useState<string | null>(null);
 
   const handleCall = async () => {
     if (!hospital.phone) return;

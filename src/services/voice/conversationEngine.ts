@@ -89,13 +89,22 @@ export class ConversationEngine {
     // 4a. Conversational Greeting check
     const isGreeting = /^(hi|hello|hey|namaste|vanakkam|namaskaram|greetings|good\s*(morning|afternoon|evening|day)|howdy|how are you|who are you)\b/i.test(lowerText) || lowerText === 'hi' || lowerText === 'hello' || lowerText === 'hey';
     if (isGreeting) {
+      isEmergency = false;
+      const isGoodMorning = /^good\s*morning/i.test(lowerText);
+      const isHi = /^hi\b/i.test(lowerText) || lowerText === 'hi';
+      const englishGreeting = isGoodMorning
+        ? 'Good morning! How can I help?'
+        : isHi
+        ? 'Hello! How can I help you today?'
+        : 'Hello! I am Medora AI, your healthcare companion. How can I help you today?';
+
       customContextResponse = this.formatContextMessage(
-        'Hello! I am Medora AI, your healthcare companion. How are you feeling today? You can ask me about symptoms, your daily medicine schedule, checkups, or emergency first aid.',
-        'வணக்கம்! நான் மெடோரா AI, உங்கள் சுகாதார உதவியாளர். இன்று உங்கள் உடல்நலம் எப்படி உள்ளது? உங்கள் அறிகுறிகள், மருந்து அட்டவணை, மருத்துவ சந்திப்புகள் பற்றி என்னிடம் கேட்கலாம்.',
-        'నమస్కారం! నేను మెడోరా AI, మీ ఆరోగ్య సహాయకుడిని. ఈ రోజు మీ ఆరోగ్యం ఎలా ఉంది? మీ లక్షణాలు, మందుల సమయాలు లేదా ఆరోగ్య పరీక్షల గురించి నన్ను అడగవచ్చు.',
-        'നമസ്കാരം! ഞാൻ മെഡോറ AI, നിങ്ങളുടെ ആരോഗ്യ സഹായി. ഇന്ന് സുഖമാണോ? നിങ്ങളുടെ ലക്ഷണങ്ങൾ, മരുന്നുകളുടെ സമയം, ഡോക്ടറുടെ അപ്പോയിന്റ്മെന്റുകൾ എന്നിവയെക്കുറിച്ച് ചോദിക്കാം.',
-        'ನಮಸ್ಕಾರ! ನಾನು ಮೆಡೋರಾ AI, ನಿಮ್ಮ ಆರೋಗ್ಯ ಸಹಾಯಕ. ನಿಮ್ಮ ಆರೋಗ್ಯ ಹೇಗಿದೆ? ನಿಮ್ಮ ರೋಗಲಕ್ಷಣಗಳು, ಔಷಧಿಗಳ ವೇಳಾಪಟ್ಟಿ ಅಥವಾ ತಪಾಸಣೆ ಬಗ್ಗೆ ಕೇಳಬಹುದು.',
-        'नमस्ते! मैं मेडोरा AI हूँ, आपका स्वास्थ्य साथी। आज आपकी तबियत कैसी है? आप मुझसे लक्षणों, दवा के समय, डॉक्टर अपॉइंटमेंट या प्राथमिक उपचार के बारे में पूछ सकते हैं।',
+        englishGreeting,
+        isGoodMorning ? 'காலை வணக்கம்! நான் உங்களுக்கு எவ்வாறு உதவலாம்?' : 'வணக்கம்! நான் உங்களுக்கு எவ்வாறு உதவலாம்?',
+        isGoodMorning ? 'శుభోదయం! నేను మీకు ఎలా సహాయపడగలను?' : 'నమస్కారం! నేను మీకు ఎలా సహాయపడగలను?',
+        isGoodMorning ? 'സുപ്രഭാതം! ഞാൻ എങ്ങനെ സഹായിക്കണം?' : 'നമസ്കാരം! ഞാൻ എങ്ങനെ സഹായിക്കണം?',
+        isGoodMorning ? 'ಶುಭೋದಯ! ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?' : 'ನಮಸ್ಕಾರ! ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?',
+        isGoodMorning ? 'सुप्रभात! मैं आपकी क्या मदद कर सकता हूँ?' : 'नमस्ते! आज मैं आपकी क्या मदद कर सकता हूँ?',
         currentLang
       );
     }
@@ -263,6 +272,8 @@ export class ConversationEngine {
     if (classification.isEmergency && !customContextResponse) {
       rawResponse = clinicalGuidance.fullFormattedResponse;
       isEmergency = true;
+    } else if (customContextResponse) {
+      isEmergency = false;
     }
 
     // 6. Restore protected values and validate integrity

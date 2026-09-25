@@ -132,11 +132,15 @@ export default function AiAssistantPage() {
           const data = await res.json();
           replyContent = data.reply;
           modelUsed = data.model || selectedModel;
+          const isCasualGreeting = /^(hi|hello|hey|good\s*morning|good\s*afternoon|good\s*evening)\b/i.test(text.trim());
           if (
-            text.toLowerCase().includes('emergency') ||
-            text.toLowerCase().includes('chest pain') ||
-            text.toLowerCase().includes('difficulty breathing') ||
-            text.toLowerCase().includes('மூச்சு')
+            !isCasualGreeting && (
+              text.toLowerCase().includes('emergency') ||
+              text.toLowerCase().includes('chest pain') ||
+              text.toLowerCase().includes('difficulty breathing') ||
+              text.toLowerCase().includes('cannot breathe') ||
+              text.toLowerCase().includes('மூச்சு')
+            )
           ) {
             isEmergency = true;
           }

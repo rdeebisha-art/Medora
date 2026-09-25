@@ -5,40 +5,19 @@ import { useAppStore } from '../store/useAppStore';
 
 export default function ConnectivityStatusIndicator() {
   const { t } = useTranslation();
-  const { isOffline, setOffline, is2GMode } = useAppStore();
-  const [online, setOnline] = useState<boolean>(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const { isOffline, is2GMode } = useAppStore();
   const [showDetails, setShowDetails] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState<string>(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+  const [lastSyncTime, setLastSyncTime] = useState<string>(() =>
+    new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  );
 
   useEffect(() => {
-    const handleOnline = () => {
-      setOnline(true);
-      setOffline(false);
+    if (!isOffline) {
       setLastSyncTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-    };
-
-    const handleOffline = () => {
-      setOnline(false);
-      setOffline(true);
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    // Initial check
-    if (typeof navigator !== 'undefined') {
-      const isCurrentlyOnline = navigator.onLine;
-      setOnline(isCurrentlyOnline);
-      setOffline(!isCurrentlyOnline);
     }
+  }, [isOffline]);
 
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, [setOffline]);
-
-  const effectiveOffline = isOffline || !online;
+  const effectiveOffline = isOffline;
 
   return (
     <div className="w-full relative z-40 transition-all">

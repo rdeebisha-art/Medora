@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
 import {
   Home, Heart, Users, Mic, MoreHorizontal, X, Wifi, WifiOff,
-  Globe, LogOut, User, Settings, HelpCircle, BookOpen, LogIn, ChevronDown
+  Globe, LogOut, User, Settings, HelpCircle, BookOpen, LogIn, ChevronDown, PhoneCall
 } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 import EmergencyOverlay from './EmergencyOverlay';
@@ -216,6 +216,19 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* STRICTLY MINIMAL LIST: ONLY Profile, Settings, FAQ, Help, Login, Sign Out */}
             <nav className="flex-1 py-3 px-3 space-y-1">
+              <Link
+                to="/call-history"
+                onClick={() => setMoreDrawerOpen(false)}
+                className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl text-xs font-bold transition-all ${
+                  location.pathname === '/call-history'
+                    ? 'bg-teal-50 text-teal-800 border border-teal-200'
+                    : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <PhoneCall size={16} className="text-teal-600" />
+                <span>Call History</span>
+              </Link>
+
               <Link
                 to="/profile"
                 onClick={() => setMoreDrawerOpen(false)}

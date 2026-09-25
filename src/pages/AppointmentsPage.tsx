@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
 import { db, Appointment, Doctor, Patient } from '../db/db';
@@ -7,7 +8,7 @@ import DemoDataBadge from '../components/DemoDataBadge';
 import {
   Calendar, Clock, User, Stethoscope, CheckCircle2,
   XCircle, AlertCircle, Plus, ChevronRight, Phone,
-  MapPin, Printer, ArrowLeft, RefreshCw
+  MapPin, Printer, ArrowLeft, RefreshCw, PhoneCall
 } from 'lucide-react';
 
 export default function AppointmentsPage() {
@@ -184,6 +185,13 @@ export default function AppointmentsPage() {
 
           <div className="flex items-center gap-2">
             <DemoDataBadge />
+            <Link
+              to="/call-history"
+              className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2.5 rounded-xl border border-slate-300 transition-colors"
+            >
+              <PhoneCall size={14} className="text-teal-700" />
+              <span>Call History</span>
+            </Link>
             <button
               onClick={() => setShowBookModal(true)}
               className="flex items-center gap-1.5 bg-[#0F766E] hover:bg-[#115E59] text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-sm transition-all active:scale-95"

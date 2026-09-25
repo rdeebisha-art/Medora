@@ -323,7 +323,7 @@ export const SmartReferralTracker: React.FC<SmartReferralTrackerProps> = ({
                         category: 'DOCTOR',
                         targetUserId: activeReferral.selectedDoctorId || 'DOC-01',
                         location: activeReferral.selectedHospitalName,
-                        emergency: activeReferral.priority === 'Emergency' || activeReferral.priority === 'Urgent',
+                        emergency: activeReferral.priority === 'Immediate' || activeReferral.priority === 'Urgent',
                       })}
                       className="text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
                     >
