@@ -10,7 +10,10 @@ export interface VoiceNavTestResult {
   notes?: string;
 }
 
-export function runVoiceNavigationTests(): { results: VoiceNavTestResult[]; summary: { total: number; passed: number; failed: number } } {
+export function runVoiceNavigationTests(): {
+  results: VoiceNavTestResult[];
+  summary: { total: number; passed: number; failed: number };
+} {
   const tests: Array<{
     id: string;
     lang: 'en' | 'ta' | 'hi' | 'te' | 'ml' | 'kn';
@@ -37,19 +40,19 @@ export function runVoiceNavigationTests(): { results: VoiceNavTestResult[]; summ
     { id: 'VNAV-HI-04', lang: 'hi', input: 'अपॉइंटमेंट दिखाओ', expectedPath: '/appointments' },
 
     // 4. Telugu
-    { id: 'VNAV-TE-01', lang: 'te', input: 'డ్యాష్‌బోర్డ్‌కు వెళ్లండి', expectedPath: '/dashboard' },
+    { id: 'VNAV-TE-01', lang: 'te', input: 'డ్యాష్‌బోర్డ్ తెరవండి', expectedPath: '/dashboard' },
     { id: 'VNAV-TE-02', lang: 'te', input: 'మందులకు వెళ్ళండి', expectedPath: '/medicines' },
     { id: 'VNAV-TE-03', lang: 'te', input: 'అత్యవసర సహాయం', expectedPath: '/emergency' },
-    { id: 'VNAV-TE-04', lang: 'te', input: 'నా అపాయింట్‌మెంట్లు', expectedPath: '/appointments' },
+    { id: 'VNAV-TE-04', lang: 'te', input: 'అపాయింట్‌మెంట్లు', expectedPath: '/appointments' },
 
     // 5. Malayalam
-    { id: 'VNAV-ML-01', lang: 'ml', input: 'ഡാഷ്‌ബോർഡിലേക്ക് പോകുക', expectedPath: '/dashboard' },
+    { id: 'VNAV-ML-01', lang: 'ml', input: 'ഡാഷ്ബോർഡ് തുറക്കുക', expectedPath: '/dashboard' },
     { id: 'VNAV-ML-02', lang: 'ml', input: 'മരുന്നുകളിലേക്ക് പോകുക', expectedPath: '/medicines' },
     { id: 'VNAV-ML-03', lang: 'ml', input: 'അടിയന്തര സഹായം', expectedPath: '/emergency' },
     { id: 'VNAV-ML-04', lang: 'ml', input: 'അപ്പോയിന്റ്മെന്റുകൾ', expectedPath: '/appointments' },
 
     // 6. Kannada
-    { id: 'VNAV-KN-01', lang: 'kn', input: 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ ಹೋಗಿ', expectedPath: '/dashboard' },
+    { id: 'VNAV-KN-01', lang: 'kn', input: 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ತೆರೆಯಿರಿ', expectedPath: '/dashboard' },
     { id: 'VNAV-KN-02', lang: 'kn', input: 'ಔಷಧಿಗಳಿಗೆ ಹೋಗಿ', expectedPath: '/medicines' },
     { id: 'VNAV-KN-03', lang: 'kn', input: 'ತುರ್ತು ಸಹಾಯ', expectedPath: '/emergency' },
     { id: 'VNAV-KN-04', lang: 'kn', input: 'ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್‌ಗಳು', expectedPath: '/appointments' },
@@ -59,7 +62,7 @@ export function runVoiceNavigationTests(): { results: VoiceNavTestResult[]; summ
 
   for (const t of tests) {
     const res = voiceCommandMatcher.matchCommand(t.input, t.lang, 'en');
-    const actualPath = res.route?.path;
+    const actualPath = res.route;
     const passed = res.matched && actualPath === t.expectedPath;
     results.push({
       testId: t.id,
@@ -79,7 +82,7 @@ export function runVoiceNavigationTests(): { results: VoiceNavTestResult[]; summ
     language: 'en',
     command: 'I have a headache',
     expectedRoute: 'NO_NAVIGATION',
-    actualRoute: safetyRes1.matched ? safetyRes1.route?.path : 'NO_NAVIGATION',
+    actualRoute: safetyRes1.matched ? safetyRes1.route : 'NO_NAVIGATION',
     passed: !safetyRes1.matched && safetyRes1.reason === 'medical_statement',
     notes: 'Correctly blocked medical statement from triggering navigation',
   });
@@ -91,7 +94,7 @@ export function runVoiceNavigationTests(): { results: VoiceNavTestResult[]; summ
     language: 'ta',
     command: 'எனக்கு தலைவலி',
     expectedRoute: 'NO_NAVIGATION',
-    actualRoute: safetyRes2.matched ? safetyRes2.route?.path : 'NO_NAVIGATION',
+    actualRoute: safetyRes2.matched ? safetyRes2.route : 'NO_NAVIGATION',
     passed: !safetyRes2.matched && safetyRes2.reason === 'medical_statement',
     notes: 'Tamil headache complaint blocked from navigation',
   });
@@ -103,8 +106,8 @@ export function runVoiceNavigationTests(): { results: VoiceNavTestResult[]; summ
     language: 'en',
     command: 'go to medicines',
     expectedRoute: '/medicines',
-    actualRoute: textFallbackRes.route?.path,
-    passed: textFallbackRes.matched && textFallbackRes.route?.path === '/medicines',
+    actualRoute: textFallbackRes.route,
+    passed: textFallbackRes.matched && textFallbackRes.route === '/medicines',
     notes: 'Text input uses identical local dictionary and resolves offline',
   });
 

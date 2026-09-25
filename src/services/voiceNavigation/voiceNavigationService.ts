@@ -1,28 +1,22 @@
-import { speechRecognitionService } from '../voice/speechRecognitionService';
+import { voiceRecognitionService } from './voiceRecognitionService';
 import { voiceCommandMatcher, CommandMatchResult } from './voiceCommandMatcher';
-import { SupportedLanguageCode } from '../../data/languages';
+import {
+  VoiceNavState,
+  VoiceNavEvent,
+  VoiceNavListener,
+  VoiceNavigationLanguage,
+  VoiceNavLangCode,
+} from './voiceNavigationTypes';
+
+export type {
+  VoiceNavState,
+  VoiceNavEvent,
+  VoiceNavListener,
+  VoiceNavigationLanguage,
+  VoiceNavLangCode,
+};
+import { langCodeToBcp47 } from './voiceNavigationUtils';
 import { SupportedVoiceNavLang } from './voiceCommandDictionary';
-
-export type VoiceNavState =
-  | 'IDLE'
-  | 'LISTENING'
-  | 'PROCESSING'
-  | 'COMMAND_RECOGNIZED'
-  | 'NAVIGATING'
-  | 'NOT_UNDERSTOOD'
-  | 'MICROPHONE_DENIED'
-  | 'UNSUPPORTED'
-  | 'OFFLINE_UNSUPPORTED';
-
-export interface VoiceNavEvent {
-  state: VoiceNavState;
-  transcript: string;
-  feedbackText: string;
-  matchResult?: CommandMatchResult;
-  isOffline: boolean;
-}
-
-export type VoiceNavListener = (event: VoiceNavEvent) => void;
 
 class VoiceNavigationService {
   private state: VoiceNavState = 'IDLE';
@@ -56,7 +50,7 @@ class VoiceNavigationService {
     this.state = event.state;
     this.transcript = event.transcript;
     this.feedbackText = event.feedbackText;
-    this.lastMatchResult = event.matchResult;
+    this.lastMatchResult = event.matchResult as CommandMatchResult | undefined;
 
     for (const listener of this.listeners) {
       try {
@@ -67,16 +61,8 @@ class VoiceNavigationService {
     }
   }
 
-  public getBcp47Code(lang: SupportedVoiceNavLang): SupportedLanguageCode {
-    switch (lang) {
-      case 'ta': return 'ta-IN';
-      case 'hi': return 'hi-IN';
-      case 'te': return 'te-IN';
-      case 'ml': return 'ml-IN';
-      case 'kn': return 'kn-IN';
-      case 'en':
-      default: return 'en-IN';
-    }
+  public getBcp47Code(lang: SupportedVoiceNavLang): VoiceNavigationLanguage {
+    return langCodeToBcp47(lang);
   }
 
   /**
@@ -95,11 +81,12 @@ class VoiceNavigationService {
     const isOffline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
 
     // Check browser speech recognition support
-    if (!speechRecognitionService.isSupported()) {
+    if (!voiceRecognitionService.isSupported()) {
       this.emit({
         state: 'UNSUPPORTED',
         transcript: '',
-        feedbackText: 'Voice navigation is not supported on this browser. You can type your command below.',
+        feedbackText:
+          'Voice navigation is not supported on this browser. You can type your command below.',
       });
       return false;
     }
@@ -122,7 +109,7 @@ class VoiceNavigationService {
       feedbackText: 'Listening... Say where you want to go (e.g. "Open medicines")',
     });
 
-    const success = speechRecognitionService.startListening(bcpCode, {
+    const success = voiceRecognitionService.startListening(bcpCode, {
       onStart: () => {
         this.emit({
           state: 'LISTENING',
@@ -145,18 +132,21 @@ class VoiceNavigationService {
         if (errorCode === 'not-allowed' || errorCode === 'permission-denied') {
           this.emit({
             state: 'MICROPHONE_DENIED',
-            feedbackText: 'Microphone permission denied. Please enable microphone or type your command.',
+            feedbackText:
+              'Microphone permission denied. Please enable microphone or type your command.',
           });
         } else if (errorCode === 'network') {
           if (isOffline) {
             this.emit({
               state: 'OFFLINE_UNSUPPORTED',
-              feedbackText: 'Offline voice recognition is not available on this browser. Use the menu or type your command.',
+              feedbackText:
+                'Offline voice recognition is not available on this browser. Use the menu or type your command.',
             });
           } else {
             this.emit({
               state: 'NOT_UNDERSTOOD',
-              feedbackText: 'Network interruption during voice recognition. You can type your command below.',
+              feedbackText:
+                'Network interruption during voice recognition. You can type your command below.',
             });
           }
         } else if (errorCode === 'no-speech') {
@@ -193,6 +183,8 @@ class VoiceNavigationService {
     const result = voiceCommandMatcher.matchCommand(text, forcedLang, appLang);
 
     if (result.matched && result.route) {
+      const destinationPath = result.route;
+
       this.emit({
         state: 'COMMAND_RECOGNIZED',
         transcript: text,
@@ -206,7 +198,7 @@ class VoiceNavigationService {
           state: 'NAVIGATING',
           feedbackText: result.feedbackText,
         });
-        onNavigate(result.route!.path);
+        onNavigate(destinationPath);
 
         // Reset to idle after navigation
         setTimeout(() => {
@@ -248,7 +240,7 @@ class VoiceNavigationService {
       clearTimeout(this.navigationTimer);
       this.navigationTimer = null;
     }
-    speechRecognitionService.stopListening();
+    voiceRecognitionService.stopListening();
     this.emit({ state: 'IDLE' });
   }
 

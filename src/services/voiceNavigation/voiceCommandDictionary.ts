@@ -1,774 +1,1123 @@
+import {
+  VoiceNavigationIntent,
+  VoiceNavigationLanguage,
+  VoiceNavLangCode,
+  VoiceCommand,
+} from './voiceNavigationTypes';
+
+export type SupportedVoiceNavLang = VoiceNavLangCode;
+
 export interface RoutePhrases {
   routeId: string;
+  intent: VoiceNavigationIntent;
   phrases: string[];
+  keywords?: string[];
 }
 
-export type SupportedVoiceNavLang = 'en' | 'ta' | 'hi' | 'te' | 'ml' | 'kn';
-
-export const VOICE_COMMAND_DICTIONARY: Record<SupportedVoiceNavLang, RoutePhrases[]> = {
+/**
+ * Multilingual Voice Command Dictionary covering English, Tamil, Hindi, Telugu, Malayalam, and Kannada.
+ * Stored locally in the application bundle — 100% offline-ready, no cloud dependencies.
+ */
+export const VOICE_COMMAND_DICTIONARY: Record<VoiceNavLangCode, RoutePhrases[]> = {
   // ─── 1. ENGLISH (en-IN) ──────────────────────────────────────────────────────────
   en: [
     {
       routeId: 'dashboard',
+      intent: 'DASHBOARD',
       phrases: [
-        'open dashboard', 'go to dashboard', 'show dashboard', 'dashboard', 'home',
-        'main page', 'home page', 'open home', 'go to home', 'start page', 'take me home',
+        'open dashboard', 'go to dashboard', 'show dashboard', 'open home', 'go home',
+        'dashboard', 'home', 'main page', 'home page', 'start page', 'take me home',
         'medora home', 'show home', 'navigate to dashboard', 'back to dashboard'
       ],
+      keywords: ['dashboard', 'home', 'main'],
     },
     {
       routeId: 'health',
+      intent: 'MY_HEALTH',
       phrases: [
         'open my health', 'go to my health', 'show my health', 'my health', 'health overview',
         'health summary', 'open health', 'go to health', 'my vitals', 'health status',
         'show health', 'patient health', 'health blueprint', 'my health blueprint'
       ],
+      keywords: ['health', 'vitals', 'overview'],
     },
     {
       routeId: 'family',
+      intent: 'FAMILY_HEALTH',
       phrases: [
         'open family', 'go to family', 'show family', 'family', 'family health',
         'family members', 'family page', 'open family members', 'show family members',
         'go to family health', 'my family', 'household health', 'family profile'
       ],
+      keywords: ['family', 'members', 'household'],
     },
     {
       routeId: 'medicines',
+      intent: 'MEDICINES',
       phrases: [
-        'open medicines', 'go to medicines', 'show medicines', 'open my medicines',
-        'medicines', 'my medicines', 'medicine reminder', 'medicine reminders',
+        'go to medicines', 'open medicines', 'show medicines', 'open medication',
+        'show my medicines', 'medicine reminders', 'open my medicines',
+        'medicines', 'my medicines', 'medicine reminder',
         'pills', 'daily medicines', 'show pills', 'take medicines', 'prescriptions',
         'medicine schedule', 'open reminder', 'show medicine schedule', 'medication schedule'
       ],
+      keywords: ['medicine', 'medicines', 'pill', 'pills', 'reminder', 'prescription', 'medication'],
     },
     {
       routeId: 'records',
+      intent: 'MEDICAL_RECORDS',
       phrases: [
         'open records', 'go to records', 'show records', 'medical records',
         'health records', 'past records', 'patient records', 'open medical records',
         'go to medical records', 'clinical history', 'my records', 'past prescriptions'
       ],
+      keywords: ['records', 'history', 'documents'],
     },
     {
       routeId: 'report_scanner',
+      intent: 'REPORT_SCANNER',
       phrases: [
         'open reports', 'go to reports', 'show reports', 'medical reports',
         'report scanner', 'scan report', 'upload report', 'scan medical report',
         'lab reports', 'blood test report', 'open report scanner', 'go to report scanner',
         'health reports', 'document scanner', 'scan document'
       ],
+      keywords: ['report', 'reports', 'scanner', 'scan'],
     },
     {
       routeId: 'xray_viewer',
+      intent: 'XRAY',
       phrases: [
         'open xray', 'go to xray', 'open x-ray', 'go to x-ray', 'show xray',
         'x-ray viewer', 'xray viewer', 'medical scans', 'chest scan', 'xray images',
         'medical images', 'open scans', 'scan viewer', 'camera scan', 'xray report'
       ],
+      keywords: ['xray', 'x-ray', 'scan'],
     },
     {
       routeId: 'health_tests',
+      intent: 'HEALTH_TESTS',
       phrases: [
         'open health tests', 'go to health tests', 'show health tests', 'health tests',
         'lab tests', 'blood pressure test', 'blood sugar test', 'tests', 'my tests',
         'vitals check', 'diagnostic tests', 'pending tests', 'view tests'
       ],
+      keywords: ['tests', 'vitals', 'diagnostic', 'blood pressure'],
     },
     {
       routeId: 'vaccinations',
+      intent: 'VACCINATIONS',
       phrases: [
         'open vaccinations', 'go to vaccinations', 'show vaccinations', 'vaccination',
         'vaccines', 'vaccine schedule', 'immunization', 'polio drops', 'due vaccines',
         'vaccine tracker', 'child vaccination', 'my vaccines', 'open immunization'
       ],
+      keywords: ['vaccine', 'vaccines', 'vaccination', 'immunization'],
     },
     {
       routeId: 'ai_assistant',
+      intent: 'AI_ASSISTANT',
       phrases: [
         'open ai', 'go to ai', 'show ai', 'ai assistant', 'medora ai',
         'ai health assistant', 'talk to ai', 'chat with ai', 'ask medora',
         'speak to ai', 'open chatbot', 'health assistant', 'symptom ai'
       ],
+      keywords: ['ai', 'assistant', 'chatbot', 'ask medora'],
     },
     {
       routeId: 'doctor_portal',
+      intent: 'DOCTOR_CONSULTATION',
       phrases: [
         'open doctor', 'go to doctor', 'show doctor', 'doctor consultation',
         'doctor portal', 'consult doctor', 'talk to doctor', 'call doctor',
         'find doctor', 'connect to doctor', 'clinician portal', 'rural doctor'
       ],
+      keywords: ['doctor', 'consult', 'consultation'],
     },
     {
       routeId: 'doctor_summary',
+      intent: 'DOCTOR_SUMMARY',
       phrases: [
         'open doctor summary', 'go to doctor summary', 'show doctor summary',
         'doctor summary', 'clinical summary', 'consultation summary', 'doctor handoff',
         'handoff summary', 'medical summary', 'patient summary'
       ],
+      keywords: ['summary', 'handoff', 'clinical summary'],
     },
     {
       routeId: 'appointments',
+      intent: 'APPOINTMENTS',
       phrases: [
         'open appointments', 'go to appointments', 'show appointments',
         'show my appointments', 'appointments', 'book appointment', 'doctor appointments',
         'schedule visit', 'clinic visit', 'upcoming appointments', 'next consultation'
       ],
-    },
-    {
-      routeId: 'call_history',
-      phrases: [
-        'open call history', 'go to call history', 'show call history', 'call history',
-        'call logs', 'recent calls', 'voice calls', 'call records', 'doctor calls',
-        'my calls', 'webrtc calls', 'phone history'
-      ],
+      keywords: ['appointment', 'appointments', 'visit', 'booking'],
     },
     {
       routeId: 'emergency',
+      intent: 'EMERGENCY',
       phrases: [
         'open emergency', 'go to emergency', 'show emergency', 'emergency',
-        'emergency help', 'urgent care', 'ambulance help', 'sos', 'emergency mode',
-        'immediate help', 'critical help', 'emergency page', 'need emergency'
+        'emergency help', 'help me', 'call ambulance', 'sos', 'medical emergency',
+        'urgent help', 'emergency hotline', 'hospital emergency', 'accident'
       ],
+      keywords: ['emergency', 'sos', 'ambulance', 'urgent'],
     },
     {
       routeId: 'hospitals',
+      intent: 'NEARBY_HOSPITALS',
       phrases: [
         'open hospitals', 'go to hospitals', 'show hospitals', 'nearby hospitals',
-        'hospitals', 'find hospital', 'nearest clinic', 'health center', 'phc',
-        'chc', 'government hospital', 'district hospital', 'clinic directory'
+        'find hospitals', 'nearest hospital', 'primary health center', 'phc',
+        'community health center', 'hospital directory', 'government hospital'
       ],
-    },
-    {
-      routeId: 'transport',
-      phrases: [
-        'open transport', 'go to transport', 'show transport', 'ambulance transport',
-        'ambulance', 'emergency transport', 'call ambulance', 'find vehicle',
-        'hospital transit', 'auto ambulance', 'transit guide'
-      ],
+      keywords: ['hospital', 'hospitals', 'clinic', 'phc'],
     },
     {
       routeId: 'schemes',
+      intent: 'GOVERNMENT_SCHEMES',
       phrases: [
         'open schemes', 'go to schemes', 'show schemes', 'government schemes',
-        'schemes', 'ayushman bharat', 'health insurance', 'govt schemes',
-        'free treatment', 'scheme eligibility', 'pmjay'
+        'health schemes', 'ayushman bharat', 'insurance scheme', 'pmjay',
+        'free medical scheme', 'welfare schemes', 'government insurance'
       ],
+      keywords: ['scheme', 'schemes', 'ayushman', 'pmjay', 'insurance'],
     },
     {
       routeId: 'education',
+      intent: 'HEALTH_EDUCATION',
       phrases: [
-        'open education', 'go to education', 'show education', 'health education',
-        'education', 'health tips', 'health guides', 'first aid guide',
-        'wellness tips', 'nutrition guide', 'prevention tips'
+        'open health education', 'go to education', 'show education', 'health education',
+        'health guides', 'medical advice', 'disease guide', 'hygiene tips',
+        'health tutorials', 'preventive care', 'first aid guide'
       ],
+      keywords: ['education', 'guide', 'tutorial', 'learning'],
     },
     {
       routeId: 'maternity',
+      intent: 'PREGNANCY',
       phrases: [
-        'open maternity', 'go to maternity', 'maternity care', 'pregnancy',
-        'pregnancy care', 'pregnant mother', 'maternal health', 'antenatal care',
-        'expecting mother', 'show maternity'
+        'open maternity', 'go to maternity', 'show maternity', 'maternity care',
+        'pregnancy', 'pregnancy care', 'pregnant woman', 'antenatal care',
+        'mother care', 'maternal health', 'trimester guide', 'new mother care'
       ],
+      keywords: ['maternity', 'pregnancy', 'pregnant', 'mother'],
     },
     {
       routeId: 'newborn',
+      intent: 'NEWBORN_CARE',
       phrases: [
-        'open newborn', 'go to newborn', 'newborn care', 'baby care',
-        'infant care', 'new born', 'postnatal care', 'baby health', 'show newborn'
+        'open newborn', 'go to newborn', 'show newborn', 'newborn care',
+        'baby care', 'infant care', 'new baby', 'baby feeding', 'infant health'
       ],
+      keywords: ['newborn', 'infant', 'baby'],
+    },
+    {
+      routeId: 'childcare',
+      intent: 'CHILD_CARE',
+      phrases: [
+        'open child care', 'go to child care', 'show child care', 'child care',
+        'children health', 'pediatric care', 'kids health', 'child growth'
+      ],
+      keywords: ['child', 'children', 'kids', 'pediatric'],
     },
     {
       routeId: 'elderly',
+      intent: 'ELDERLY_CARE',
       phrases: [
-        'open elderly', 'go to elderly', 'elderly care', 'senior citizen',
-        'elder care', 'grandparents health', 'geriatric care', 'show elderly'
+        'open elderly', 'go to elderly', 'show elderly', 'elderly care',
+        'senior citizen', 'grandparents health', 'geriatric care', 'old age care'
       ],
+      keywords: ['elderly', 'senior', 'geriatric', 'grandparents'],
     },
     {
       routeId: 'sms',
+      intent: 'SMS_COMMUNICATION',
       phrases: [
         'open sms', 'go to sms', 'show sms', 'sms communication', 'send sms',
-        'messages', 'text message', 'offline sms', 'sms outbox'
+        'offline messaging', 'text messages', 'sms alerts'
       ],
+      keywords: ['sms', 'message', 'messaging', 'text'],
     },
     {
       routeId: 'ussd',
+      intent: 'USSD',
       phrases: [
-        'open ussd', 'go to ussd', 'show ussd', 'ussd', 'basic phone',
-        'button phone', 'feature phone', 'dial 123', 'star 123 hash'
+        'open ussd', 'go to ussd', 'show ussd', 'ussd code', 'basic phone',
+        'star 123 hash', 'feature phone mode', 'offline phone'
       ],
-    },
-    {
-      routeId: 'village',
-      phrases: [
-        'open village', 'go to village', 'show village', 'village dashboard',
-        'community health', 'village data', 'asha dashboard', 'panchayat health'
-      ],
+      keywords: ['ussd', 'feature phone', 'star 123 hash'],
     },
     {
       routeId: 'settings',
+      intent: 'SETTINGS',
       phrases: [
         'open settings', 'go to settings', 'show settings', 'settings',
-        'preferences', 'app settings', 'configuration', 'change settings'
+        'app settings', 'preferences', 'configure', 'change settings'
       ],
+      keywords: ['settings', 'preferences', 'options'],
     },
     {
-      routeId: 'profile',
+      routeId: 'language',
+      intent: 'LANGUAGE',
       phrases: [
-        'open profile', 'go to profile', 'show profile', 'profile', 'my profile',
-        'user account', 'account settings', 'personal details'
+        'open language', 'go to language', 'show language', 'change language',
+        'language settings', 'language bridge', 'switch language', 'select language'
       ],
-    },
-    {
-      routeId: 'help',
-      phrases: [
-        'open help', 'go to help', 'show help', 'help', 'support', 'user guide',
-        'how to use', 'help and support', 'need help'
-      ],
-    },
-    {
-      routeId: 'faq',
-      phrases: [
-        'open faq', 'go to faq', 'show faq', 'faq', 'frequently asked questions',
-        'questions and answers', 'common questions'
-      ],
+      keywords: ['language', 'bridge', 'translate'],
     },
   ],
 
-  // ─── 2. TAMIL (ta-IN) ──────────────────────────────────────────────────────────
+  // ─── 2. TAMIL (ta-IN) ────────────────────────────────────────────────────────────
   ta: [
     {
       routeId: 'dashboard',
+      intent: 'DASHBOARD',
       phrases: [
-        'முகப்பு', 'முகப்புக்கு செல்லவும்', 'முகப்பு பக்கம்', 'டாஷ்போர்டு',
-        'டாஷ்போர்டைத் திறக்கவும்', 'டாஷ்போர்டுக்கு செல்லுங்கள்', 'முகப்புப் பக்கம் திறக்க',
-        'வீட்டுப் பக்கம்', 'ஆரம்ப பக்கம்', 'மெடோரா முகப்பு'
+        'டாஷ்போர்டை திற', 'டாஷ்போர்டுக்கு செல்', 'முகப்பை திற', 'முகப்புக்கு செல்',
+        'டாஷ்போர்டு', 'முகப்பு', 'முகப்பு பக்கம்', 'முதல் பக்கம்',
+        'மெடோரா முகப்பு', 'முகப்பிற்கு போ'
       ],
-    },
-    {
-      routeId: 'medicines',
-      phrases: [
-        'மருந்துகளுக்கு செல்லுங்கள்', 'மருந்துகளைத் திறக்கவும்', 'மருந்துகள்',
-        'மருந்து பட்டியல்', 'மருந்து நினைவூட்டல்', 'மருந்து அட்டவணை',
-        'மருந்து மாத்திரை', 'மாத்திரைகள்', 'என் மருந்துகள்', 'மருந்துகளைக் காட்டு',
-        'மருந்துகள் பக்கம்', 'மருந்து நேரம்'
-      ],
-    },
-    {
-      routeId: 'emergency',
-      phrases: [
-        'அவசரம்', 'அவசர உதவி', 'அவசர சிகிச்சைக்கு செல்லவும்', 'அவசர பிரிவு',
-        'அவசர பக்கம்', 'ஆம்புலன்ஸ் உதவி', 'அவசர அழைப்பு', 'உடனடி உதவி',
-        'அவசர சிகிச்சை', 'அவசர உதவிக்கு செல்லுங்கள்'
-      ],
-    },
-    {
-      routeId: 'family',
-      phrases: [
-        'குடும்பம்', 'குடும்ப நலம்', 'குடும்ப உறுப்பினர்கள்', 'குடும்பப் பக்கம்',
-        'குடும்ப பக்கத்திற்கு செல்லுங்கள்', 'குடும்ப நலம் திறக்க', 'குடும்ப உறுப்பினர்கள் பார்க்க'
-      ],
+      keywords: ['முகப்பு', 'டாஷ்போர்டு'],
     },
     {
       routeId: 'health',
+      intent: 'MY_HEALTH',
       phrases: [
-        'என் உடல்நலம்', 'என் ஆரோக்கியம்', 'உடல்நல பக்கம்', 'ஆரோக்கிய சுருக்கம்',
-        'உடல்நலம் பார்க்க', 'என் சுகாதார விவரம்'
+        'என் உடல்நலத்தை காட்டு', 'என் உடல்நலம்', 'உடல்நல விவரம்', 'என் நலம்',
+        'உடல்நலம்', 'என் ஆரோக்கியம்', 'உடல்நிலை காட்டு', 'என் மருத்துவ நலம்'
       ],
+      keywords: ['உடல்நலம்', 'ஆரோக்கியம்'],
     },
     {
-      routeId: 'doctor_portal',
+      routeId: 'family',
+      intent: 'FAMILY_HEALTH',
       phrases: [
-        'மருத்துவர்', 'மருத்துவரை அணுகவும்', 'மருத்துவர் போர்டல்', 'மருத்துவ ஆலோசனை',
-        'டாக்டரை பார்க்க', 'டாக்டர் போர்டல்', 'மருத்துவரிடம் பேச'
+        'குடும்ப நலம்', 'குடும்ப ஆரோக்கியம்', 'குடும்ப உறுப்பினர்கள்',
+        'என் குடும்பம்', 'குடும்ப பக்கம்', 'குடும்ப நலம் திற'
       ],
+      keywords: ['குடும்பம்', 'குடும்ப நலம்'],
     },
     {
-      routeId: 'doctor_summary',
+      routeId: 'medicines',
+      intent: 'MEDICINES',
       phrases: [
-        'மருத்துவ சுருக்கம்', 'டாக்டர் சம்மரி', 'மருத்துவ அறிக்கை சுருக்கம்',
-        'டாக்டர் சுருக்கம் திறக்க'
+        'மருந்துகளுக்கு செல்', 'மருந்துகளை திற', 'மருந்துகளை காட்டு',
+        'என் மருந்துகளை காட்டு', 'மருந்து நினைவூட்டல்கள்',
+        'மருந்துகளுக்கு செல்லுங்கள்', 'மருந்துகள்', 'என் மருந்துகள்',
+        'மருந்து நினைவூட்டல்', 'மருந்து பட்டியல்', 'மாத்திரைகள்',
+        'தினசரி மருந்துகள்'
       ],
-    },
-    {
-      routeId: 'appointments',
-      phrases: [
-        'சந்திப்புகள்', 'மருத்துவ சந்திப்புகள்', 'அப்பாயிண்ட்மெண்ட்', 'அப்பாயிண்ட்மெண்ட் பக்கம்',
-        'முன்பதிவு', 'சந்திப்பு முன்பதிவு', 'சந்திப்புகளைக் காட்டு'
-      ],
+      keywords: ['மருந்து', 'மருந்துகள்', 'மாத்திரை'],
     },
     {
       routeId: 'records',
+      intent: 'MEDICAL_RECORDS',
       phrases: [
-        'மருத்துவ பதிவுகள்', 'சுகாதார பதிவுகள்', 'பதிவுகள்', 'பழைய பதிவுகள்',
-        'மருத்துவ ஆவணங்கள்', 'பதிவுகள் திறக்க'
+        'மருத்துவ பதிவுகள்', 'பழைய பதிவுகள்', 'மருத்துவ ஆவணங்கள்',
+        'என் மருத்துவ பதிவுகள்', 'பதிவுகள் பக்கம்', 'மருத்துவ வரலாறு'
       ],
+      keywords: ['பதிவுகள்', 'ஆவணங்கள்'],
     },
     {
       routeId: 'report_scanner',
+      intent: 'REPORT_SCANNER',
       phrases: [
-        'மருத்துவ அறிக்கைகள்', 'அறிக்கையை ஸ்கேன் செய்', 'ரிப்போர்ட் ஸ்கேனர்',
-        'அறிக்கைகள்', 'பரிசோதனை அறிக்கை', 'ஸ்கேன் பக்கம்', 'லேப் ரிப்போர்ட்'
+        'அறிக்கை ஸ்கேனர்', 'மருத்துவ அறிக்கை', 'ஸ்கேன் செய்', 'அறிக்கையை ஸ்கேன் செய்',
+        'இரத்த பரிசோதனை அறிக்கை', 'ஆய்வக அறிக்கை', 'அறிக்கை பதிவேற்று'
       ],
+      keywords: ['அறிக்கை', 'ஸ்கேனர்'],
     },
     {
       routeId: 'xray_viewer',
+      intent: 'XRAY',
       phrases: [
-        'எக்ஸ்-ரே', 'எக்ஸ்ரே பார்க்க', 'ஸ்கேன் படங்கள்', 'எக்ஸ்ரே படம்',
-        'எக்ஸ்-ரே திறக்க'
+        'எக்ஸ்-ரே', 'எக்ஸ்ரே', 'ஸ்கேன் படம்', 'எக்ஸ்ரே பார்',
+        'எக்ஸ்-ரே படங்கள்', 'மார்பு எக்ஸ்ரே'
       ],
+      keywords: ['எக்ஸ்ரே', 'எக்ஸ்-ரே', 'ஸ்கேன்'],
     },
     {
       routeId: 'health_tests',
+      intent: 'HEALTH_TESTS',
       phrases: [
-        'ஆரோக்கிய பரிசோதனை', 'ரத்தப் பரிசோதனை', 'பரிசோதனைகள்', 'பரிசோதனை பார்க்க',
-        'சுகாதார சோதனைகள்', 'ரத்த அழுத்தம் சோதனை'
+        'ஆரோக்கிய பரிசோதனைகள்', 'பரிசோதனைகள்', 'இரத்த அழுத்த பரிசோதனை',
+        'சர்க்கரை அளவு', 'மருத்துவ சோதனைகள்', 'சோதனை முடிவுகள்'
       ],
+      keywords: ['பரிசோதனை', 'சோதனை'],
     },
     {
       routeId: 'vaccinations',
+      intent: 'VACCINATIONS',
       phrases: [
-        'தடுப்பூசி', 'தடுப்பூசிகள்', 'தடுப்பூசி அட்டவணை', 'தடுப்பூசி விவரம்',
-        'போலியோ சொட்டு மருந்து'
+        'தடுப்பூசி', 'தடுப்பூசி அட்டவணை', 'குழந்தை தடுப்பூசி',
+        'போலியோ சொட்டு மருந்து', 'தடுப்பூசிகள்', 'தடுப்பூசி நிலவரம்'
       ],
+      keywords: ['தடுப்பூசி', 'தடுப்பூசிகள்'],
     },
     {
       routeId: 'ai_assistant',
+      intent: 'AI_ASSISTANT',
       phrases: [
-        'செயற்கை நுண்ணறிவு', 'மெடோரா ஏஐ', 'ஏஐ உதவியாளர்', 'ஏஐ பேசுங்கள்',
-        'மெடோராவுடன் பேசுங்கள்', 'ஏஐ உதவி'
+        'மெடோரா AI', 'AI உதவியாளர்', 'AI உடன் பேசு',
+        'செயற்கை நுண்ணறிவு', 'மருத்துவ உதவியாளர்'
       ],
+      keywords: ['AI', 'உதவியாளர்'],
+    },
+    {
+      routeId: 'doctor_portal',
+      intent: 'DOCTOR_CONSULTATION',
+      phrases: [
+        'மருத்துவர் ஆலோசனை', 'மருத்துவரை பார்', 'மருத்துவரிடம் பேசு',
+        'மருத்துவர் போர்ட்டல்', 'டாக்டரிடம் பேசு'
+      ],
+      keywords: ['மருத்துவர்', 'டாக்டர்'],
+    },
+    {
+      routeId: 'doctor_summary',
+      intent: 'DOCTOR_SUMMARY',
+      phrases: [
+        'மருத்துவ சுருக்கம்', 'மருத்துவர் சுருக்கம்', 'மருத்துவ குறிப்பு'
+      ],
+      keywords: ['சுருக்கம்', 'குறிப்பு'],
+    },
+    {
+      routeId: 'appointments',
+      intent: 'APPOINTMENTS',
+      phrases: [
+        'மருத்துவ சந்திப்புகள்', 'சந்திப்புகள்', 'முன்பதிவு',
+        'மருத்துவர் சந்திப்பு', 'சந்திப்பு பதிவு செய்'
+      ],
+      keywords: ['சந்திப்பு', 'முன்பதிவு'],
+    },
+    {
+      routeId: 'emergency',
+      intent: 'EMERGENCY',
+      phrases: [
+        'அவசரநிலையை திற', 'அவசர உதவிக்கு செல்', 'அவசர உதவி',
+        'அவசரநிலையை காட்டு', 'ஆம்புலன்ஸ்', 'அவசர சிகிச்சை',
+        'அவசர அழைப்பு', 'உடனடி உதவி'
+      ],
+      keywords: ['அவசரம்', 'ஆம்புலன்ஸ்'],
     },
     {
       routeId: 'hospitals',
+      intent: 'NEARBY_HOSPITALS',
       phrases: [
-        'மருத்துவமனைகள்', 'அருகிலுள்ள மருத்துவமனை', 'ஆஸ்பத்திரி',
-        'அரசு மருத்துவமனை', 'ஆரம்ப சுகாதார நிலையம்'
+        'அருகிலுள்ள மருத்துவமனைகள்', 'மருத்துவமனை', 'அரசு மருத்துவமனை',
+        'ஆரம்ப சுகாதார நிலையம்', 'கிளினிக்'
       ],
-    },
-    {
-      routeId: 'transport',
-      phrases: [
-        'ஆம்புலன்ஸ்', 'போக்குவரத்து', 'ஆம்புலன்ஸ் அழைக்க', 'அவசர வாகனம்'
-      ],
+      keywords: ['மருத்துவமனை', 'சுகாதார நிலையம்'],
     },
     {
       routeId: 'schemes',
+      intent: 'GOVERNMENT_SCHEMES',
       phrases: [
-        'அரசு திட்டங்கள்', 'சுகாதார திட்டங்கள்', 'திட்டங்கள்', 'ஆயுஷ்மான் பாரத்',
-        'அரசு மருத்துவ காப்பீடு'
+        'அரசு நலத்திட்டங்கள்', 'காப்பீட்டு திட்டம்', 'ஆயுஷ்மான் பாரத்',
+        'முதலமைச்சர் காப்பீடு', 'இலவச சிகிச்சை'
       ],
+      keywords: ['திட்டம்', 'காப்பீடு', 'ஆயுஷ்மான்'],
     },
     {
       routeId: 'education',
+      intent: 'HEALTH_EDUCATION',
       phrases: [
-        'சுகாதார கல்வி', 'ஆரோக்கிய வழிகாட்டி', 'சுகாதார குறிப்புகள்',
-        'முதல் உதவி வழிகாட்டி'
+        'சுகாதார வழிகாட்டல்', 'ஆரோக்கிய கல்வி', 'சுகாதார குறிப்புகள்'
       ],
+      keywords: ['கல்வி', 'வழிகாட்டல்'],
     },
     {
-      routeId: 'call_history',
+      routeId: 'maternity',
+      intent: 'PREGNANCY',
       phrases: [
-        'அழைப்பு வரலாறு', 'கால் ஹிஸ்டரி', 'அழைப்புகள்', 'அழைப்பு விவரம்'
+        'தாய்மை நலம்', 'கர்ப்பகால பராமரிப்பு', 'கர்ப்பிணி பெண்', 'தாய் சேய் நலம்'
       ],
+      keywords: ['தாய்மை', 'கர்ப்பம்', 'கர்ப்பிணி'],
+    },
+    {
+      routeId: 'newborn',
+      intent: 'NEWBORN_CARE',
+      phrases: [
+        'பச்சிளம் குழந்தை நலம்', 'குழந்தை பராமரிப்பு', 'குழந்தை உணவு'
+      ],
+      keywords: ['பச்சிளம்', 'குழந்தை'],
+    },
+    {
+      routeId: 'childcare',
+      intent: 'CHILD_CARE',
+      phrases: [
+        'குழந்தை நலம்', 'சிறுவர் ஆரோக்கியம்', 'குழந்தை வளர்ச்சி'
+      ],
+      keywords: ['குழந்தை'],
+    },
+    {
+      routeId: 'elderly',
+      intent: 'ELDERLY_CARE',
+      phrases: [
+        'முதியோர் பராமரிப்பு', 'முதியோர் நலம்', 'தாத்தா பாட்டி ஆரோக்கியம்'
+      ],
+      keywords: ['முதியோர்'],
+    },
+    {
+      routeId: 'sms',
+      intent: 'SMS_COMMUNICATION',
+      phrases: [
+        'குறுஞ்செய்தி தொடர்பு', 'எஸ்எம்எஸ்', 'செய்தி அனுப்பு'
+      ],
+      keywords: ['எஸ்எம்எஸ்', 'குறுஞ்செய்தி'],
+    },
+    {
+      routeId: 'ussd',
+      intent: 'USSD',
+      phrases: [
+        'USSD சாதாரண போன்', 'சாதாரண போன் மோட்'
+      ],
+      keywords: ['USSD', 'சாதாரண போன்'],
     },
     {
       routeId: 'settings',
+      intent: 'SETTINGS',
       phrases: [
-        'அமைப்புகள்', 'செட்டிங்ஸ்', 'அமைப்புகள் பக்கம்'
+        'அமைப்புகள்', 'செயலி அமைப்புகள்', 'அமைப்பை மாற்று'
       ],
+      keywords: ['அமைப்புகள்'],
     },
     {
-      routeId: 'help',
+      routeId: 'language',
+      intent: 'LANGUAGE',
       phrases: [
-        'உதவி', 'வழிகாட்டல்', 'உதவி பக்கம்'
+        'மொழி பாலம்', 'மொழியை மாற்று', 'மொழி தேர்வு'
       ],
-    },
-    {
-      routeId: 'faq',
-      phrases: [
-        'அடிக்கடி கேட்கப்படும் கேள்விகள்', 'கேள்வி பதில்', 'கேள்விகள்'
-      ],
+      keywords: ['மொழி'],
     },
   ],
 
-  // ─── 3. HINDI (hi-IN) ──────────────────────────────────────────────────────────
+  // ─── 3. HINDI (hi-IN) ────────────────────────────────────────────────────────────
   hi: [
     {
       routeId: 'dashboard',
+      intent: 'DASHBOARD',
       phrases: [
-        'डैशबोर्ड पर जाएं', 'डैशबोर्ड खोलो', 'डैशबोर्ड', 'मुख्य पृष्ठ', 'होम',
-        'होम पेज खोलो', 'शुरुआती पृष्ठ', 'मेडोरा होम'
+        'डैशबोर्ड खोलो', 'डैशबोर्ड पर जाएं', 'होम खोलो', 'डैशबोर्ड खोलें',
+        'डैशबोर्ड', 'होम पेज', 'मुख्य पृष्ठ', 'होम पर जाएं', 'मेडोरा होम'
       ],
-    },
-    {
-      routeId: 'medicines',
-      phrases: [
-        'दवाइयों पर जाएं', 'दवाएं खोलो', 'मेरी दवाइयां दिखाओ', 'दवाइयां',
-        'दवा अनुसूची', 'दवा रिमाइंडर', 'दवाइयों की सूची', 'दवाई', 'गोलियां',
-        'दवा का समय'
-      ],
-    },
-    {
-      routeId: 'emergency',
-      phrases: [
-        'आपातकाल', 'आपातकालीन सहायता', 'इमरजेंसी पर जाएं', 'इमरजेंसी',
-        'इमरजेंसी सहायता', 'तुरंत मदद', 'एम्बुलेंस बुलाओ', 'इमरजेंसी पेज'
-      ],
-    },
-    {
-      routeId: 'family',
-      phrases: [
-        'परिवार', 'परिवार का स्वास्थ्य', 'परिवार पर जाएं', 'परिवार के सदस्य',
-        'परिवार खोलो', 'परिवार स्वास्थ्य'
-      ],
+      keywords: ['डैशबोर्ड', 'होम'],
     },
     {
       routeId: 'health',
+      intent: 'MY_HEALTH',
       phrases: [
-        'मेरा स्वास्थ्य', 'मेरी सेहत', 'स्वास्थ्य पृष्ठ', 'स्वास्थ्य विवरण',
-        'स्वास्थ्य सारांश', 'स्वास्थ्य'
+        'मेरा स्वास्थ्य दिखाएं', 'मेरा स्वास्थ्य', 'स्वास्थ्य विवरण',
+        'मेरी सेहत', 'स्वास्थ्य स्थिति', 'वाइटल्स'
       ],
+      keywords: ['स्वास्थ्य', 'सेहत'],
+    },
+    {
+      routeId: 'family',
+      intent: 'FAMILY_HEALTH',
+      phrases: [
+        'परिवार स्वास्थ्य', 'परिवार का स्वास्थ्य', 'परिवार के सदस्य',
+        'मेरा परिवार'
+      ],
+      keywords: ['परिवार', 'सदस्य'],
+    },
+    {
+      routeId: 'medicines',
+      intent: 'MEDICINES',
+      phrases: [
+        'दवाइयों पर जाएं', 'दवाइयां खोलो', 'मेरी दवाइयां दिखाओ', 'दवा रिमाइंडर खोलो',
+        'दवाइयां', 'मेरी दवाइयां', 'दवा रिमाइंडर',
+        'दवाइयों की सूची', 'गोलियां', 'दवाएं दिखाएं', 'दवाई का समय'
+      ],
+      keywords: ['दवाई', 'दवाइयां', 'गोली', 'रिमाइंडर'],
+    },
+    {
+      routeId: 'records',
+      intent: 'MEDICAL_RECORDS',
+      phrases: [
+        'मेडिकल रिकॉर्ड', 'स्वास्थ्य रिकॉर्ड', 'पुरानी पर्चियां',
+        'दस्तावेज़', 'इलाज का इतिहास'
+      ],
+      keywords: ['रिकॉर्ड', 'दस्तावेज़'],
+    },
+    {
+      routeId: 'report_scanner',
+      intent: 'REPORT_SCANNER',
+      phrases: [
+        'रिपोर्ट स्कैनर', 'मेडिकल रिपोर्ट', 'रिपोर्ट स्कैन करें',
+        'खून की जांच रिपोर्ट', 'जांच रिपोर्ट'
+      ],
+      keywords: ['रिपोर्ट', 'स्कैनर', 'जांच'],
+    },
+    {
+      routeId: 'xray_viewer',
+      intent: 'XRAY',
+      phrases: [
+        'एक्स-रे', 'एक्सरे', 'स्कैन इमेज', 'छाती का एक्स-रे'
+      ],
+      keywords: ['एक्स-रे', 'एक्सरे', 'स्कैन'],
+    },
+    {
+      routeId: 'health_tests',
+      intent: 'HEALTH_TESTS',
+      phrases: [
+        'स्वास्थ्य परीक्षण', 'लैब टेस्ट', 'रक्तचाप जांच', 'शुगर टेस्ट', 'परीक्षण'
+      ],
+      keywords: ['परीक्षण', 'टेस्ट', 'जांच'],
+    },
+    {
+      routeId: 'vaccinations',
+      intent: 'VACCINATIONS',
+      phrases: [
+        'टीकाकरण', 'टीका', 'टीके की तारीख', 'पोलियो ड्राप', 'बच्चों का टीका'
+      ],
+      keywords: ['टीका', 'टीकाकरण'],
+    },
+    {
+      routeId: 'ai_assistant',
+      intent: 'AI_ASSISTANT',
+      phrases: [
+        'मेडोरा AI', 'AI सहायक', 'AI से बात करें', 'हेल्थ सहायक'
+      ],
+      keywords: ['AI', 'सहायक'],
     },
     {
       routeId: 'doctor_portal',
+      intent: 'DOCTOR_CONSULTATION',
       phrases: [
-        'डॉक्टर', 'डॉक्टर से परामर्श', 'डॉक्टर पोर्टल', 'चिकित्सक',
-        'डॉक्टर से बात करो', 'डॉक्टर खोलो'
+        'डॉक्टर परामर्श', 'डॉक्टर से बात करें', 'डॉक्टर को दिखाएं', 'चिकित्सक'
       ],
+      keywords: ['डॉक्टर', 'परामर्श'],
     },
     {
       routeId: 'doctor_summary',
+      intent: 'DOCTOR_SUMMARY',
       phrases: [
-        'डॉक्टर सारांश', 'क्लिनिकल सारांश', 'परामर्श सारांश', 'डॉक्टर समरी'
+        'डॉक्टर सारांश', 'परामर्श सारांश', 'चिकित्सा सारांश'
       ],
+      keywords: ['सारांश'],
     },
     {
       routeId: 'appointments',
+      intent: 'APPOINTMENTS',
       phrases: [
-        'अपॉइंटमेंट', 'मेरी मुलाकातें', 'अपॉइंटमेंट दिखाओ', 'डॉक्टर अपॉइंटमेंट',
-        'अपॉइंटमेंट बुक करो', 'अपॉइंटमेंट पेज'
+        'अपॉइंटमेंट', 'अपॉइंटमेंट दिखाओ', 'डॉक्टर से मिलना', 'मुलाकात का समय'
       ],
+      keywords: ['अपॉइंटमेंट', 'मुलाकात'],
     },
     {
-      routeId: 'records',
+      routeId: 'emergency',
+      intent: 'EMERGENCY',
       phrases: [
-        'मेडिकल रिकॉर्ड', 'स्वास्थ्य रिकॉर्ड', 'पुराने पर्चे', 'रिकॉर्ड खोलो',
-        'मेडिकल इतिहास'
+        'आपातकाल खोलो', 'आपातकाल पर जाएं', 'आपातकालीन सहायता खोलो',
+        'आपातकाल', 'आपातकालीन सहायता', 'एंबुलेंस बुलाओ', 'इमरजेंसी', 'मदद चाहिए'
       ],
-    },
-    {
-      routeId: 'report_scanner',
-      phrases: [
-        'रिपोर्ट', 'मेडिकल रिपोर्ट', 'रिपोर्ट स्कैनर', 'रिपोर्ट खोलो',
-        'रिपोर्ट स्कैन करो', 'जांच रिपोर्ट'
-      ],
-    },
-    {
-      routeId: 'xray_viewer',
-      phrases: [
-        'एक्स-रे', 'एक्सरे', 'स्कैन चित्र', 'एक्स-रे दिखाओ', 'छाती का एक्स-रे'
-      ],
-    },
-    {
-      routeId: 'health_tests',
-      phrases: [
-        'जांच', 'लैब टेस्ट', 'स्वास्थ्य परीक्षण', 'रक्त परीक्षण', 'जांच खोलो'
-      ],
-    },
-    {
-      routeId: 'vaccinations',
-      phrases: [
-        'टीकाकरण', 'टीके', 'टीकाकरण सूची', 'टीकाकरण अनुसूची', 'पोलियो'
-      ],
-    },
-    {
-      routeId: 'ai_assistant',
-      phrases: [
-        'एआई सहायक', 'मेडोरा एआई', 'एआई से बात करो', 'एआई स्वास्थ्य सहायक',
-        'चैटबॉट'
-      ],
+      keywords: ['आपातकाल', 'एंबुलेंस', 'इमरजेंसी'],
     },
     {
       routeId: 'hospitals',
+      intent: 'NEARBY_HOSPITALS',
       phrases: [
-        'अस्पताल', 'नजदीकी अस्पताल', 'हॉस्पिटल दिखाओ', 'प्राथमिक स्वास्थ्य केंद्र',
-        'अस्पताल खोलो'
+        'नजदीकी अस्पताल', 'अस्पताल', 'सरकारी अस्पताल', 'प्राथमिक स्वास्थ्य केंद्र'
       ],
-    },
-    {
-      routeId: 'transport',
-      phrases: [
-        'एम्बुलेंस', 'परिवहन', 'एम्बुलेंस बुलाओ', 'अस्पताल वाहन'
-      ],
+      keywords: ['अस्पताल', 'स्वास्थ्य केंद्र'],
     },
     {
       routeId: 'schemes',
+      intent: 'GOVERNMENT_SCHEMES',
       phrases: [
-        'सरकारी योजनाएं', 'योजनाएं', 'स्वास्थ्य योजनाएं', 'आयुष्मान भारत',
-        'सरकारी योजना'
+        'सरकारी स्वास्थ्य योजनाएं', 'आयुष्मान भारत', 'स्वास्थ्य बीमा योजना'
       ],
+      keywords: ['योजना', 'आयुष्मान', 'बीमा'],
     },
     {
       routeId: 'education',
+      intent: 'HEALTH_EDUCATION',
       phrases: [
-        'स्वास्थ्य शिक्षा', 'स्वास्थ्य सुझाव', 'जानकारी', 'प्राथमिक उपचार'
+        'स्वास्थ्य शिक्षा', 'रोग मार्गदर्शिका', 'स्वास्थ्य सुझाव'
       ],
+      keywords: ['शिक्षा', 'सुझाव'],
     },
     {
-      routeId: 'call_history',
+      routeId: 'maternity',
+      intent: 'PREGNANCY',
       phrases: [
-        'कॉल विवरण', 'कॉल हिस्ट्री', 'कॉल इतिहास', 'कॉल रिकॉर्ड'
+        'मातृत्व देखभाल', 'गर्भावस्था', 'गर्भवती महिला', 'प्रसव पूर्व देखभाल'
       ],
+      keywords: ['मातृत्व', 'गर्भावस्था'],
+    },
+    {
+      routeId: 'newborn',
+      intent: 'NEWBORN_CARE',
+      phrases: [
+        'नवजात शिशु देखभाल', 'शिशु स्वास्थ्य', 'शिशु आहार'
+      ],
+      keywords: ['नवजात', 'शिशु'],
+    },
+    {
+      routeId: 'childcare',
+      intent: 'CHILD_CARE',
+      phrases: [
+        'बाल देखभाल', 'बच्चों का स्वास्थ्य'
+      ],
+      keywords: ['बाल', 'बच्चे'],
+    },
+    {
+      routeId: 'elderly',
+      intent: 'ELDERLY_CARE',
+      phrases: [
+        'बुजुर्गों की देखभाल', 'वृद्ध देखभाल', 'वरिष्ठ नागरिक'
+      ],
+      keywords: ['बुजुर्ग', 'वृद्ध'],
+    },
+    {
+      routeId: 'sms',
+      intent: 'SMS_COMMUNICATION',
+      phrases: [
+        'एसएमएस संचार', 'मैसेज भेजें'
+      ],
+      keywords: ['एसएमएस', 'मैसेज'],
+    },
+    {
+      routeId: 'ussd',
+      intent: 'USSD',
+      phrases: [
+        'यूएसएसडी साधारण फोन', 'कीपैड फोन मोड'
+      ],
+      keywords: ['यूएसएसडी', 'साधारण फोन'],
     },
     {
       routeId: 'settings',
+      intent: 'SETTINGS',
       phrases: [
-        'सेटिंग्स', 'सेटिंग', 'सेटिंग खोलो'
+        'सेटिंग्स', 'ऐप सेटिंग्स'
       ],
+      keywords: ['सेटिंग्स'],
     },
     {
-      routeId: 'help',
+      routeId: 'language',
+      intent: 'LANGUAGE',
       phrases: [
-        'मदद', 'सहायता', 'मार्गदर्शन'
+        'भाषा सेतु', 'भाषा बदलें', 'भाषा'
       ],
-    },
-    {
-      routeId: 'faq',
-      phrases: [
-        'अक्सर पूछे जाने वाले सवाल', 'सवाल जवाब'
-      ],
+      keywords: ['भाषा'],
     },
   ],
 
-  // ─── 4. TELUGU (te-IN) ──────────────────────────────────────────────────────────
+  // ─── 4. TELUGU (te-IN) ───────────────────────────────────────────────────────────
   te: [
     {
       routeId: 'dashboard',
+      intent: 'DASHBOARD',
       phrases: [
-        'డ్యాష్‌బోర్డ్‌కు వెళ్లండి', 'డ్యాష్‌బోర్డ్', 'హోమ్ పేజీ', 'ప్రధాన పేజీ',
-        'హోమ్', 'డ్యాష్‌బోర్డ్ తెరువు'
+        'డాష్బోర్డ్ తెరవండి', 'డాష్‌బోర్డ్ తెరవండి', 'డాష్బోర్డ్కు వెళ్ళండి', 'డాష్‌బోర్డ్‌కు వెళ్లండి',
+        'హోమ్ తెరవండి', 'డ్యాష్‌బోర్డ్', 'హోమ్ పేజీ', 'ప్రధాన పేజీ'
       ],
-    },
-    {
-      routeId: 'medicines',
-      phrases: [
-        'మందులకు వెళ్ళండి', 'మందులు చూపించు', 'నా మందులు', 'మందులు తెరువు',
-        'మందుల సమయాలు', 'మందులు', 'మందుల రిమైండర్', 'మందుల పట్టిక'
-      ],
-    },
-    {
-      routeId: 'emergency',
-      phrases: [
-        'అత్యవసరం', 'అత్యవసర విభాగం', 'ఎమర్జెన్సీ', 'అత్యవసర సహాయం',
-        'అత్యవసర పేజీ', 'ఆంబులెన్స్ పిలువు'
-      ],
-    },
-    {
-      routeId: 'family',
-      phrases: [
-        'కుటుంబం', 'కుటుంబ ఆరోగ్యం', 'కుటుంబ సభ్యులు', 'కుటుంబ పేజీ'
-      ],
+      keywords: ['డ్యాష్‌బోర్డ్', 'డాష్‌బోర్డ్', 'డాష్బోర్డ్', 'హోమ్'],
     },
     {
       routeId: 'health',
+      intent: 'MY_HEALTH',
       phrases: [
-        'నా ఆరోగ్యం', 'ఆరోగ్య సారాంశం', 'ఆరోగ్య పేజీ'
+        'నా ఆరోగ్యాన్ని చూపించు', 'నా ఆరోగ్యం', 'ఆరోగ్య వివరాలు', 'వైద్య సమాచారం'
       ],
+      keywords: ['ఆరోగ్యం'],
     },
     {
-      routeId: 'doctor_portal',
+      routeId: 'family',
+      intent: 'FAMILY_HEALTH',
       phrases: [
-        'వైద్యుడు', 'డాక్టర్ సంప్రదింపు', 'డాక్టర్ పోర్టల్', 'డాక్టర్‌తో మాట్లాడు',
-        'డాక్టర్'
+        'కుటుంబ ఆరోగ్యం', 'కుటుంబ సభ్యులు', 'మా కుటుంబం'
       ],
+      keywords: ['కుటుంబం'],
     },
     {
-      routeId: 'appointments',
+      routeId: 'medicines',
+      intent: 'MEDICINES',
       phrases: [
-        'అపాయింట్‌మెంట్లు', 'నా అపాయింట్‌మెంట్లు', 'అపాయింట్‌మెంట్', 'అపాయింట్‌మెంట్ పేజీ'
+        'మందులకు వెళ్ళండి', 'మందులను తెరవండి', 'నా మందులను చూపించండి', 'మందుల రిమైండర్లు',
+        'మందులకు వెళ్ళు', 'మందులు', 'నా మందులు', 'మందుల రిమైండర్',
+        'మాత్రలు', 'రోజువారీ మందులు'
       ],
+      keywords: ['మందులు', 'మాత్రలు'],
     },
     {
       routeId: 'records',
+      intent: 'MEDICAL_RECORDS',
       phrases: [
         'వైద్య రికార్డులు', 'ఆరోగ్య రికార్డులు', 'పాత రికార్డులు'
       ],
+      keywords: ['రికార్డులు'],
     },
     {
       routeId: 'report_scanner',
+      intent: 'REPORT_SCANNER',
       phrases: [
-        'వైద్య నివేదికలు', 'రిపోర్ట్ స్కానర్', 'రిపోర్టులు', 'నివేదికను స్కాన్ చేయి'
+        'రిపోర్ట్ స్కానర్', 'వైద్య నివేదిక', 'నివేదిక స్కాన్ చేయండి'
       ],
+      keywords: ['రిపోర్ట్', 'స్కానర్'],
     },
     {
       routeId: 'xray_viewer',
+      intent: 'XRAY',
       phrases: [
-        'ఎక్స్-రే', 'ఎక్స్రే', 'స్కాన్ చిత్రాలు', 'ఎక్స్-రే చూపు'
+        'ఎక్స్-రే', 'ఎక్స్‌రే', 'స్కాన్ చిత్రాలు'
       ],
+      keywords: ['ఎక్స్-రే', 'స్కాన్'],
     },
     {
       routeId: 'health_tests',
+      intent: 'HEALTH_TESTS',
       phrases: [
-        'ఆరోగ్య పరీక్షలు', 'ల్యాబ్ టెస్ట్‌లు', 'రక్త పరీక్షలు'
+        'ఆరోగ్య పరీక్షలు', 'రక్త పరీక్షలు', 'పరీక్షలు'
       ],
+      keywords: ['పరీక్షలు'],
     },
     {
       routeId: 'vaccinations',
+      intent: 'VACCINATIONS',
       phrases: [
-        'టీకాలు', 'టీకా వివరాలు', 'వ్యాక్సినేషన్', 'పోలియో చుక్కలు'
+        'టీకాలు', 'టీకా షెడ్యూల్', 'పోలియో చుక్కలు'
       ],
+      keywords: ['టీకాలు'],
     },
     {
       routeId: 'ai_assistant',
+      intent: 'AI_ASSISTANT',
       phrases: [
-        'ఏఐ అసిస్టెంట్', 'మెడోరా ఏఐ', 'ఏఐ సహాయకుడు', 'ఏఐతో మాట్లాడు'
+        'మెడోరా AI', 'AI అసిస్టెంట్', 'AI తో మాట్లాడండి'
       ],
-    },
-    {
-      routeId: 'hospitals',
-      phrases: [
-        'ఆసుపత్రులు', 'సమీప ఆసుపత్రులు', 'ఆసుపత్రి'
-      ],
-    },
-    {
-      routeId: 'schemes',
-      phrases: [
-        'ప్రభుత్వ పథకాలు', 'పథకాలు', 'ఆరోగ్య పథకాలు'
-      ],
-    },
-    {
-      routeId: 'call_history',
-      phrases: [
-        'కాల్ చరిత్ర', 'కాల్స్', 'ఫోన్ కాల్ వివరాలు'
-      ],
-    },
-    {
-      routeId: 'settings',
-      phrases: [
-        'సెట్టింగ్‌లు', 'సెట్టింగ్స్'
-      ],
-    },
-    {
-      routeId: 'help',
-      phrases: [
-        'సహాయం', 'మార్గదర్శకత్వం'
-      ],
-    },
-  ],
-
-  // ─── 5. MALAYALAM (ml-IN) ──────────────────────────────────────────────────────────
-  ml: [
-    {
-      routeId: 'dashboard',
-      phrases: [
-        'ഡാഷ്‌ബോർഡിലേക്ക് പോകുക', 'ഡാഷ്‌ബോർഡ്', 'ഹോം', 'പ്രധാന പേജ്',
-        'ഹോം പേജ്'
-      ],
-    },
-    {
-      routeId: 'medicines',
-      phrases: [
-        'മരുന്നുകളിലേക്ക് പോകുക', 'മരുന്നുകൾ കാണിക്കുക', 'എന്റെ മരുന്നുകൾ',
-        'മരുന്നുകൾ', 'മരുന്ന് ഓർമ്മപ്പെടുത്തൽ', 'മരുന്നുകളുടെ സമയം'
-      ],
-    },
-    {
-      routeId: 'emergency',
-      phrases: [
-        'അടിയന്തരാവസ്ഥ', 'എമർജൻസി', 'അടിയന്തര സഹായം', 'അടിയന്തര പേജ്',
-        'ആംബുലൻസ്'
-      ],
-    },
-    {
-      routeId: 'family',
-      phrases: [
-        'കുടുംബം', 'കുടുംബാരോഗ്യം', 'കുടുംബാംഗങ്ങൾ'
-      ],
-    },
-    {
-      routeId: 'health',
-      phrases: [
-        'എന്റെ ആരോഗ്യം', 'ആരോഗ്യ വിവരങ്ങൾ'
-      ],
+      keywords: ['AI'],
     },
     {
       routeId: 'doctor_portal',
+      intent: 'DOCTOR_CONSULTATION',
       phrases: [
-        'ഡോക്ടർ', 'ഡോക്ടർ കൺസൾട്ടേഷൻ', 'ഡോക്ടർ പോർട്ടൽ', 'ഡോക്ടറോട് സംസാരിക്കുക'
+        'వైద్యుని సంప్రదింపు', 'డాక్టర్‌తో మాట్లాడండి', 'డాక్టర్ సంప్రదింపు'
       ],
+      keywords: ['డాక్టర్', 'వైద్యుడు'],
+    },
+    {
+      routeId: 'doctor_summary',
+      intent: 'DOCTOR_SUMMARY',
+      phrases: [
+        'డాక్టర్ సారాంశం', 'వైద్య సారాంశం'
+      ],
+      keywords: ['సారాంశం'],
     },
     {
       routeId: 'appointments',
+      intent: 'APPOINTMENTS',
       phrases: [
-        'അപ്പോയിന്റ്മെന്റുകൾ', 'അപ്പോയിന്റ്മെന്റ് കാണിക്കുക', 'ഡോക്ടർ അപ്പോയിന്റ്മെന്റ്'
+        'అపాయింట్‌మెంట్లు', 'డాక్టర్ అపాయింట్‌మెంట్'
       ],
+      keywords: ['అపాయింట్‌మెంట్'],
     },
     {
-      routeId: 'records',
+      routeId: 'emergency',
+      intent: 'EMERGENCY',
       phrases: [
-        'മെഡിക്കൽ റെക്കോർഡുകൾ', 'ആരോഗ്യ രേഖകൾ'
+        'అత్యవసర పరిస్థితిని తెరవండి', 'అత్యవసర సహాయానికి వెళ్ళండి', 'అత్యవసర సహాయం',
+        'అత్యవసర పరిస్థితిని చూపించండి', 'అంబులెన్స్', 'అత్యవసరం'
       ],
-    },
-    {
-      routeId: 'report_scanner',
-      phrases: [
-        'റിപ്പോർട്ടുകൾ', 'മെഡിക്കൽ റിപ്പോർട്ടുകൾ', 'റിപ്പോർട്ട് സ്കാനർ'
-      ],
-    },
-    {
-      routeId: 'xray_viewer',
-      phrases: [
-        'എക്സ്-റേ', 'സ്കാൻ', 'എക്സ്റേ ചിത്രങ്ങൾ'
-      ],
-    },
-    {
-      routeId: 'health_tests',
-      phrases: [
-        'ആരോഗ്യ പരിശോധനകൾ', 'ടെസ്റ്റുകൾ', 'ലാബ് പരിശോധനകൾ'
-      ],
-    },
-    {
-      routeId: 'vaccinations',
-      phrases: [
-        'വാക്സിനേഷൻ', 'കുത്തിവയ്പ്പുകൾ', 'പ്രതിരോധ കുത്തിവയ്പ്പ്'
-      ],
-    },
-    {
-      routeId: 'ai_assistant',
-      phrases: [
-        'എഐ അസിസ്റ്റന്റ്', 'മെഡോറ എഐ', 'എഐയോട് ചോദിക്കുക'
-      ],
+      keywords: ['అత్యవసరం', 'అత్యవసర', 'అంబులెన్స్'],
     },
     {
       routeId: 'hospitals',
+      intent: 'NEARBY_HOSPITALS',
       phrases: [
-        'ആശുപത്രികൾ', 'സമീപത്തെ ആശുപത്രി'
+        'సమీప ఆసుపత్రులు', 'ఆసుపత్రి', 'ప్రభుత్వ ఆసుపత్రి'
       ],
+      keywords: ['ఆసుపత్రి'],
     },
     {
       routeId: 'schemes',
+      intent: 'GOVERNMENT_SCHEMES',
       phrases: [
-        'സർക്കാർ പദ്ധതികൾ', 'പദ്ധതികൾ'
+        'ప్రభుత్వ పథకాలు', 'ఆయుష్మాన్ భారత్', 'ఆరోగ్య బీమా'
       ],
+      keywords: ['పథకాలు', 'ఆయుష్మాన్'],
     },
     {
-      routeId: 'call_history',
+      routeId: 'education',
+      intent: 'HEALTH_EDUCATION',
       phrases: [
-        'കോൾ ഹിസ്റ്ററി', 'കോളുകൾ'
+        'ఆరోగ్య విద్య', 'ఆరోగ్య సూచనలు'
       ],
+      keywords: ['విద్య'],
+    },
+    {
+      routeId: 'maternity',
+      intent: 'PREGNANCY',
+      phrases: [
+        'గర్భధారణ సంరక్షణ', 'తల్లి సంరక్షణ'
+      ],
+      keywords: ['గర్భధారణ'],
+    },
+    {
+      routeId: 'newborn',
+      intent: 'NEWBORN_CARE',
+      phrases: [
+        'నవజాత శిశు సంరక్షణ', 'శిశు సంరక్షణ'
+      ],
+      keywords: ['నవజాత'],
+    },
+    {
+      routeId: 'childcare',
+      intent: 'CHILD_CARE',
+      phrases: [
+        'పిల్లల సంరక్షణ'
+      ],
+      keywords: ['పిల్లల'],
+    },
+    {
+      routeId: 'elderly',
+      intent: 'ELDERLY_CARE',
+      phrases: [
+        'వృద్ధుల సంరక్షణ'
+      ],
+      keywords: ['వృద్ధుల'],
+    },
+    {
+      routeId: 'sms',
+      intent: 'SMS_COMMUNICATION',
+      phrases: [
+        'ఎస్ఎంఎస్ కమ్యూనికేషన్'
+      ],
+      keywords: ['ఎస్ఎంఎస్'],
+    },
+    {
+      routeId: 'ussd',
+      intent: 'USSD',
+      phrases: [
+        'యూఎస్‌ఎస్‌డీ బేసిక్ ఫోన్'
+      ],
+      keywords: ['యూఎస్‌ఎస్‌డీ'],
     },
     {
       routeId: 'settings',
+      intent: 'SETTINGS',
       phrases: [
-        'ക്രമീകരണങ്ങൾ', 'സെറ്റിംഗ്സ്'
+        'సెట్టింగ్‌లు'
       ],
+      keywords: ['సెట్టింగ్‌లు'],
     },
     {
-      routeId: 'help',
+      routeId: 'language',
+      intent: 'LANGUAGE',
       phrases: [
-        'സഹായം'
+        'భాషా వారధి', 'భాషను మార్చండి'
       ],
+      keywords: ['భాష'],
+    },
+  ],
+
+  // ─── 5. MALAYALAM (ml-IN) ────────────────────────────────────────────────────────
+  ml: [
+    {
+      routeId: 'dashboard',
+      intent: 'DASHBOARD',
+      phrases: [
+        'ഡാഷ്ബോർഡ് തുറക്കുക', 'ഡാഷ്ബോർഡിലേക്ക് പോകുക',
+        'ഡാഷ്‌ബോർഡ് തുറക്കുക', 'ഡാഷ്‌ബോർഡിലേക്ക് പോകുക',
+        'ഹോം തുറക്കുക', 'ഡാഷ്‌ബോർഡ്', 'ഡാഷ്ബോർഡ്', 'പ്രധാന പേജ്', 'ഹോം പേജ്'
+      ],
+      keywords: ['ഡാഷ്‌ബോർഡ്', 'ഡാഷ്ബോർഡ്', 'ഹോം'],
+    },
+    {
+      routeId: 'health',
+      intent: 'MY_HEALTH',
+      phrases: [
+        'എന്റെ ആരോഗ്യം കാണിക്കുക', 'എന്റെ ആരോഗ്യം', 'ആരോഗ്യ വിവരങ്ങൾ'
+      ],
+      keywords: ['ആരോഗ്യം'],
+    },
+    {
+      routeId: 'family',
+      intent: 'FAMILY_HEALTH',
+      phrases: [
+        'കുടുംബാരോഗ്യം', 'കുടുംബാംഗങ്ങൾ'
+      ],
+      keywords: ['കുടുംബം'],
+    },
+    {
+      routeId: 'medicines',
+      intent: 'MEDICINES',
+      phrases: [
+        'മരുന്നുകളിലേക്ക് പോകുക', 'മരുന്നുകൾ തുറക്കുക', 'എന്റെ മരുന്നുകൾ കാണിക്കുക',
+        'മരുന്ന് റിമൈൻഡറുകൾ', 'മരുന്നുകൾ', 'എന്റെ മരുന്നുകൾ',
+        'മരുന്ന് ഓർമ്മപ്പെടുത്തൽ', 'ഗുളികകൾ', 'ദിവസേനയുള്ള മരുന്നുകൾ'
+      ],
+      keywords: ['മരുന്നുകൾ', 'ഗുളിക', 'റിമൈൻഡർ'],
+    },
+    {
+      routeId: 'records',
+      intent: 'MEDICAL_RECORDS',
+      phrases: [
+        'മെഡിക്കൽ റെക്കോർഡുകൾ', 'ആരോഗ്യ രേഖകൾ'
+      ],
+      keywords: ['റെക്കോർഡുകൾ'],
+    },
+    {
+      routeId: 'report_scanner',
+      intent: 'REPORT_SCANNER',
+      phrases: [
+        'റിപ്പോർട്ട് സ്കാനർ', 'മെഡിക്കൽ റിപ്പോർട്ട് സ്കാൻ ചെയ്യുക'
+      ],
+      keywords: ['റിപ്പോർട്ട്', 'സ്കാനർ'],
+    },
+    {
+      routeId: 'xray_viewer',
+      intent: 'XRAY',
+      phrases: [
+        'എക്സ്-റേ', 'എക്സ്റേ സ്കാനുകൾ'
+      ],
+      keywords: ['എക്സ്-റേ'],
+    },
+    {
+      routeId: 'health_tests',
+      intent: 'HEALTH_TESTS',
+      phrases: [
+        'ആരോഗ്യ പരിശോധനകൾ', 'ലാബ് ടെസ്റ്റുകൾ'
+      ],
+      keywords: ['പരിശോധനകൾ'],
+    },
+    {
+      routeId: 'vaccinations',
+      intent: 'VACCINATIONS',
+      phrases: [
+        'കുത്തിവയ്പ്പുകൾ', 'വാക്സിനേഷൻ'
+      ],
+      keywords: ['കുത്തിവയ്പ്പുകൾ', 'വാക്സിൻ'],
+    },
+    {
+      routeId: 'ai_assistant',
+      intent: 'AI_ASSISTANT',
+      phrases: [
+        'മെഡോറ AI', 'AI സഹായി'
+      ],
+      keywords: ['AI'],
+    },
+    {
+      routeId: 'doctor_portal',
+      intent: 'DOCTOR_CONSULTATION',
+      phrases: [
+        'ഡോക്ടർ കൺസൾട്ടേഷൻ', 'ഡോക്ടറോട് സംസാരിക്കുക'
+      ],
+      keywords: ['ഡോക്ടർ'],
+    },
+    {
+      routeId: 'doctor_summary',
+      intent: 'DOCTOR_SUMMARY',
+      phrases: [
+        'ഡോക്ടർ സംഗ്രഹം'
+      ],
+      keywords: ['സംഗ്രഹം'],
+    },
+    {
+      routeId: 'appointments',
+      intent: 'APPOINTMENTS',
+      phrases: [
+        'അപ്പോയിന്റ്മെന്റുകൾ', 'ഡോക്ടർ അപ്പോയിന്റ്മെന്റ്'
+      ],
+      keywords: ['അപ്പോയിന്റ്മെന്റ്'],
+    },
+    {
+      routeId: 'emergency',
+      intent: 'EMERGENCY',
+      phrases: [
+        'അടിയന്തര സഹായം', 'ആംബുലൻസ്', 'അടിയന്തരാവസ്ഥ'
+      ],
+      keywords: ['അടിയന്തര', 'ആംബുലൻസ്'],
+    },
+    {
+      routeId: 'hospitals',
+      intent: 'NEARBY_HOSPITALS',
+      phrases: [
+        'സമീപത്തെ ആശുപത്രികൾ', 'ആശുപത്രി'
+      ],
+      keywords: ['ആശുപത്രി'],
+    },
+    {
+      routeId: 'schemes',
+      intent: 'GOVERNMENT_SCHEMES',
+      phrases: [
+        'സർക്കാർ പദ്ധതികൾ', 'ആയുഷ്മാൻ ഭാരത്'
+      ],
+      keywords: ['പദ്ധതികൾ'],
+    },
+    {
+      routeId: 'education',
+      intent: 'HEALTH_EDUCATION',
+      phrases: [
+        'ആരോഗ്യ വിദ്യാഭ്യാസം'
+      ],
+      keywords: ['വിദ്യാഭ്യാസം'],
+    },
+    {
+      routeId: 'maternity',
+      intent: 'PREGNANCY',
+      phrases: [
+        'ഗർഭകാല പരിചരണം'
+      ],
+      keywords: ['ഗർഭകാല'],
+    },
+    {
+      routeId: 'newborn',
+      intent: 'NEWBORN_CARE',
+      phrases: [
+        'നവജാതശിശു പരിചരണം'
+      ],
+      keywords: ['നവജാതശിശു'],
+    },
+    {
+      routeId: 'childcare',
+      intent: 'CHILD_CARE',
+      phrases: [
+        'കുട്ടികളുടെ പരിചരണം'
+      ],
+      keywords: ['കുട്ടികൾ'],
+    },
+    {
+      routeId: 'elderly',
+      intent: 'ELDERLY_CARE',
+      phrases: [
+        'മുതിർന്നവരുടെ പരിചരണം'
+      ],
+      keywords: ['മുതിർന്നവർ'],
+    },
+    {
+      routeId: 'sms',
+      intent: 'SMS_COMMUNICATION',
+      phrases: [
+        'എസ്എംഎസ് ആശയവിനിമയം'
+      ],
+      keywords: ['എസ്എംഎസ്'],
+    },
+    {
+      routeId: 'ussd',
+      intent: 'USSD',
+      phrases: [
+        'യുഎസ്എസ്ഡി ബേസിക് ഫോൺ'
+      ],
+      keywords: ['യുഎസ്എസ്ഡി'],
+    },
+    {
+      routeId: 'settings',
+      intent: 'SETTINGS',
+      phrases: [
+        'ക്രമീകരണങ്ങൾ'
+      ],
+      keywords: ['ക്രമീകരണങ്ങൾ'],
+    },
+    {
+      routeId: 'language',
+      intent: 'LANGUAGE',
+      phrases: [
+        'ഭാഷാ പാലം', 'ഭാഷ മാറ്റുക'
+      ],
+      keywords: ['ഭാഷ'],
     },
   ],
 
@@ -776,114 +1125,226 @@ export const VOICE_COMMAND_DICTIONARY: Record<SupportedVoiceNavLang, RoutePhrase
   kn: [
     {
       routeId: 'dashboard',
+      intent: 'DASHBOARD',
       phrases: [
-        'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ ಹೋಗಿ', 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', 'ಮುಖಪುಟ', 'ಹೋಮ್',
-        'ಪ್ರಮುಖ ಪುಟ'
+        'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ತೆರೆಯಿರಿ', 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', 'ಮುಖಪುಟ', 'ಮುಖ್ಯ ಪುಟ'
       ],
-    },
-    {
-      routeId: 'medicines',
-      phrases: [
-        'ಔಷಧಿಗಳಿಗೆ ಹೋಗಿ', 'ಔಷಧಿಗಳನ್ನು ತೆರೆಯಿರಿ', 'ನನ್ನ ಔಷಧಿಗಳು', 'ಔಷಧಿಗಳು',
-        'ಔಷಧಿ ಜ್ಞಾಪನೆ', 'ಔಷಧಿ ವೇಳಾಪಟ್ಟಿ'
-      ],
-    },
-    {
-      routeId: 'emergency',
-      phrases: [
-        'ತುರ್ತು ಪರಿಸ್ಥಿತಿ', 'ತುರ್ತು ಸಹಾಯ', 'ಎಮರ್ಜೆನ್ಸಿ', 'ತುರ್ತು ಪುಟ',
-        'ಆಂಬ್ಯುಲೆನ್ಸ್'
-      ],
-    },
-    {
-      routeId: 'family',
-      phrases: [
-        'ಕುಟುಂಬ', 'ಕುಟುಂಬ ಆರೋಗ್ಯ', 'ಕುಟುಂಬ ಸದಸ್ಯರು'
-      ],
+      keywords: ['ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', 'ಮುಖಪುಟ'],
     },
     {
       routeId: 'health',
+      intent: 'MY_HEALTH',
       phrases: [
-        'ನನ್ನ ಆರೋಗ್ಯ', 'ಆರೋಗ್ಯ ವಿವರ'
+        'ನನ್ನ ಆರೋಗ್ಯವನ್ನು ತೋರಿಸಿ', 'ನನ್ನ ಆರೋಗ್ಯ', 'ಆರೋಗ್ಯ ವಿವರ'
       ],
+      keywords: ['ಆರೋಗ್ಯ'],
     },
     {
-      routeId: 'doctor_portal',
+      routeId: 'family',
+      intent: 'FAMILY_HEALTH',
       phrases: [
-        'ವೈದ್ಯರು', 'ವೈದ್ಯರ ಸಮಾಲೋಚನೆ', 'ಡಾಕ್ಟರ್ ಪೋರ್ಟಲ್', 'ವೈದ್ಯರನ್ನು ಸಂಪರ್ಕಿಸಿ'
+        'ಕುಟುಂಬ ಆರೋಗ್ಯ', 'ಕುಟುಂಬದ ಸದಸ್ಯರು'
       ],
+      keywords: ['ಕುಟುಂಬ'],
     },
     {
-      routeId: 'appointments',
+      routeId: 'medicines',
+      intent: 'MEDICINES',
       phrases: [
-        'ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್‌ಗಳು', 'ನನ್ನ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್', 'ವೈದ್ಯರ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್'
+        'ಔಷಧಿಗಳಿಗೆ ಹೋಗಿ', 'ಔಷಧಿಗಳು', 'ನನ್ನ ಔಷಧಿಗಳು', 'ಔಷಧಿ ಜ್ಞಾಪನೆ',
+        'ಮಾತ್ರೆಗಳು', 'ದೈನಂದಿನ ಔಷಧಿಗಳು'
       ],
+      keywords: ['ಔಷಧಿಗಳು', 'ಮಾತ್ರೆಗಳು'],
     },
     {
       routeId: 'records',
+      intent: 'MEDICAL_RECORDS',
       phrases: [
         'ವೈದ್ಯಕೀಯ ದಾಖಲೆಗಳು', 'ಆರೋಗ್ಯ ದಾಖಲೆಗಳು'
       ],
+      keywords: ['ದಾಖಲೆಗಳು'],
     },
     {
       routeId: 'report_scanner',
+      intent: 'REPORT_SCANNER',
       phrases: [
-        'ವರದಿಗಳು', 'ವೈದ್ಯಕೀಯ ವರದಿಗಳು', 'ವರದಿ ಸ್ಕ್ಯಾನರ್', 'ವರದಿ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ'
+        'ವರದಿ ಸ್ಕ್ಯಾನರ್', 'ವೈದ್ಯಕೀಯ ವರದಿ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ'
       ],
+      keywords: ['ವರದಿ', 'ಸ್ಕ್ಯಾನರ್'],
     },
     {
       routeId: 'xray_viewer',
+      intent: 'XRAY',
       phrases: [
-        'ಎಕ್ಸ್-ರೇ', 'ಸ್ಕ್ಯಾನ್ ಚಿತ್ರಗಳು', 'ಎಕ್ಸ್-ರೇ ನೋಡಿ'
+        'ಎಕ್ಸ್-ರೇ', 'ಎಕ್ಸ್‌ರೇ ಸ್ಕ್ಯಾನ್‌ಗಳು'
       ],
+      keywords: ['ಎಕ್ಸ್-ರೇ'],
     },
     {
       routeId: 'health_tests',
+      intent: 'HEALTH_TESTS',
       phrases: [
-        'ಆರೋಗ್ಯ ಪರೀಕ್ಷೆಗಳು', 'ಲ್ಯಾಬ್ ಪರೀಕ್ಷೆಗಳು', 'ಪರೀಕ್ಷೆಗಳು'
+        'ಆರೋಗ್ಯ ಪರೀಕ್ಷೆಗಳು', 'ಲ್ಯಾಬ್ ಪರೀಕ್ಷೆಗಳು'
       ],
+      keywords: ['ಪರೀಕ್ಷೆಗಳು'],
     },
     {
       routeId: 'vaccinations',
+      intent: 'VACCINATIONS',
       phrases: [
-        'ಲಸಿಕೆಗಳು', 'ಲಸಿಕೆ ವೇಳಾಪಟ್ಟಿ', 'ಲಸಿಕೆ'
+        'ಲಸಿಕೆಗಳು', 'ಲಸಿಕೆ ವೇಳಾಪಟ್ಟಿ', 'ಪೋಲಿಯೊ ಹನಿಗಳು'
       ],
+      keywords: ['ಲಸಿಕೆಗಳು'],
     },
     {
       routeId: 'ai_assistant',
+      intent: 'AI_ASSISTANT',
       phrases: [
-        'ಎಐ ಸಹಾಯಕ', 'ಮೆಡೋರಾ ಎಐ', 'ಎಐ ಜತೆ ಮಾತನಾಡಿ'
+        'ಮೆಡೋರಾ AI', 'AI ಸಹಾಯಕ'
       ],
+      keywords: ['AI'],
+    },
+    {
+      routeId: 'doctor_portal',
+      intent: 'DOCTOR_CONSULTATION',
+      phrases: [
+        'ವೈದ್ಯರ ಸಮಾಲೋಚನೆ', 'ವೈದ್ಯರೊಂದಿಗೆ ಮಾತನಾಡಿ'
+      ],
+      keywords: ['ವೈದ್ಯರು'],
+    },
+    {
+      routeId: 'doctor_summary',
+      intent: 'DOCTOR_SUMMARY',
+      phrases: [
+        'ವೈದ್ಯರ ಸಾರಾಂಶ'
+      ],
+      keywords: ['ಸಾರಾಂಶ'],
+    },
+    {
+      routeId: 'appointments',
+      intent: 'APPOINTMENTS',
+      phrases: [
+        'ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್‌ಗಳು', 'ವೈದ್ಯರ ಭೇಟಿ'
+      ],
+      keywords: ['ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್'],
+    },
+    {
+      routeId: 'emergency',
+      intent: 'EMERGENCY',
+      phrases: [
+        'ತುರ್ತು ಸಹಾಯ', 'ಆಂಬ್ಯುಲೆನ್ಸ್', 'ತುರ್ತು ಚಿಕಿತ್ಸೆ'
+      ],
+      keywords: ['ತುರ್ತು', 'ಆಂಬ್ಯುಲೆನ್ಸ್'],
     },
     {
       routeId: 'hospitals',
+      intent: 'NEARBY_HOSPITALS',
       phrases: [
-        'ಆಸ್ಪತ್ರೆಗಳು', 'ಹತ್ತಿರದ ಆಸ್ಪತ್ರೆ'
+        'ಹತ್ತಿರದ ಆಸ್ಪತ್ರೆಗಳು', 'ಆಸ್ಪತ್ರೆ'
       ],
+      keywords: ['ಆಸ್ಪತ್ರೆ'],
     },
     {
       routeId: 'schemes',
+      intent: 'GOVERNMENT_SCHEMES',
       phrases: [
-        'ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು', 'ಯೋಜನೆಗಳು'
+        'ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು', 'ಆಯುಷ್ಮಾನ್ ಭಾರತ್'
       ],
+      keywords: ['ಯೋಜನೆಗಳು'],
     },
     {
-      routeId: 'call_history',
+      routeId: 'education',
+      intent: 'HEALTH_EDUCATION',
       phrases: [
-        'ಕರೆ ಇತಿಹಾಸ', 'ಕರೆಗಳು'
+        'ಆರೋಗ್ಯ ಶಿಕ್ಷಣ'
       ],
+      keywords: ['ಶಿಕ್ಷಣ'],
+    },
+    {
+      routeId: 'maternity',
+      intent: 'PREGNANCY',
+      phrases: [
+        'ತಾಯ್ತನದ ಆರೈಕೆ'
+      ],
+      keywords: ['ತಾಯ್ತನ'],
+    },
+    {
+      routeId: 'newborn',
+      intent: 'NEWBORN_CARE',
+      phrases: [
+        'ನವಜಾತ ಶಿಶು ಆರೈಕೆ'
+      ],
+      keywords: ['ನವಜಾತ'],
+    },
+    {
+      routeId: 'childcare',
+      intent: 'CHILD_CARE',
+      phrases: [
+        'ಮಕ್ಕಳ ಆರೈಕೆ'
+      ],
+      keywords: ['ಮಕ್ಕಳ'],
+    },
+    {
+      routeId: 'elderly',
+      intent: 'ELDERLY_CARE',
+      phrases: [
+        'ಹಿರಿಯರ ಆರೈಕೆ'
+      ],
+      keywords: ['ಹಿರಿಯರು'],
+    },
+    {
+      routeId: 'sms',
+      intent: 'SMS_COMMUNICATION',
+      phrases: [
+        'ಎಸ್ಎಂಎಸ್ ಸಂವಹನ'
+      ],
+      keywords: ['ಎಸ್ಎಂಎಸ್'],
+    },
+    {
+      routeId: 'ussd',
+      intent: 'USSD',
+      phrases: [
+        'ಯುಎಸ್‌ಎಸ್‌ಡಿ ಬೇಸಿಕ್ ಫೋನ್'
+      ],
+      keywords: ['ಯುಎಸ್‌ಎಸ್‌ಡಿ'],
     },
     {
       routeId: 'settings',
+      intent: 'SETTINGS',
       phrases: [
-        'ಸೆಟ್ಟಿಂಗ್‌ಗಳು', 'ಸೆಟ್ಟಿಂಗ್ಸ್'
+        'ಸೆಟ್ಟಿಂಗ್‌ಗಳು'
       ],
+      keywords: ['ಸೆಟ್ಟಿಂಗ್‌ಗಳು'],
     },
     {
-      routeId: 'help',
+      routeId: 'language',
+      intent: 'LANGUAGE',
       phrases: [
-        'ಸಹಾಯ'
+        'ಭಾಷಾ ಸೇತು', 'ಭಾಷೆ ಬದಲಿಸಿ'
       ],
+      keywords: ['ಭಾಷೆ'],
     },
   ],
 };
+
+/**
+ * Normalized flat array of VoiceCommand items conforming to the VoiceCommand interface.
+ */
+export const VOICE_COMMANDS: VoiceCommand[] = Object.entries(VOICE_COMMAND_DICTIONARY).flatMap(
+  ([langCode, routePhrasesList]) => {
+    const language: VoiceNavigationLanguage =
+      langCode === 'ta' ? 'ta-IN'
+      : langCode === 'hi' ? 'hi-IN'
+      : langCode === 'te' ? 'te-IN'
+      : langCode === 'ml' ? 'ml-IN'
+      : langCode === 'kn' ? 'kn-IN'
+      : 'en-IN';
+
+    return routePhrasesList.map((rp) => ({
+      intent: rp.intent,
+      language,
+      phrases: rp.phrases,
+      keywords: rp.keywords,
+    }));
+  }
+);

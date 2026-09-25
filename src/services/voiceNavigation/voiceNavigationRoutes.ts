@@ -1,21 +1,44 @@
-export interface VoiceNavigationRoute {
-  id: string;
-  path: string;
-  name: {
-    en: string;
-    ta: string;
-    hi: string;
-    te: string;
-    ml: string;
-    kn: string;
-  };
-  category: 'core' | 'care' | 'records' | 'services' | 'system';
-  icon: string;
-}
+import { VoiceNavigationIntent, VoiceNavigationRoute } from './voiceNavigationTypes';
 
-export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
+/**
+ * Centralized intent-to-path route map.
+ * Guaranteed to match actual Medora routes.
+ */
+export const VOICE_NAVIGATION_ROUTES: Record<VoiceNavigationIntent, string> = {
+  DASHBOARD: '/dashboard',
+  MY_HEALTH: '/health',
+  FAMILY_HEALTH: '/family',
+  MEDICAL_RECORDS: '/records',
+  MEDICINES: '/medicines',
+  VACCINATIONS: '/vaccination',
+  HEALTH_TESTS: '/health-tests',
+  HEALTH_REPORTS: '/report-scanner',
+  REPORT_SCANNER: '/report-scanner',
+  XRAY: '/xray-viewer',
+  AI_ASSISTANT: '/ai',
+  DOCTOR_CONSULTATION: '/doctor-portal',
+  DOCTOR_SUMMARY: '/doctor-summary',
+  APPOINTMENTS: '/appointments',
+  EMERGENCY: '/emergency',
+  NEARBY_HOSPITALS: '/hospitals',
+  GOVERNMENT_SCHEMES: '/schemes',
+  HEALTH_EDUCATION: '/education',
+  SMS_COMMUNICATION: '/sms',
+  USSD: '/ussd',
+  SETTINGS: '/settings',
+  LANGUAGE: '/language-bridge',
+  FAMILY: '/family',
+  ELDERLY_CARE: '/elderly',
+  CHILD_CARE: '/childcare',
+  PREGNANCY: '/maternity',
+  NEWBORN_CARE: '/newborn',
+  NEW_MOTHER_CARE: '/maternity',
+};
+
+export const VOICE_NAVIGATION_ROUTE_LIST: VoiceNavigationRoute[] = [
   {
     id: 'dashboard',
+    intent: 'DASHBOARD',
     path: '/dashboard',
     name: {
       en: 'Dashboard',
@@ -30,6 +53,7 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
   },
   {
     id: 'health',
+    intent: 'MY_HEALTH',
     path: '/health',
     name: {
       en: 'My Health',
@@ -44,6 +68,7 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
   },
   {
     id: 'family',
+    intent: 'FAMILY_HEALTH',
     path: '/family',
     name: {
       en: 'Family Health',
@@ -58,6 +83,7 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
   },
   {
     id: 'medicines',
+    intent: 'MEDICINES',
     path: '/medicines',
     name: {
       en: 'Medicines & Reminders',
@@ -72,6 +98,7 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
   },
   {
     id: 'records',
+    intent: 'MEDICAL_RECORDS',
     path: '/records',
     name: {
       en: 'Medical Records',
@@ -86,6 +113,7 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
   },
   {
     id: 'report_scanner',
+    intent: 'REPORT_SCANNER',
     path: '/report-scanner',
     name: {
       en: 'Health Reports & Scanner',
@@ -100,6 +128,7 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
   },
   {
     id: 'xray_viewer',
+    intent: 'XRAY',
     path: '/xray-viewer',
     name: {
       en: 'X-Ray & Scans',
@@ -114,6 +143,7 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
   },
   {
     id: 'health_tests',
+    intent: 'HEALTH_TESTS',
     path: '/health-tests',
     name: {
       en: 'Health Tests & Vitals',
@@ -128,6 +158,7 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
   },
   {
     id: 'vaccinations',
+    intent: 'VACCINATIONS',
     path: '/vaccination',
     name: {
       en: 'Vaccinations',
@@ -142,6 +173,7 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
   },
   {
     id: 'ai_assistant',
+    intent: 'AI_ASSISTANT',
     path: '/ai',
     name: {
       en: 'AI Health Assistant',
@@ -156,6 +188,7 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
   },
   {
     id: 'doctor_portal',
+    intent: 'DOCTOR_CONSULTATION',
     path: '/doctor-portal',
     name: {
       en: 'Doctor Consultation',
@@ -170,6 +203,7 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
   },
   {
     id: 'doctor_summary',
+    intent: 'DOCTOR_SUMMARY',
     path: '/doctor-summary',
     name: {
       en: 'Doctor Summary',
@@ -184,6 +218,7 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
   },
   {
     id: 'appointments',
+    intent: 'APPOINTMENTS',
     path: '/appointments',
     name: {
       en: 'Appointments',
@@ -197,21 +232,8 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
     icon: 'Calendar',
   },
   {
-    id: 'call_history',
-    path: '/call-history',
-    name: {
-      en: 'Call History',
-      ta: 'அழைப்பு வரலாறு',
-      hi: 'कॉल विवरण',
-      te: 'కాల్ చరిత్ర',
-      ml: 'കോൾ ഹിസ്റ്ററി',
-      kn: 'ಕರೆ ಇತಿಹಾಸ',
-    },
-    category: 'services',
-    icon: 'PhoneCall',
-  },
-  {
     id: 'emergency',
+    intent: 'EMERGENCY',
     path: '/emergency',
     name: {
       en: 'Emergency Help',
@@ -226,6 +248,7 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
   },
   {
     id: 'hospitals',
+    intent: 'NEARBY_HOSPITALS',
     path: '/hospitals',
     name: {
       en: 'Nearby Hospitals',
@@ -239,21 +262,8 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
     icon: 'Building2',
   },
   {
-    id: 'transport',
-    path: '/transport',
-    name: {
-      en: 'Emergency Transport & Ambulance',
-      ta: 'ஆம்புலன்ஸ் & போக்குவரத்து',
-      hi: 'एम्बुलेंस और वाहन',
-      te: 'అంబులెన్స్ & రవాణా',
-      ml: 'ആംബുലൻസ് & ഗതാഗതം',
-      kn: 'ಆಂಬ್ಯುಲೆನ್ಸ್ ಮತ್ತು ಸಾರಿಗೆ',
-    },
-    category: 'services',
-    icon: 'Ambulance',
-  },
-  {
     id: 'schemes',
+    intent: 'GOVERNMENT_SCHEMES',
     path: '/schemes',
     name: {
       en: 'Government Schemes',
@@ -268,6 +278,7 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
   },
   {
     id: 'education',
+    intent: 'HEALTH_EDUCATION',
     path: '/education',
     name: {
       en: 'Health Education',
@@ -282,6 +293,7 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
   },
   {
     id: 'maternity',
+    intent: 'PREGNANCY',
     path: '/maternity',
     name: {
       en: 'Maternity Care',
@@ -296,6 +308,7 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
   },
   {
     id: 'newborn',
+    intent: 'NEWBORN_CARE',
     path: '/newborn',
     name: {
       en: 'Newborn Care',
@@ -309,7 +322,23 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
     icon: 'Smile',
   },
   {
+    id: 'childcare',
+    intent: 'CHILD_CARE',
+    path: '/childcare',
+    name: {
+      en: 'Child Care',
+      ta: 'குழந்தை நலம்',
+      hi: 'बाल देखभाल',
+      te: 'పిల్లల సంరక్షణ',
+      ml: 'കുട്ടികളുടെ പരിചരണം',
+      kn: 'ಮಕ್ಕಳ ಆರೈಕೆ',
+    },
+    category: 'care',
+    icon: 'Smile',
+  },
+  {
     id: 'elderly',
+    intent: 'ELDERLY_CARE',
     path: '/elderly',
     name: {
       en: 'Elderly Care',
@@ -324,6 +353,7 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
   },
   {
     id: 'sms',
+    intent: 'SMS_COMMUNICATION',
     path: '/sms',
     name: {
       en: 'SMS & Messaging',
@@ -338,6 +368,7 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
   },
   {
     id: 'ussd',
+    intent: 'USSD',
     path: '/ussd',
     name: {
       en: 'USSD Basic Phone (*123#)',
@@ -351,35 +382,8 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
     icon: 'Phone',
   },
   {
-    id: 'village',
-    path: '/village',
-    name: {
-      en: 'Village Health Dashboard',
-      ta: 'கிராம சுகாதார பலகை',
-      hi: 'ग्राम स्वास्थ्य डैशबोर्ड',
-      te: 'గ్రామ ఆరోగ్య డాష్‌బోర్డ్',
-      ml: 'ഗ്രാമ ആരോഗ്യ ഡാഷ്‌ബോർഡ്',
-      kn: 'ಗ್ರಾಮ ಆರೋಗ್ಯ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್',
-    },
-    category: 'services',
-    icon: 'MapPin',
-  },
-  {
-    id: 'profile',
-    path: '/profile',
-    name: {
-      en: 'User Profile',
-      ta: 'பயனர் சுயவிவரம்',
-      hi: 'उपयोगकर्ता प्रोफाइल',
-      te: 'యూజర్ ప్రొఫైల్',
-      ml: 'പ്രൊഫൈൽ',
-      kn: 'ಪ್ರೊಫೈಲ್',
-    },
-    category: 'system',
-    icon: 'User',
-  },
-  {
     id: 'settings',
+    intent: 'SETTINGS',
     path: '/settings',
     name: {
       en: 'Settings',
@@ -393,31 +397,26 @@ export const VOICE_NAVIGATION_ROUTES: VoiceNavigationRoute[] = [
     icon: 'Settings',
   },
   {
-    id: 'help',
-    path: '/help',
+    id: 'language',
+    intent: 'LANGUAGE',
+    path: '/language-bridge',
     name: {
-      en: 'Help & Guide',
-      ta: 'உதவி வழிகாட்டி',
-      hi: 'सहायता एवं निर्देश',
-      te: 'సహాయం & మార్గదర్శి',
-      ml: 'സഹായം & വഴികാട്ടി',
-      kn: 'ಸಹಾಯ ಮತ್ತು ಮಾರ್ಗದರ್ಶಿ',
+      en: 'Language Bridge',
+      ta: 'மொழி பாலம்',
+      hi: 'भाषा सेतु',
+      te: 'భాషా వారధి',
+      ml: 'ഭാഷാ പാലം',
+      kn: 'ಭಾಷಾ ಸೇತು',
     },
     category: 'system',
-    icon: 'HelpCircle',
-  },
-  {
-    id: 'faq',
-    path: '/faq',
-    name: {
-      en: 'Frequently Asked Questions',
-      ta: 'அடிக்கடி கேட்கப்படும் கேள்விகள்',
-      hi: 'अक्सर पूछे जाने वाले सवाल',
-      te: 'తరచుగా అడిగే ప్రశ్నలు',
-      ml: 'പതിവുചോദ്യങ്ങൾ',
-      kn: 'ಪದೇ ಪದೇ ಕೇಳಲಾಗುವ ಪ್ರಶ್ನೆಗಳು',
-    },
-    category: 'system',
-    icon: 'BookOpen',
+    icon: 'Languages',
   },
 ];
+
+export function getRouteByIntent(intent: VoiceNavigationIntent): VoiceNavigationRoute | undefined {
+  return VOICE_NAVIGATION_ROUTE_LIST.find((r) => r.intent === intent);
+}
+
+export function getPathByIntent(intent: VoiceNavigationIntent): string {
+  return VOICE_NAVIGATION_ROUTES[intent] || '/dashboard';
+}
