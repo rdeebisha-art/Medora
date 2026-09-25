@@ -8,6 +8,7 @@ import HealthScoreCard from '../components/HealthScoreCard';
 import CareGapAlert from '../components/CareGapAlert';
 import MedicineCard from '../components/MedicineCard';
 import DemoDataBadge from '../components/DemoDataBadge';
+import { HealthTrendsChart } from '../components/HealthTrendsChart';
 
 export default function MyHealthPage() {
   const { t } = useTranslation();
@@ -15,6 +16,7 @@ export default function MyHealthPage() {
   const [patient, setPatient] = useState<Patient | null>(null);
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [vitals, setVitals] = useState<HealthTest[]>([]);
+  const [allVitals, setAllVitals] = useState<HealthTest[]>([]);
   const [vaccinations, setVaccinations] = useState<Vaccination[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [refresh, setRefresh] = useState(0);
@@ -24,6 +26,7 @@ export default function MyHealthPage() {
     db.patients.get(currentUser.id).then(p => setPatient(p || null));
     db.medicines.where({ patientId: currentUser.id, status: 'active' }).toArray().then(setMedicines);
     db.healthTests.where('patientId').equals(currentUser.id).reverse().limit(6).toArray().then(setVitals);
+    db.healthTests.where('patientId').equals(currentUser.id).toArray().then(setAllVitals);
     db.vaccinations.where('patientId').equals(currentUser.id).toArray().then(setVaccinations);
     db.appointments.where({ patientId: currentUser.id }).toArray().then(setAppointments);
   }, [currentUser, refresh]);
@@ -121,6 +124,9 @@ export default function MyHealthPage() {
             <CareGapAlert gaps={careGaps} />
           </div>
         )}
+
+        {/* Health Trends (30 Days) */}
+        <HealthTrendsChart tests={allVitals} />
 
         {/* Recent Vitals */}
         {vitals.length > 0 && (

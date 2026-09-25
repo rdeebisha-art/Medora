@@ -875,26 +875,79 @@ export async function seedDatabase() {
     },
   ]);
 
-  // Health Tests for Ramesh Patel (blood sugar for last 7 days)
+  // Health Tests for Ramesh Patel (blood sugar and BP for last 30 days)
   const today = new Date();
-  const sugarReadings = [162, 178, 145, 170, 155, 168, 180];
-  for (let i = 0; i < 7; i++) {
+  const baseSugars = [158, 162, 170, 165, 178, 155, 145, 150, 168, 172, 160, 158, 166, 175, 180, 162, 159, 164, 170, 168, 155, 152, 163, 171, 165, 158, 160, 167, 174, 162];
+  const baseBps = [
+    [140, 86], [142, 88], [138, 85], [145, 90], [140, 86], [135, 82], [148, 92], [143, 87],
+    [139, 85], [141, 86], [137, 84], [144, 89], [142, 88], [136, 83], [146, 91], [140, 86],
+    [138, 85], [143, 87], [145, 89], [139, 84], [136, 82], [141, 86], [144, 88], [140, 85],
+    [137, 83], [142, 87], [146, 90], [139, 85], [138, 84], [140, 86]
+  ];
+  const basePulses = [72, 74, 76, 75, 78, 73, 71, 72, 75, 77, 74, 73, 76, 78, 80, 75, 74, 76, 77, 75, 72, 70, 74, 76, 75, 73, 74, 76, 77, 72];
+
+  for (let i = 0; i < 30; i++) {
     const d = new Date(today);
-    d.setDate(d.getDate() - (6 - i));
+    d.setDate(d.getDate() - (29 - i));
+    const dateStr = d.toISOString().split('T')[0];
+
+    // Sugar
     await db.healthTests.add({
-      patientId: Number(p2), type: 'blood_sugar', value: String(sugarReadings[i]),
-      unit: 'mg/dL', date: d.toISOString().split('T')[0],
-      notes: i === 6 ? 'Fasting value' : '',
+      patientId: Number(p2),
+      type: 'blood_sugar',
+      value: String(baseSugars[i]),
+      unit: 'mg/dL',
+      date: dateStr,
+      notes: i === 29 ? 'Fasting value' : '',
+    });
+
+    // BP
+    const [sys, dia] = baseBps[i];
+    await db.healthTests.add({
+      patientId: Number(p2),
+      type: 'blood_pressure',
+      value: `${sys}/${dia}`,
+      unit: 'mmHg',
+      date: dateStr,
+      notes: '',
+    });
+
+    // Pulse
+    await db.healthTests.add({
+      patientId: Number(p2),
+      type: 'pulse',
+      value: String(basePulses[i]),
+      unit: 'bpm',
+      date: dateStr,
+      notes: '',
     });
   }
-  // BP readings for Ramesh
-  const bpReadings = ['142/88', '138/85', '145/90', '140/86', '135/82', '148/92', '143/87'];
-  for (let i = 0; i < 7; i++) {
+
+  // 30 days of BP and Weight for Anitha Kumar (patient 1)
+  for (let i = 0; i < 30; i++) {
     const d = new Date(today);
-    d.setDate(d.getDate() - (6 - i));
+    d.setDate(d.getDate() - (29 - i));
+    const dateStr = d.toISOString().split('T')[0];
+    const bpSys = 108 + (i % 6);
+    const bpDia = 70 + (i % 5);
+    const pulse = 76 + (i % 8);
+
     await db.healthTests.add({
-      patientId: Number(p2), type: 'blood_pressure', value: bpReadings[i],
-      unit: 'mmHg', date: d.toISOString().split('T')[0], notes: '',
+      patientId: Number(p1),
+      type: 'blood_pressure',
+      value: `${bpSys}/${bpDia}`,
+      unit: 'mmHg',
+      date: dateStr,
+      notes: '',
+    });
+
+    await db.healthTests.add({
+      patientId: Number(p1),
+      type: 'pulse',
+      value: String(pulse),
+      unit: 'bpm',
+      date: dateStr,
+      notes: '',
     });
   }
   // Weight for Anitha Kumar

@@ -158,7 +158,7 @@ export const VOICE_COMMAND_DICTIONARY: Record<VoiceNavLangCode, RoutePhrases[]> 
       routeId: 'emergency',
       intent: 'EMERGENCY',
       phrases: [
-        'open emergency', 'go to emergency', 'show emergency', 'emergency',
+        'open emergency', 'go to emergency', 'show emergency', 'open emergency help', 'emergency',
         'emergency help', 'help me', 'call ambulance', 'sos', 'medical emergency',
         'urgent help', 'emergency hotline', 'hospital emergency', 'accident'
       ],
@@ -712,7 +712,7 @@ export const VOICE_COMMAND_DICTIONARY: Record<VoiceNavLangCode, RoutePhrases[]> 
       intent: 'DASHBOARD',
       phrases: [
         'డాష్బోర్డ్ తెరవండి', 'డాష్‌బోర్డ్ తెరవండి', 'డాష్బోర్డ్కు వెళ్ళండి', 'డాష్‌బోర్డ్‌కు వెళ్లండి',
-        'హోమ్ తెరవండి', 'డ్యాష్‌బోర్డ్', 'హోమ్ పేజీ', 'ప్రధాన పేజీ'
+        'డాష్‌బోర్డ్‌కు వెళ్ళండి', 'హోమ్ తెరవండి', 'డ్యాష్‌బోర్డ్', 'హోమ్ పేజీ', 'ప్రధాన పేజీ'
       ],
       keywords: ['డ్యాష్‌బోర్డ్', 'డాష్‌బోర్డ్', 'డాష్బోర్డ్', 'హోమ్'],
     },
@@ -1027,7 +1027,8 @@ export const VOICE_COMMAND_DICTIONARY: Record<VoiceNavLangCode, RoutePhrases[]> 
       routeId: 'emergency',
       intent: 'EMERGENCY',
       phrases: [
-        'അടിയന്തര സഹായം', 'ആംബുലൻസ്', 'അടിയന്തരാവസ്ഥ'
+        'അടിയന്തരാവസ്ഥ തുറക്കുക', 'അടിയന്തര സഹായത്തിലേക്ക് പോകുക', 'അടിയന്തര സഹായം',
+        'അടിയന്തരാവസ്ഥ കാണിക്കുക', 'ആംബുലൻസ്', 'അടിയന്തരാവസ്ഥ'
       ],
       keywords: ['അടിയന്തര', 'ആംബുലൻസ്'],
     },
@@ -1127,9 +1128,9 @@ export const VOICE_COMMAND_DICTIONARY: Record<VoiceNavLangCode, RoutePhrases[]> 
       routeId: 'dashboard',
       intent: 'DASHBOARD',
       phrases: [
-        'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ತೆರೆಯಿರಿ', 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', 'ಮುಖಪುಟ', 'ಮುಖ್ಯ ಪುಟ'
+        'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ತೆರೆಯಿರಿ', 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ ಹೋಗಿ', 'ಹೋಮ್ ತೆರೆಯಿರಿ', 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', 'ಮುಖಪುಟ', 'ಮುಖ್ಯ ಪುಟ'
       ],
-      keywords: ['ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', 'ಮುಖಪುಟ'],
+      keywords: ['ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', 'ಮುಖಪುಟ', 'ಹೋಮ್'],
     },
     {
       routeId: 'health',
@@ -1151,7 +1152,8 @@ export const VOICE_COMMAND_DICTIONARY: Record<VoiceNavLangCode, RoutePhrases[]> 
       routeId: 'medicines',
       intent: 'MEDICINES',
       phrases: [
-        'ಔಷಧಿಗಳಿಗೆ ಹೋಗಿ', 'ಔಷಧಿಗಳು', 'ನನ್ನ ಔಷಧಿಗಳು', 'ಔಷಧಿ ಜ್ಞಾಪನೆ',
+        'ಔಷಧಿಗಳಿಗೆ ಹೋಗಿ', 'ಔಷಧಿಗಳನ್ನು ತೆರೆಯಿರಿ', 'ನನ್ನ ಔಷಧಿಗಳನ್ನು ತೋರಿಸಿ', 'ಔಷಧಿ ಜ್ಞಾಪನೆಗಳು',
+        'ಔಷಧಿಗಳು', 'ನನ್ನ ಔಷಧಿಗಳು', 'ಔಷಧಿ ಜ್ಞಾಪನೆ',
         'ಮಾತ್ರೆಗಳು', 'ದೈನಂದಿನ ಔಷಧಿಗಳು'
       ],
       keywords: ['ಔಷಧಿಗಳು', 'ಮಾತ್ರೆಗಳು'],
@@ -1232,7 +1234,8 @@ export const VOICE_COMMAND_DICTIONARY: Record<VoiceNavLangCode, RoutePhrases[]> 
       routeId: 'emergency',
       intent: 'EMERGENCY',
       phrases: [
-        'ತುರ್ತು ಸಹಾಯ', 'ಆಂಬ್ಯುಲೆನ್ಸ್', 'ತುರ್ತು ಚಿಕಿತ್ಸೆ'
+        'ತುರ್ತು ಪರಿಸ್ಥಿತಿ ತೆರೆಯಿರಿ', 'ತುರ್ತು ಸಹಾಯಕ್ಕೆ ಹೋಗಿ', 'ತುರ್ತು ಸಹಾಯ',
+        'ತುರ್ತು ಪರಿಸ್ಥಿತಿಯನ್ನು ತೋರಿಸಿ', 'ಆಂಬ್ಯುಲೆನ್ಸ್', 'ತುರ್ತು ಚಿಕಿತ್ಸೆ'
       ],
       keywords: ['ತುರ್ತು', 'ಆಂಬ್ಯುಲೆನ್ಸ್'],
     },
