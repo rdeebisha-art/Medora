@@ -271,6 +271,71 @@ export interface EducationContent {
   tags: string[];
 }
 
+export interface FamilyAlertOutbox {
+  id?: number;
+  alertId: string;
+  familyId: number | string;
+  patientId: number | string;
+  recipientId?: number | string;
+  recipientName: string;
+  recipientPhone: string;
+  message: string;
+  language: string;
+  timestamp: string;
+  status: 'PENDING' | 'READY_TO_SEND' | 'SENT_DEMO' | 'FAILED' | 'PENDING_OFFLINE';
+}
+
+export interface EmergencyIncident {
+  id?: number;
+  incidentId: string;
+  patientId?: number | string;
+  timestamp: string;
+  detectedLanguage: string;
+  emergencyType: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  locationIfAvailable?: string;
+  latitude?: number;
+  longitude?: number;
+  locationAccuracy?: number;
+  transcript?: string;
+  emergencyContact?: string;
+  source: 'MANUAL_BUTTON' | 'LOCAL_SOUND_DETECTION' | 'AI_TRIAGE' | 'USSD';
+  status: 'LOCAL_ONLY' | 'PENDING_CONNECTION' | 'SENT' | 'FAILED';
+  dispatchStatus: 'NOT_SENT' | 'LOCAL_ONLY' | 'PENDING_CONNECTION' | 'SENT' | 'CONFIRMED' | 'FAILED';
+  createdAt: string;
+}
+
+export interface CallHistoryRecord {
+  id?: number;
+  phoneNumber: string;
+  contactName?: string;
+  contactType: 'PERSON' | 'DOCTOR' | 'FAMILY' | 'HOSPITAL' | 'EMERGENCY';
+  action: 'CALL_INITIATED';
+  timestamp: string;
+}
+
+export interface UssdSessionRecord {
+  id?: number;
+  ussdSessionId: string;
+  patientId?: number | string;
+  language: string;
+  previousSymptom?: string;
+  duration?: string;
+  lastIntent?: string;
+  lastResponse?: string;
+  lastUpdated: string;
+}
+
+export interface UssdMessageRecord {
+  id?: number;
+  sessionId: string;
+  role: 'user' | 'assistant';
+  text: string;
+  intent?: string;
+  isEmergency?: boolean;
+  timestamp: string;
+}
+
 export class MedoraDB extends Dexie {
   patients!: Table<Patient, number>;
   families!: Table<Family, number>;
@@ -293,6 +358,11 @@ export class MedoraDB extends Dexie {
   languageBridgeSessions!: Table<LanguageBridgeSession, number>;
   languageBridgeMessages!: Table<LanguageBridgeMessage, number>;
   languageBridgeCorrections!: Table<LanguageBridgeCorrection, number>;
+  familyAlertOutbox!: Table<FamilyAlertOutbox, number>;
+  emergencyIncidents!: Table<EmergencyIncident, number>;
+  callHistory!: Table<CallHistoryRecord, number>;
+  ussdSessions!: Table<UssdSessionRecord, number>;
+  ussdMessages!: Table<UssdMessageRecord, number>;
 
   constructor() {
     super('MedoraDB');
@@ -320,6 +390,13 @@ export class MedoraDB extends Dexie {
       languageBridgeSessions: '++id, patientId, doctorId, status, createdAt',
       languageBridgeMessages: '++id, sessionId, timestamp, speaker',
       languageBridgeCorrections: '++id, sessionId, languagePair, timestamp',
+    });
+    this.version(3).stores({
+      familyAlertOutbox: '++id, alertId, familyId, patientId, recipientPhone, status, timestamp',
+      emergencyIncidents: '++id, incidentId, patientId, emergencyType, severity, status, timestamp',
+      callHistory: '++id, phoneNumber, contactType, action, timestamp',
+      ussdSessions: '++id, ussdSessionId, patientId, language, lastUpdated',
+      ussdMessages: '++id, sessionId, timestamp, role',
     });
   }
 }
@@ -378,26 +455,123 @@ export async function seedDatabase() {
   });
   const p7 = await db.patients.add({
     name: 'Gopi Krishnan', age: 72, gender: 'male', phone: '9876543216', pin: '1234',
-    role: 'patient', village: 'Kodaikanal', language: 'ta', familyId: undefined,
+    role: 'patient', village: 'Kodaikanal', language: 'ta', familyId: 6,
     bloodGroup: 'O-', allergies: [], conditions: ['COPD', 'Hypertension'],
     isElderly: true, emergencyContact: '9876500006',
     dateOfBirth: '1952-03-22', createdAt: new Date().toISOString(),
   });
-  await db.patients.add({
+  const p8 = await db.patients.add({
     name: 'Priya Mehta', age: 29, gender: 'female', phone: '9876543217', pin: '1234',
-    role: 'patient', village: 'Kodaikanal', language: 'hi', familyId: undefined,
-    bloodGroup: 'A-', allergies: [], conditions: [],
+    role: 'patient', village: 'Kodaikanal', language: 'hi', familyId: 7,
+    bloodGroup: 'A-', allergies: [], conditions: ['Maternal Health (T1)'],
+    isPregnant: true, pregnancyWeeks: 12,
     emergencyContact: '9876500007',
     dateOfBirth: '1995-09-18', createdAt: new Date().toISOString(),
   });
+  const p9 = await db.patients.add({
+    name: 'Ramesh Kumar', age: 36, gender: 'male', phone: '9876543218', pin: '1234',
+    role: 'patient', village: 'Kodaikanal', language: 'ta', familyId: 2,
+    bloodGroup: 'B+', allergies: [], conditions: [],
+    emergencyContact: '9876543210',
+    dateOfBirth: '1988-01-14', createdAt: new Date().toISOString(),
+  });
+  const p10 = await db.patients.add({
+    name: 'Sunil Sharma', age: 38, gender: 'male', phone: '9876543219', pin: '1234',
+    role: 'patient', village: 'Kodaikanal', language: 'hi', familyId: 1,
+    bloodGroup: 'O+', allergies: [], conditions: [],
+    emergencyContact: '9876543214',
+    dateOfBirth: '1986-04-10', createdAt: new Date().toISOString(),
+  });
+  const p11 = await db.patients.add({
+    name: 'Sarita Patel', age: 62, gender: 'female', phone: '9876543220', pin: '1234',
+    role: 'patient', village: 'Kodaikanal', language: 'hi', familyId: 5,
+    bloodGroup: 'O+', allergies: [], conditions: ['Hypertension'],
+    isElderly: true, emergencyContact: '9876543211',
+    dateOfBirth: '1962-08-20', createdAt: new Date().toISOString(),
+  });
+  const p12 = await db.patients.add({
+    name: 'Deepa Nair', age: 40, gender: 'female', phone: '9876543221', pin: '1234',
+    role: 'patient', village: 'Kodaikanal', language: 'ml', familyId: 3,
+    bloodGroup: 'A+', allergies: [], conditions: [],
+    emergencyContact: '9876543213',
+    dateOfBirth: '1984-05-15', createdAt: new Date().toISOString(),
+  });
+  const p13 = await db.patients.add({
+    name: 'Kamala Krishnan', age: 68, gender: 'female', phone: '9876543222', pin: '1234',
+    role: 'patient', village: 'Kodaikanal', language: 'ta', familyId: 6,
+    bloodGroup: 'B+', allergies: [], conditions: ['Arthritis'],
+    isElderly: true, emergencyContact: '9876543216',
+    dateOfBirth: '1956-02-12', createdAt: new Date().toISOString(),
+  });
+  const p14 = await db.patients.add({
+    name: 'Vikram Mehta', age: 32, gender: 'male', phone: '9876543223', pin: '1234',
+    role: 'patient', village: 'Kodaikanal', language: 'hi', familyId: 7,
+    bloodGroup: 'AB+', allergies: [], conditions: [],
+    emergencyContact: '9876543217',
+    dateOfBirth: '1992-12-05', createdAt: new Date().toISOString(),
+  });
+  const p15 = await db.patients.add({
+    name: 'Basavanna Gowda', age: 70, gender: 'male', phone: '9876543224', pin: '1234',
+    role: 'patient', village: 'Kodaikanal', language: 'kn', familyId: 8,
+    bloodGroup: 'O+', allergies: [], conditions: ['Hypertension', 'Fall Risk'],
+    isElderly: true, emergencyContact: '9876500008',
+    dateOfBirth: '1954-03-10', createdAt: new Date().toISOString(),
+  });
+  const p16 = await db.patients.add({
+    name: 'Ningamma Gowda', age: 65, gender: 'female', phone: '9876543225', pin: '1234',
+    role: 'patient', village: 'Kodaikanal', language: 'kn', familyId: 8,
+    bloodGroup: 'A+', allergies: [], conditions: ['Osteoarthritis'],
+    isElderly: true, emergencyContact: '9876543224',
+    dateOfBirth: '1959-07-22', createdAt: new Date().toISOString(),
+  });
+  const p17 = await db.patients.add({
+    name: 'Sunita Das', age: 34, gender: 'female', phone: '9876543226', pin: '1234',
+    role: 'patient', village: 'Kodaikanal', language: 'hi', familyId: 9,
+    bloodGroup: 'B+', allergies: [], conditions: [],
+    emergencyContact: '9876500009',
+    dateOfBirth: '1990-09-02', createdAt: new Date().toISOString(),
+  });
+  const p18 = await db.patients.add({
+    name: 'Amit Das', age: 10, gender: 'male', phone: '9876543227', pin: '1234',
+    role: 'patient', village: 'Kodaikanal', language: 'hi', familyId: 9,
+    bloodGroup: 'B+', allergies: [], conditions: [],
+    isChild: true, emergencyContact: '9876543226',
+    dateOfBirth: '2014-06-18', createdAt: new Date().toISOString(),
+  });
+  const p19 = await db.patients.add({
+    name: 'Rahul Das', age: 6, gender: 'male', phone: '9876543228', pin: '1234',
+    role: 'patient', village: 'Kodaikanal', language: 'hi', familyId: 9,
+    bloodGroup: 'O+', allergies: [], conditions: [],
+    isChild: true, emergencyContact: '9876543226',
+    dateOfBirth: '2018-11-25', createdAt: new Date().toISOString(),
+  });
+  const p20 = await db.patients.add({
+    name: 'Harish Joshi', age: 50, gender: 'male', phone: '9876543229', pin: '1234',
+    role: 'patient', village: 'Kodaikanal', language: 'hi', familyId: 10,
+    bloodGroup: 'AB+', allergies: [], conditions: ['Prediabetes'],
+    emergencyContact: '9876500010',
+    dateOfBirth: '1974-04-16', createdAt: new Date().toISOString(),
+  });
+  const p21 = await db.patients.add({
+    name: 'Geeta Joshi', age: 46, gender: 'female', phone: '9876543230', pin: '1234',
+    role: 'patient', village: 'Kodaikanal', language: 'hi', familyId: 10,
+    bloodGroup: 'A+', allergies: [], conditions: ['Migraine'],
+    emergencyContact: '9876543229',
+    dateOfBirth: '1978-10-30', createdAt: new Date().toISOString(),
+  });
 
-  // Families
+  // 10 Families with complete connected demo data
   await db.families.bulkAdd([
-    { familyName: 'Sharma Family', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p5)] },
-    { familyName: 'Kumar Family', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p1)] },
-    { familyName: 'Nair Family', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p4)] },
-    { familyName: 'Devi Family', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p3), Number(p6)] },
-    { familyName: 'Patel Family', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p2)] },
+    { familyName: 'Sharma Family (Family 01)', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p5), Number(p10)] },
+    { familyName: 'Kumar Family (Family 02)', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p1), Number(p9)] },
+    { familyName: 'Nair Family (Family 03)', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p4), Number(p12)] },
+    { familyName: 'Devi Family (Family 04)', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p3), Number(p6)] },
+    { familyName: 'Patel Family (Family 05)', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p2), Number(p11)] },
+    { familyName: 'Krishnan Family (Family 06)', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p7), Number(p13)] },
+    { familyName: 'Mehta Family (Family 07)', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p8), Number(p14)] },
+    { familyName: 'Gowda Family (Family 08)', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p15), Number(p16)] },
+    { familyName: 'Das Family (Family 09)', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p17), Number(p18), Number(p19)] },
+    { familyName: 'Joshi Family (Family 10)', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p20), Number(p21)] },
   ]);
 
   // Doctors

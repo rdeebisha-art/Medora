@@ -32,7 +32,6 @@ export default function LoginPage() {
       if (selectedRole === 'patient') {
         const patient = await db.patients.where({ phone }).first();
         if (patient && patient.pin === pin) {
-          setLanguage(patient.language || 'en');
           login({ id: patient.id!, name: patient.name, role: 'patient', phone: patient.phone, village: patient.village, language: patient.language, familyId: patient.familyId, ...patient });
           navigate('/dashboard');
           return;

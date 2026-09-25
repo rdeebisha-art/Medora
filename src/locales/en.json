@@ -594,7 +594,7 @@
     "reset": "Reset",
     "addNote": "Add Note",
     "save": "Save",
-    "disclaimer": "Medical images must be reviewed by a qualified healthcare professional. Medora cannot diagnose from images."
+    "disclaimer": "Medical images should be reviewed by a qualified healthcare professional. Medora does not diagnose medical conditions from images."
   },
   "transport": {
     "title": "Transport Assistance",

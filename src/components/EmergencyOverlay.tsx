@@ -39,16 +39,16 @@ export default function EmergencyOverlay({ onClose }: EmergencyOverlayProps) {
 
         <div className="p-5 space-y-3 bg-[#FEF2F2]">
           <button 
-            onClick={() => handleAction('/ivr', 'Dialing emergency services')}
+            onClick={() => handleAction('/emergency', 'Opening emergency mode')}
             className="w-full bg-[#DC2626] hover:bg-[#B91C1C] text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-red-600/30 active:scale-95 transition-all"
           >
             <PhoneCall size={24} />
-            <span className="text-lg">CALL EMERGENCY (108)</span>
+            <span className="text-lg">OPEN EMERGENCY (108)</span>
           </button>
 
           <div className="grid grid-cols-2 gap-3">
             <button 
-              onClick={() => handleAction('/sms', 'Alerting family members')}
+              onClick={() => handleAction('/emergency', 'Alerting family members')}
               className="bg-white border-2 border-red-200 hover:border-red-400 text-[#B91C1C] font-bold py-3 px-2 rounded-2xl flex flex-col items-center gap-1.5 shadow-xs active:scale-95 transition-all"
             >
               <Users size={24} className="text-[#DC2626]" />

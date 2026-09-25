@@ -16,8 +16,8 @@ const LANGUAGES = [
 export default function WelcomePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { setLanguage, toggleSimpleMode, isSimpleMode } = useAppStore();
-  const [selectedLang, setSelectedLang] = useState('en');
+  const { appLanguage, setLanguage, toggleSimpleMode, isSimpleMode } = useAppStore();
+  const [selectedLang, setSelectedLang] = useState(appLanguage || 'en');
   const [step, setStep] = useState<'language' | 'mode'>('language');
 
   const handleLangSelect = (code: string) => {

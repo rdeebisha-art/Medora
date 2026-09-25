@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 import EmergencyOverlay from './EmergencyOverlay';
+import ConnectivityStatusIndicator from './ConnectivityStatusIndicator';
 
 const LANGUAGES = [
   { code: 'en', label: 'EN', name: 'English', native: 'English' },
@@ -66,12 +67,7 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className={`min-h-screen flex flex-col bg-transparent text-[#0F172A] overflow-x-hidden ${is2GMode ? 'text-base' : ''} ${isSimpleMode ? 'text-lg' : ''}`}>
-      {isOffline && (
-        <div className="bg-[#D97706] text-white text-center py-1.5 px-4 text-xs font-bold sticky top-0 z-50 flex items-center justify-center gap-1.5 shadow-sm">
-          <WifiOff size={13} />
-          <span>🔴 {t('common.offline')} · {t('common.offlineNotice')}</span>
-        </div>
-      )}
+      <ConnectivityStatusIndicator />
 
       <header className="bg-[#0F766E] text-white px-3 sm:px-4 py-2.5 sm:py-3 shadow-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">

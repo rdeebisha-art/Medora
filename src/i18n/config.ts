@@ -7,6 +7,18 @@ import te from '../locales/te.json';
 import kn from '../locales/kn.json';
 import ml from '../locales/ml.json';
 
+const getInitialLanguage = (): string => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const saved = localStorage.getItem('medora-app-language');
+    if (saved && ['en', 'ta', 'te', 'ml', 'kn', 'hi'].includes(saved)) {
+      return saved;
+    }
+  }
+  return 'en';
+};
+
+const initialLang = getInitialLanguage();
+
 i18n
   .use(initReactI18next)
   .init({
@@ -18,7 +30,7 @@ i18n
       kn: { translation: kn },
       ml: { translation: ml },
     },
-    lng: 'en',
+    lng: initialLang,
     fallbackLng: 'en',
     interpolation: { escapeValue: false },
   });

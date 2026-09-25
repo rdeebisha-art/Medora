@@ -76,16 +76,50 @@ export default function DashboardPage() {
   ];
 
   const handleQuickEmergencyAlert = async () => {
-    await db.smsOutbox.add({
-      toPhone: '108 & Family Contact',
-      message: `EMERGENCY ALERT from MEDORA: Urgent medical help requested for ${currentUser?.name || 'Patient'} in Kodaikanal. [DEMO SIMULATION]`,
-      type: 'emergency_alert',
-      language: 'en',
-      status: 'pending',
-      createdAt: new Date().toISOString()
-    });
-    setEmergencyAlertSent(true);
-    setTimeout(() => setEmergencyAlertSent(false), 4000);
+    try {
+      const pId = currentUser?.id || 1;
+      const famId = (currentUser as any)?.familyId || 1;
+      const patientName = currentUser?.name || 'Patient';
+      const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      await db.emergencyIncidents.add({
+        incidentId: `INC-${Date.now()}`,
+        patientId: pId,
+        timestamp: new Date().toISOString(),
+        detectedLanguage: language,
+        emergencyType: 'DASHBOARD_QUICK_ALERT',
+        severity: 'HIGH',
+        source: 'MANUAL_BUTTON',
+        status: 'LOCAL_ONLY',
+        dispatchStatus: 'LOCAL_ONLY',
+        createdAt: new Date().toISOString(),
+      });
+
+      await db.familyAlertOutbox.add({
+        alertId: `ALT-${Date.now()}`,
+        familyId: famId,
+        patientId: pId,
+        recipientName: 'Family Contacts',
+        recipientPhone: currentUser?.phone || 'Emergency Contact',
+        message: `🚨 EMERGENCY ALERT from MEDORA: Urgent medical help requested for ${patientName} at ${timestamp}.`,
+        language,
+        timestamp: new Date().toISOString(),
+        status: 'PENDING_OFFLINE',
+      });
+
+      await db.smsOutbox.add({
+        toPhone: '108 & Family Contact',
+        message: `EMERGENCY ALERT from MEDORA: Urgent medical help requested for ${patientName} in Kodaikanal.`,
+        type: 'emergency_alert',
+        language,
+        status: 'PENDING_OFFLINE',
+        createdAt: new Date().toISOString()
+      });
+      setEmergencyAlertSent(true);
+      setTimeout(() => setEmergencyAlertSent(false), 4000);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const dateLocale =

@@ -21,22 +21,50 @@ interface AppState {
   isSimpleMode: boolean;
   currentUser: CurrentUser | null;
   currentRole: Role | null;
-  language: string;
+  appLanguage: string;
+  language: string; // for backward compatibility
   setOffline: (status: boolean) => void;
   toggle2GMode: () => void;
   toggleSimpleMode: () => void;
   login: (user: CurrentUser) => void;
   logout: () => void;
   setLanguage: (lang: string) => void;
+  setAppLanguage: (lang: string) => void;
+}
+
+const getStoredLanguage = (): string => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const saved = localStorage.getItem('medora-app-language');
+    if (saved && ['en', 'ta', 'te', 'ml', 'kn', 'hi'].includes(saved)) {
+      return saved;
+    }
+  }
+  return 'en';
+};
+
+const initialLanguage = getStoredLanguage();
+
+const bcpMap: Record<string, string> = {
+  ta: 'ta-IN',
+  te: 'te-IN',
+  hi: 'hi-IN',
+  kn: 'kn-IN',
+  ml: 'ml-IN',
+  en: 'en-IN'
+};
+
+if (typeof document !== 'undefined') {
+  document.documentElement.lang = bcpMap[initialLanguage] || 'en-IN';
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  isOffline: !navigator.onLine,
+  isOffline: typeof navigator !== 'undefined' ? !navigator.onLine : false,
   is2GMode: false,
   isSimpleMode: false,
   currentUser: null,
   currentRole: null,
-  language: 'en',
+  appLanguage: initialLanguage,
+  language: initialLanguage,
 
   setOffline: (status) => set({ isOffline: status }),
 
@@ -45,42 +73,37 @@ export const useAppStore = create<AppState>((set) => ({
   toggleSimpleMode: () => set((state) => ({ isSimpleMode: !state.isSimpleMode })),
 
   login: (user) => {
-    const lang = (user.language as string) || 'en';
-    const bcpMap: Record<string, string> = {
-      ta: 'ta-IN',
-      te: 'te-IN',
-      hi: 'hi-IN',
-      kn: 'kn-IN',
-      ml: 'ml-IN',
-      en: 'en-IN'
-    };
-    if (typeof document !== 'undefined') {
-      document.documentElement.lang = bcpMap[lang] || 'en-IN';
-    }
-    i18n.changeLanguage(lang);
+    // Keep the authoritative appLanguage as chosen by user. Do NOT overwrite appLanguage with user's record language.
     set({
       currentUser: user,
       currentRole: user.role,
-      language: lang,
     });
   },
 
   logout: () => set({ currentUser: null, currentRole: null }),
 
   setLanguage: (lang) => {
-    const bcpMap: Record<string, string> = {
-      ta: 'ta-IN',
-      te: 'te-IN',
-      hi: 'hi-IN',
-      kn: 'kn-IN',
-      ml: 'ml-IN',
-      en: 'en-IN'
-    };
-    if (typeof document !== 'undefined') {
-      document.documentElement.lang = bcpMap[lang] || 'en-IN';
+    const validLang = ['en', 'ta', 'te', 'ml', 'kn', 'hi'].includes(lang) ? lang : 'en';
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('medora-app-language', validLang);
     }
-    i18n.changeLanguage(lang);
-    set({ language: lang });
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = bcpMap[validLang] || 'en-IN';
+    }
+    i18n.changeLanguage(validLang);
+    set({ appLanguage: validLang, language: validLang });
+  },
+
+  setAppLanguage: (lang) => {
+    const validLang = ['en', 'ta', 'te', 'ml', 'kn', 'hi'].includes(lang) ? lang : 'en';
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('medora-app-language', validLang);
+    }
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = bcpMap[validLang] || 'en-IN';
+    }
+    i18n.changeLanguage(validLang);
+    set({ appLanguage: validLang, language: validLang });
   },
 }));
 
@@ -88,5 +111,7 @@ export const useAppStore = create<AppState>((set) => ({
 seedDatabase().catch(console.error);
 
 // Sync online/offline status
-window.addEventListener('online', () => useAppStore.getState().setOffline(false));
-window.addEventListener('offline', () => useAppStore.getState().setOffline(true));
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => useAppStore.getState().setOffline(false));
+  window.addEventListener('offline', () => useAppStore.getState().setOffline(true));
+}
