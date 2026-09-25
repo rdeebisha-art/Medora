@@ -1039,17 +1039,22 @@ app.post('/api/chat', async (req: Request, res: Response) => {
 
   let systemInstruction = `You are Medora AI, a compassionate healthcare assistant for rural communities.
 Language code: ${language}.
-Always communicate clearly, respectfully, and simply.
-Do NOT diagnose or prescribe treatment.
+Always communicate clearly, respectfully, and simply in the specified language (${language}). If the user types in Hindi, Tamil, Telugu, Kannada, Malayalam, or English, reply in that exact language and script.
 Preserve exact medicine names, measurements (e.g. 102°F, 120/80, 180 mg/dL), and dates.
-If red flag symptoms appear (chest pain, breathing difficulty, severe bleeding, newborn fever, unconsciousness), instruct immediate emergency medical care without waiting.`;
+If red flag symptoms appear (chest pain, breathing difficulty, severe bleeding, newborn fever, unconsciousness), instruct immediate emergency medical care (dial 108) without waiting.`;
 
   if (role === 'symptoms') {
     systemInstruction += `\nRole: Symptom & Safe Home Care Guide. Focus on safe first-aid remedies (e.g., ORS for dehydration, cold compresses for mild fever, safe rest) without substituting for hospital care.`;
   } else if (role === 'doctor_handoff') {
     systemInstruction += `\nRole: Doctor Consultation & Clinical Summary Specialist. Summarize patient complaints, vitals, and findings for clinical handoff.`;
   } else if (role === 'ussd_guide') {
-    systemInstruction += `\nRole: USSD Basic Phone Assistant. Keep responses concise, numbered, and under 160 characters per section.`;
+    systemInstruction += `\nRole: USSD Healthcare AI Specialist (*123#).
+The user is asking about their symptoms. You MUST structure your response into 4 distinct, numbered sections in ${language}:
+1. 🩺 SYMPTOMS (लक्षण / அறிகுறிகள் / లక్షణాలు / ರೋಗಲಕ್ಷಣಗಳು): Identify and evaluate the reported symptoms and severity.
+2. 📋 PROBABLE DIAGNOSIS (संभावित निदान / சாத்தியமான நோயறிதல் / సాధ్యమైన రోగ నిర్ధారణ): Explain the likely medical condition, cause, and rural clinical triage level in simple terms.
+3. 🌿 SAFE REMEDIES (घरेलू उपचार / வீட்டு வைத்தியம் / ఇంటి నివారణలు): Give practical, effective home remedies (hydration, safe fluids, rest, ORS, herbal/warm steam, cold sponge).
+4. 💊 CURE & TREATMENT (इलाज और चिकित्सा सलाह / சிகிச்சை முறை / చికిత్స): Explain medical cure, doctor consultation guidance, required clinical care, and red-flag warning signs (when to immediately call 108 or visit nearest PHC hospital).
+Ensure your tone is reassuring and written in fluent, natural ${language}.`;
   }
 
   if (patientContext) {
@@ -1137,6 +1142,52 @@ ${JSON.stringify(summary, null, 2)}`;
   }
 
   return res.json({ translatedSummary: summary });
+});
+
+// POST /api/tts (Gemini Text-to-Speech for rural Indic & English speech)
+app.post('/api/tts', async (req: Request, res: Response) => {
+  const { text, language = 'en' } = req.body || {};
+  if (!text) {
+    return res.status(400).json({ error: 'Text is required' });
+  }
+
+  if (genAI) {
+    try {
+      const response = await genAI.models.generateContent({
+        model: 'gemini-3.8-flash-lite-tts',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                text: String(text).slice(0, 1000),
+                speechMetadata: {
+                  style: `Clear, measured healthcare guidance for rural users in language ${language}`,
+                },
+              },
+            ],
+          },
+        ],
+        config: {
+          responseModalities: ['AUDIO'],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: 'Kore' },
+            },
+          },
+        },
+      });
+
+      const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      if (base64Audio) {
+        return res.json({ audio: base64Audio, format: 'pcm', sampleRate: 24000 });
+      }
+    } catch (err: any) {
+      console.warn('[Medora TTS] Gemini TTS notice:', err);
+    }
+  }
+
+  return res.json({ audio: null, fallbackToBrowser: true });
 });
 
 // GET /api/integrations/status (Live integration status for Admin & UI)

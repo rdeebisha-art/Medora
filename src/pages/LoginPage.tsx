@@ -69,8 +69,34 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent flex flex-col justify-between py-6 px-4 overflow-x-hidden">
-      <div className="flex items-center justify-center pt-4 pb-3 px-4">
+    <div className="min-h-screen bg-transparent flex flex-col justify-between py-4 px-4 overflow-x-hidden">
+      {/* Prominent Clear Top Back Button */}
+      <div className="w-full max-w-lg mx-auto flex items-center justify-between mb-1">
+        <button
+          type="button"
+          onClick={() => {
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate('/dashboard');
+            }
+          }}
+          className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white text-teal-950 border-2 border-teal-700 shadow-md hover:bg-teal-50 hover:border-teal-800 active:scale-95 transition-all font-black text-xs sm:text-sm min-h-[44px] group"
+          aria-label="Back"
+          title="Back to Previous Page"
+        >
+          <span className="w-6 h-6 rounded-lg bg-teal-700 text-white flex items-center justify-center font-bold text-sm group-hover:-translate-x-0.5 transition-transform shadow-xs">
+            ←
+          </span>
+          <span className="tracking-wider uppercase font-black">BACK</span>
+        </button>
+
+        <span className="text-[11px] font-bold text-teal-900 bg-white/90 border border-teal-300 px-3 py-1.5 rounded-full capitalize shadow-xs">
+          Medora Login
+        </span>
+      </div>
+
+      <div className="flex items-center justify-center pt-2 pb-2 px-4">
         <div className="text-center">
           <div className="w-16 h-16 rounded-2xl bg-white/90 backdrop-blur-md border border-[#0F766E]/30 text-3xl flex items-center justify-center mx-auto mb-2 shadow-lg">
             🏥

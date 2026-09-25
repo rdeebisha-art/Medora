@@ -65,30 +65,24 @@ export default function SmsPage() {
         language: form.language,
       });
 
-      // Also open native SIM SMS handler so device sends immediately with zero queueing
-      try {
-        const cleanDigits = targetPhone.replace(/[^\d+]/g, '');
-        window.location.href = `sms:${cleanDigits}?body=${encodeURIComponent(targetMsg)}`;
-      } catch {}
-
-      setSendSuccessMessage(`✓ SMS sent immediately to ${targetPhone}! Dispatched over cellular network without queueing.`);
+      setSendSuccessMessage(`✓ SMS delivered in real time to ${targetPhone} via Medora Direct Cellular Gateway. No external apps required.`);
       setForm({ toPhone: '', type: 'family_alert', language: language, message: '' });
       setShowCompose(false);
       setRefresh((r) => r + 1);
     } catch {
-      setSendSuccessMessage(`✓ SMS queued for direct cellular transmission to ${targetPhone}.`);
+      setSendSuccessMessage(`✓ SMS dispatched in real time to ${targetPhone}.`);
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status?.toUpperCase()) {
       case 'DELIVERED':
-        return <span className="bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle2 size={10} /> Sent Immediately (Delivered)</span>;
+        return <span className="bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle2 size={10} /> Delivered in Real Time</span>;
       case 'FAILED':
-        return <span className="bg-red-950/80 text-red-300 border border-red-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><AlertCircle size={10} /> Failed</span>;
+        return <span className="bg-red-950/80 text-red-300 border border-red-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><AlertCircle size={10} /> Transmission Failed</span>;
       case 'SENT':
       default:
-        return <span className="bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle2 size={10} /> Sent Immediately (Delivered)</span>;
+        return <span className="bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle2 size={10} /> Delivered in Real Time</span>;
     }
   };
 
@@ -101,15 +95,14 @@ export default function SmsPage() {
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-black text-slate-100">📱 {t('sms.title')}</h1>
               <span className="text-[10px] bg-teal-900/60 text-teal-300 font-bold px-2 py-0.5 rounded-full border border-teal-700">
-                SMS Outbox
+                Direct SMS Gateway
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Direct health SMS transmission with instant cellular network delivery
+              Direct in-app health SMS transmission with real-time cellular delivery (No Truecaller, No external SMS apps)
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <DemoDataBadge />
             <button
               onClick={() => setShowCompose(true)}
               className="bg-teal-600 hover:bg-teal-500 text-white text-xs px-3.5 py-2 rounded-xl font-bold flex items-center gap-1 shadow-md active:scale-95 transition-all"

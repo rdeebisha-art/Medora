@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { MapPin, Navigation, PhoneCall, Clock, ShieldCheck, AlertTriangle, Building2, Car, Bus, Volume2, Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
 import { LanguageCode, Hospital } from '../types';
 import { voiceService } from '../services/voiceService';
+import { useAppStore } from '../store/useAppStore';
 
 interface EmergencyMapPageProps {
   currentLang: LanguageCode;
@@ -63,13 +64,20 @@ export const EmergencyMapPage: React.FC<EmergencyMapPageProps> = ({
               <Volume2 className="w-4 h-4" />
               <span>{speaking ? 'Stop Voice' : '🔊 Listen in Native Language'}</span>
             </button>
-            <a
-              href="tel:108"
-              className="flex items-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-black text-xs shadow-lg transition-all"
+            <button
+              onClick={() => {
+                useAppStore.getState().startDirectCall({
+                  name: '108 Rural Emergency Ambulance',
+                  phone: '108',
+                  category: 'AMBULANCE',
+                  location: 'Tamil Nadu Emergency Trauma Response',
+                });
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-500 active:scale-95 text-white rounded-xl font-black text-xs shadow-lg transition-all"
             >
               <PhoneCall className="w-4 h-4" />
               <span>Call 108 Ambulance</span>
-            </a>
+            </button>
           </div>
         </div>
       </div>

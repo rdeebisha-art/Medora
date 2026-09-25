@@ -4,6 +4,14 @@ import { seedDatabase } from '../db/db';
 
 export type Role = 'patient' | 'family' | 'doctor' | 'admin';
 
+export interface ActiveCallInfo {
+  name: string;
+  phone: string;
+  category: 'EMERGENCY' | 'AMBULANCE' | 'HOSPITAL' | 'DOCTOR' | 'FAMILY' | 'SUPPORT' | 'CUSTOM';
+  location?: string;
+  notes?: string;
+}
+
 export interface CurrentUser {
   id: number;
   name: string;
@@ -23,6 +31,9 @@ interface AppState {
   currentRole: Role | null;
   appLanguage: string;
   language: string; // for backward compatibility
+  activeDirectCall: ActiveCallInfo | null;
+  startDirectCall: (callInfo: ActiveCallInfo) => void;
+  endDirectCall: () => void;
   setOffline: (status: boolean) => void;
   toggle2GMode: () => void;
   toggleSimpleMode: () => void;
@@ -87,6 +98,10 @@ export const useAppStore = create<AppState>((set) => ({
   currentRole: initialUser?.role || 'patient',
   appLanguage: initialLanguage,
   language: initialLanguage,
+  activeDirectCall: null,
+
+  startDirectCall: (callInfo) => set({ activeDirectCall: callInfo }),
+  endDirectCall: () => set({ activeDirectCall: null }),
 
   setOffline: (status) => set({ isOffline: status }),
 

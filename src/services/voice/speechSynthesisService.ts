@@ -118,23 +118,13 @@ export class SpeechSynthesisService {
     // 2. CRITICAL: Cancel any existing speech before starting new speech!
     this.stop();
 
-    const voiceStatus = this.checkVoiceAvailability(targetLang);
-
-    // If an Indic native voice is missing on this device, do NOT speak English
-    if (!voiceStatus.hasMatchingVoice && targetLang !== 'en-IN') {
-      const meta = LANGUAGE_METADATA[targetLang];
-      console.warn(`No native voice pack found for ${meta.nativeName} (${targetLang}). Falling back to visual text display.`);
-      this.setStatus('STOPPED');
-      onError?.(`Native voice for ${meta.nativeName} (${meta.name}) is not installed on this device. Please read the response text below.`);
-      return false;
-    }
+    const matchedVoice = this.getVoiceForLanguage(targetLang);
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = targetLang;
     utterance.rate = 0.90; // Clear, measured pace for rural healthcare users
     utterance.pitch = 1.0;
 
-    const matchedVoice = this.getVoiceForLanguage(targetLang);
     if (matchedVoice) {
       utterance.voice = matchedVoice;
     }

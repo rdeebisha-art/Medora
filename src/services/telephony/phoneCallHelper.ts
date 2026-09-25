@@ -1,4 +1,5 @@
 import { db } from '../../db/db';
+import { useAppStore } from '../../store/useAppStore';
 
 export function isMobileDevice(): boolean {
   if (typeof navigator === 'undefined') return false;
@@ -98,30 +99,29 @@ export async function initiatePhoneCall(
     }
   }
 
-  // Attempt standard tel: protocol handler (works on mobile dialers, macOS FaceTime/iPhone Handoff, Windows Phone Link, VoIP apps)
+  // Launch direct in-app web call console without opening external apps or Truecaller
   try {
-    window.location.href = `tel:${sanitized}`;
-  } catch {
-    // Handled below
-  }
+    const store = useAppStore.getState();
+    if (store && store.startDirectCall) {
+      store.startDirectCall({
+        name: contactName || `Contact (${sanitized})`,
+        phone: sanitized,
+        category: sanitized === '108' || sanitized === '112' ? 'EMERGENCY' : sanitized === '102' ? 'AMBULANCE' : options?.contactType === 'DOCTOR' ? 'DOCTOR' : options?.contactType === 'HOSPITAL' ? 'HOSPITAL' : 'CUSTOM',
+        location: 'Medora Direct VoIP Web Line (In-App)',
+      });
+      return {
+        actionTaken: 'SERVER_CALL_INITIATED',
+        status: 'INITIATED',
+        message: `Connecting to ${contactName || sanitized} via Medora Direct In-App Line...`,
+        sanitizedPhone: sanitized,
+      };
+    }
+  } catch {}
 
-  if (isMobileDevice()) {
-    return {
-      actionTaken: 'DIALER_LAUNCHED',
-      status: 'INITIATED',
-      message: contactName
-        ? `Opening cellular phone dialer for ${contactName} (${sanitized})...`
-        : `Opening cellular phone dialer (${sanitized})...`,
-      sanitizedPhone: sanitized,
-    };
-  } else {
-    return {
-      actionTaken: 'DIALER_LAUNCHED',
-      status: 'INITIATED',
-      message: contactName
-        ? `Connecting to ${contactName} (${sanitized}) via phone dialer / calling app...`
-        : `Connecting to ${sanitized} via phone dialer / calling app...`,
-      sanitizedPhone: sanitized,
-    };
-  }
+  return {
+    actionTaken: 'SERVER_CALL_INITIATED',
+    status: 'INITIATED',
+    message: `Connecting to ${contactName || sanitized} via Medora Direct In-App Line...`,
+    sanitizedPhone: sanitized,
+  };
 }

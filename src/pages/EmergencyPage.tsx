@@ -465,9 +465,6 @@ export default function EmergencyPage() {
   };
 
   const handleCallAmbulance108 = () => {
-    try {
-      window.location.href = 'tel:108';
-    } catch {}
     setActiveCall({
       name: '108 Rural Ambulance & Trauma Hotline',
       phone: '108',
@@ -478,9 +475,6 @@ export default function EmergencyPage() {
   };
 
   const handleCallHospital = () => {
-    try {
-      window.location.href = 'tel:04542241200';
-    } catch {}
     setActiveCall({
       name: 'Kodaikanal Government Hospital',
       phone: '04542-241200',
@@ -491,9 +485,6 @@ export default function EmergencyPage() {
   };
 
   const handleCall112 = () => {
-    try {
-      window.location.href = 'tel:112';
-    } catch {}
     setActiveCall({
       name: '112 National Unified Emergency Hotline',
       phone: '112',
@@ -504,9 +495,6 @@ export default function EmergencyPage() {
   };
 
   const handleCall102 = () => {
-    try {
-      window.location.href = 'tel:102';
-    } catch {}
     setActiveCall({
       name: '102 Janani Shishu Express Ambulance',
       phone: '102',
@@ -518,10 +506,6 @@ export default function EmergencyPage() {
 
   const handleCallEmergencyContact = () => {
     const contactPhone = currentPatient?.emergencyContact || '108';
-    const cleanDigits = contactPhone.replace(/[^\d+]/g, '');
-    try {
-      window.location.href = `tel:${cleanDigits}`;
-    } catch {}
     setActiveCall({
       name: currentPatient?.name ? `Emergency Contact (${currentPatient.name})` : 'Designated Emergency Contact',
       phone: contactPhone,
@@ -548,11 +532,18 @@ export default function EmergencyPage() {
             </div>
           </div>
           <button
-            onClick={() => navigate('/dashboard')}
-            className="bg-black/30 hover:bg-black/50 text-white text-xs px-3 py-1.5 rounded-full font-bold transition-colors flex items-center gap-1"
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate('/dashboard');
+              }
+            }}
+            className="bg-white hover:bg-slate-100 text-red-950 text-xs px-3.5 py-2 rounded-2xl font-black transition-all flex items-center gap-1.5 shadow-md active:scale-95 border-2 border-red-900"
+            title="Back to Previous Page"
           >
-            <ArrowLeft size={13} />
-            <span>Home</span>
+            <ArrowLeft size={16} className="font-black" />
+            <span className="font-black tracking-wider uppercase">BACK</span>
           </button>
         </div>
       </div>

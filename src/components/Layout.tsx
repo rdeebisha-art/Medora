@@ -9,6 +9,7 @@ import {
 import NotificationBell from './NotificationBell';
 import EmergencyOverlay from './EmergencyOverlay';
 import ConnectivityStatusIndicator from './ConnectivityStatusIndicator';
+import { ActiveCallModal } from './ActiveCallModal';
 
 const LANGUAGES = [
   { code: 'en', label: 'EN', name: 'English', native: 'English' },
@@ -36,7 +37,9 @@ export default function Layout({ children }: LayoutProps) {
     setLanguage,
     toggle2GMode,
     toggleSimpleMode,
-    logout
+    logout,
+    activeDirectCall,
+    endDirectCall,
   } = useAppStore();
 
   const [moreDrawerOpen, setMoreDrawerOpen] = useState(false);
@@ -293,21 +296,41 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       )}
 
-      {showBack && (
-        <div className="px-3 sm:px-4 md:px-6 pt-3 max-w-7xl mx-auto w-full">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-1 min-h-11 text-[#0F766E] font-bold text-sm hover:underline"
-          >
-            ← {t('common.back')}
-          </button>
+      {/* PROMINENT, HIGH-VISIBILITY BACK BUTTON AT TOP OF EVERY PAGE */}
+      <div className="px-3 sm:px-4 md:px-6 pt-3 pb-1 max-w-7xl mx-auto w-full flex items-center justify-between no-print">
+        <button
+          type="button"
+          onClick={() => {
+            if (window.history.length > 1 && location.pathname !== '/dashboard') {
+              navigate(-1);
+            } else {
+              navigate('/dashboard');
+            }
+          }}
+          className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white text-teal-950 border-2 border-teal-700 shadow-md hover:bg-teal-50 hover:border-teal-800 hover:shadow-lg active:scale-95 transition-all font-black text-xs sm:text-sm min-h-[44px] group"
+          aria-label="Back"
+          title="Back to Previous Page"
+        >
+          <span className="w-6 h-6 rounded-lg bg-teal-700 text-white flex items-center justify-center font-bold text-sm group-hover:-translate-x-0.5 transition-transform shadow-xs">
+            ←
+          </span>
+          <span className="tracking-wider uppercase font-black">BACK</span>
+        </button>
+
+        <div className="text-[11px] font-bold text-teal-900 bg-teal-50/90 border border-teal-300 px-3 py-1.5 rounded-full capitalize shadow-xs flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-teal-600" />
+          <span>{location.pathname.replace('/', '').replace(/-/g, ' ') || 'Dashboard'}</span>
         </div>
-      )}
+      </div>
 
       <main className={`flex-1 pb-28 sm:pb-32 w-full max-w-7xl mx-auto min-w-0 break-words ${isSimpleMode ? 'text-lg' : ''}`}>
         {children}
       </main>
+
+      {/* Global In-Browser Direct Voice Call Modal */}
+      {activeDirectCall && (
+        <ActiveCallModal callInfo={activeDirectCall} onClose={endDirectCall} />
+      )}
 
       <button
         onClick={() => setEmergencyOpen(true)}
