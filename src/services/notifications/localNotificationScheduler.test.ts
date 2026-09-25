@@ -135,4 +135,41 @@ describe('LocalNotificationSchedulerService - Offline Reminders', () => {
     // Verify fireReminder runs without throwing even offline
     await expect(localNotificationScheduler.fireReminder(reminder)).resolves.not.toThrow();
   });
+
+  it('automatically sets push notifications for pills, vaccinations, and therapy sessions without manual user input', async () => {
+    const result = await localNotificationScheduler.autoScheduleAllForPatient(201, { force: true });
+
+    expect(result).toBeDefined();
+    expect(result.pillsCount).toBeGreaterThan(0);
+    expect(result.vaccinesCount).toBeGreaterThan(0);
+    expect(result.therapyCount).toBeGreaterThan(0);
+    expect(result.totalScheduled).toBe(result.pillsCount + result.vaccinesCount + result.therapyCount);
+
+    const scheduled = localNotificationScheduler.getReminders(201);
+    expect(scheduled.length).toBeGreaterThanOrEqual(result.totalScheduled);
+
+    // Verify pills scheduled
+    const pillReminders = scheduled.filter((r) => r.type === 'medication');
+    expect(pillReminders.length).toBeGreaterThan(0);
+    expect(pillReminders.some((r) => r.autoScheduled)).toBe(true);
+
+    // Verify vaccination scheduled
+    const vaccineReminders = scheduled.filter((r) => r.type === 'vaccination');
+    expect(vaccineReminders.length).toBeGreaterThan(0);
+
+    // Verify therapy sessions scheduled
+    const therapyReminders = scheduled.filter((r) => r.type === 'therapy');
+    expect(therapyReminders.length).toBeGreaterThan(0);
+    expect(therapyReminders[0].therapyName).toBeDefined();
+    expect(therapyReminders[0].time24).toBeDefined();
+  });
+
+  it('does not duplicate automated schedules on subsequent runs', async () => {
+    const firstRun = await localNotificationScheduler.autoScheduleAllForPatient(202, { force: true });
+    expect(firstRun.newlyAdded).toBeGreaterThan(0);
+
+    const secondRun = await localNotificationScheduler.autoScheduleAllForPatient(202, { force: false });
+    expect(secondRun.newlyAdded).toBe(0);
+  });
 });
+

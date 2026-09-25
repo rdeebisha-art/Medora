@@ -102,7 +102,7 @@ export interface Vaccination {
   vaccineName: string;
   dueDate: string;
   givenDate?: string;
-  status: 'due' | 'given' | 'overdue' | 'scheduled';
+  status: 'due' | 'given' | 'overdue' | 'scheduled' | 'completed' | 'missed';
   batchNo?: string;
   givenBy?: string;
 }

@@ -9,6 +9,7 @@ import CareGapAlert from '../components/CareGapAlert';
 import MedicineCard from '../components/MedicineCard';
 import DemoDataBadge from '../components/DemoDataBadge';
 import { HealthTrendsChart } from '../components/HealthTrendsChart';
+import { RecentHealthActivitySection } from '../components/RecentHealthActivitySection';
 import {
   Activity,
   Droplets,
@@ -559,6 +560,9 @@ export default function MyHealthPage() {
             <CareGapAlert gaps={careGaps} />
           </div>
         )}
+
+        {/* Recent Health Activity Timeline */}
+        <RecentHealthActivitySection />
 
         {/* Health Trends (30 Days with all 5 metrics) */}
         <HealthTrendsChart tests={allVitals} />

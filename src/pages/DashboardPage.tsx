@@ -9,8 +9,10 @@ import CareGapAlert from '../components/CareGapAlert';
 import DemoDataBadge from '../components/DemoDataBadge';
 import SpeakToMedoraCard from '../components/SpeakToMedoraCard';
 import MedoraHealthcareTeam from '../components/MedoraHealthcareTeam';
+import { RecentHealthActivitySection } from '../components/RecentHealthActivitySection';
 import {
   TriangleAlert as AlertTriangle,
+  Sparkles,
   Heart,
   Users,
   Pill,
@@ -748,10 +750,13 @@ export default function DashboardPage() {
 
           {/* Care Gap Alerts */}
           {careGaps.length > 0 && <CareGapAlert gaps={careGaps} />}
+
+          {/* Recent Health Activity Timeline */}
+          <RecentHealthActivitySection />
         </div>
 
         {/* ========================================================= */}
-        {/* 7. MAIN HEALTHCARE FEATURE GRID (16 Core Cards)          */}
+        {/* 7. MAIN HEALTHCARE FEATURE GRID (17 Core Cards)          */}
         {/* ========================================================= */}
         <div>
           <div className="flex items-center justify-between mb-3">
@@ -763,6 +768,7 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {[
+              { path: '/a2a-simulation', icon: <Sparkles size={22} className="text-[#0F766E]" />, iconBg: 'bg-[#F0FDFA]', title: '🤖 Agent Simulation', desc: 'Multi-specialist clinical reasoning & safe diagnostic triage simulation' },
               { path: '/health', icon: <Heart size={22} className="text-[#0F766E]" />, iconBg: 'bg-[#F0FDFA]', title: t('dashboard.hfMyHealthTitle'), desc: t('dashboard.hfMyHealthDesc') },
               { path: '/family', icon: <Users size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: t('dashboard.hfFamilyTitle'), desc: t('dashboard.hfFamilyDesc') },
               { path: '/records', icon: <FileText size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: t('dashboard.hfRecordsTitle'), desc: t('dashboard.hfRecordsDesc') },
