@@ -688,7 +688,7 @@ export async function seedDatabase() {
     dateOfBirth: '1999-02-20', createdAt: new Date().toISOString(),
   });
   const p4 = await db.patients.add({
-    name: 'Suresh Nair', age: 45, gender: 'male', phone: '9876543213', pin: '1234',
+    name: 'Suresh Guptha', age: 45, gender: 'male', phone: '9876543213', pin: '1234',
     role: 'patient', village: 'Kodaikanal', language: 'ml', familyId: 3,
     bloodGroup: 'AB+', allergies: ['Sulfa drugs'], conditions: ['Hypertension'],
     emergencyContact: '9876500004',
@@ -746,7 +746,7 @@ export async function seedDatabase() {
     dateOfBirth: '1962-08-20', createdAt: new Date().toISOString(),
   });
   const p12 = await db.patients.add({
-    name: 'Deepa Nair', age: 40, gender: 'female', phone: '9876543221', pin: '1234',
+    name: 'Deepa Guptha', age: 40, gender: 'female', phone: '9876543221', pin: '1234',
     role: 'patient', village: 'Kodaikanal', language: 'ml', familyId: 3,
     bloodGroup: 'A+', allergies: [], conditions: [],
     emergencyContact: '9876543213',
@@ -820,7 +820,7 @@ export async function seedDatabase() {
   await db.families.bulkAdd([
     { familyName: 'Sharma Family (Family 01)', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p5), Number(p10)] },
     { familyName: 'Kumar Family (Family 02)', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p1), Number(p9)] },
-    { familyName: 'Nair Family (Family 03)', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p4), Number(p12)] },
+    { familyName: 'Guptha Family (Family 03)', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p4), Number(p12)] },
     { familyName: 'Devi Family (Family 04)', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p3), Number(p6)] },
     { familyName: 'Patel Family (Family 05)', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p2), Number(p11)] },
     { familyName: 'Krishnan Family (Family 06)', pin: '1234', village: 'Kodaikanal', memberIds: [Number(p7), Number(p13)] },
@@ -950,11 +950,21 @@ export async function seedDatabase() {
       notes: '',
     });
   }
-  // Weight for Anitha Kumar
+  // Weight, Temperature, and SpO2 for Anitha Kumar
   await db.healthTests.add({ patientId: Number(p1), type: 'weight', value: '58', unit: 'kg', date: new Date().toISOString().split('T')[0], notes: '28 weeks pregnant' });
-  await db.healthTests.add({ patientId: Number(p1), type: 'blood_pressure', value: '110/72', unit: 'mmHg', date: new Date().toISOString().split('T')[0], notes: '' });
+  await db.healthTests.add({ patientId: Number(p1), type: 'blood_pressure', value: '110/72', unit: 'mmHg', date: new Date().toISOString().split('T')[0], notes: 'Normal resting BP' });
+  await db.healthTests.add({ patientId: Number(p1), type: 'temperature', value: '98.4', unit: '°F', date: new Date().toISOString().split('T')[0], notes: 'Normal oral temperature' });
+  await db.healthTests.add({ patientId: Number(p1), type: 'spo2', value: '99', unit: '%', date: new Date().toISOString().split('T')[0], notes: 'Room air saturation' });
+  await db.healthTests.add({ patientId: Number(p1), type: 'blood_sugar', value: '95', unit: 'mg/dL', date: new Date().toISOString().split('T')[0], notes: 'Fasting glucose normal' });
 
-  // Vaccinations
+  // Additional 5 Health Tests for Ramesh Patel (Blood Sugar, Blood Pressure, Weight, Temperature, Pulse, SpO2)
+  await db.healthTests.add({ patientId: Number(p2), type: 'temperature', value: '98.6', unit: '°F', date: new Date().toISOString().split('T')[0], notes: 'Afebrile' });
+  await db.healthTests.add({ patientId: Number(p2), type: 'spo2', value: '97', unit: '%', date: new Date().toISOString().split('T')[0], notes: 'Stable baseline' });
+  await db.healthTests.add({ patientId: Number(p2), type: 'weight', value: '74', unit: 'kg', date: new Date().toISOString().split('T')[0], notes: 'Stable BMI 25.6' });
+  await db.healthTests.add({ patientId: Number(p7), type: 'temperature', value: '98.2', unit: '°F', date: new Date().toISOString().split('T')[0], notes: 'Normal baseline' });
+  await db.healthTests.add({ patientId: Number(p7), type: 'spo2', value: '94', unit: '%', date: new Date().toISOString().split('T')[0], notes: 'Room air (COPD baseline)' });
+
+  // Vaccinations (8 Original + 3 More New Requested Datas = 11)
   await db.vaccinations.bulkAdd([
     { patientId: Number(p1), vaccineName: 'Td (Tetanus)', dueDate: '2024-03-01', givenDate: '2024-03-05', status: 'given', givenBy: 'Dr. Kavitha Rao' },
     { patientId: Number(p1), vaccineName: 'TT Booster', dueDate: '2024-08-01', status: 'due' },
@@ -962,8 +972,12 @@ export async function seedDatabase() {
     { patientId: Number(p5), vaccineName: 'DPT Booster', dueDate: '2024-01-15', givenDate: '2024-01-20', status: 'given', givenBy: 'ANM Radha' },
     { patientId: Number(p6), vaccineName: 'BCG', dueDate: new Date().toISOString().split('T')[0], givenDate: new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0], status: 'given', givenBy: 'Dr. Kavitha Rao' },
     { patientId: Number(p6), vaccineName: 'OPV-0', dueDate: new Date().toISOString().split('T')[0], givenDate: new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0], status: 'given', givenBy: 'Dr. Kavitha Rao' },
-    { patientId: Number(p6), vaccineName: 'Hepatitis B (Birth dose)', dueDate: new Date().toISOString().split('T')[0], status: 'due' },
+    { patientId: Number(p6), vaccineName: 'Hepatitis B (Birth dose)', dueDate: new Date().toISOString().split('T')[0], status: 'given', givenDate: new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0], givenBy: 'Dr. Kavitha Rao' },
     { patientId: Number(p2), vaccineName: 'Influenza (Annual)', dueDate: '2024-11-01', status: 'due' },
+    // 3 More Requested Vaccination Datas:
+    { patientId: Number(p6), vaccineName: 'Pentavalent-1 (DPT+HepB+Hib)', dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0], status: 'due' },
+    { patientId: Number(p6), vaccineName: 'Rotavirus Vaccine Dose 1', dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0], status: 'due' },
+    { patientId: Number(p15), vaccineName: 'Pneumococcal (PCV) Booster', dueDate: new Date(Date.now() + 21 * 86400000).toISOString().split('T')[0], status: 'due' },
   ]);
 
   // Appointments
@@ -975,8 +989,9 @@ export async function seedDatabase() {
     { patientId: Number(p6), doctorId: Number(d1), date: nextWeek, reason: 'Newborn follow-up – 2 weeks', status: 'scheduled', notes: '' },
   ]);
 
-  // Medical Records (8 Detailed Demo Reports)
+  // Medical Records (Reports, Consultations, Vitals & Prescriptions)
   await db.medicalRecords.bulkAdd([
+    // 1. Diagnostic Reports
     {
       patientId: Number(p2), type: 'report', date: '2024-09-01',
       data: { 
@@ -1087,10 +1102,178 @@ export async function seedDatabase() {
         ]
       },
       notes: 'DEMO REPORT — FICTIONAL DATA — NOT FOR CLINICAL USE. Findings consistent with COPD.',
+    },
+
+    // 2. Doctor Consultations
+    {
+      patientId: Number(p1), type: 'consultation', date: '2024-09-08',
+      data: {
+        reportName: 'Antenatal Clinical Evaluation (28 Weeks)',
+        doctorName: 'Dr. Kavitha Rao, MBBS, MS (OBG)',
+        specialty: 'Obstetrics & Maternal Health',
+        facility: 'Kodaikanal Government Hospital',
+        assessment: 'Third trimester singleton pregnancy with mild nutritional anemia. Fetal movements normal. Fundal height 28 cm.',
+        clinicalAdvice: 'Continue Iron and Folic Acid tablets daily with water. Maintain high protein diet with ragi, pulses, and milk. Review at 32 weeks for growth ultrasound.'
+      },
+      notes: 'Third-trimester clinical checkup completed. Danger signs discussed: blurred vision, heavy vaginal bleeding, abdominal pain.',
+    },
+    {
+      patientId: Number(p2), type: 'consultation', date: '2024-08-28',
+      data: {
+        reportName: 'Metabolic & Cardiovascular Review',
+        doctorName: 'Dr. Arjun Mehta, MBBS, MD (General Medicine)',
+        specialty: 'Internal Medicine',
+        facility: 'Kodaikanal Government Hospital',
+        assessment: 'Type 2 Diabetes Mellitus with sub-optimal glycemic control (HbA1c 7.8%) and Grade 1 Hypertension (138/85 mmHg).',
+        clinicalAdvice: 'Continue Metformin 500mg BD after meals. Maintain daily 30-min brisk walk. Inspect feet daily for micro-abrasions. Recheck fasting blood glucose in 4 weeks.'
+      },
+      notes: 'Chronic disease management consultation. Patient counselled on rural diet glycemic index and salt restriction.',
+    },
+    {
+      patientId: Number(p4), type: 'consultation', date: '2024-08-10',
+      data: {
+        reportName: 'Primary Hypertension & Cardiovascular Assessment',
+        doctorName: 'Dr. Suresh Balakrishnan, MBBS, MD, DM (Cardiology)',
+        specialty: 'Cardiology',
+        facility: 'CHC Palani & Mobile Clinic',
+        assessment: 'Stage 1 Essential Hypertension. Resting BP 142/90 mmHg. Heart sounds normal (S1, S2 audible, no murmurs).',
+        clinicalAdvice: 'Prescribed Telmisartan 40mg once daily in morning. Restrict dietary sodium. Routine ECG scheduled.'
+      },
+      notes: 'Consultation conducted at rural tele-clinic. Follow up in 3 months with home blood pressure logs.',
+    },
+    {
+      patientId: Number(p7), type: 'consultation', date: '2024-07-25',
+      data: {
+        reportName: 'Pulmonary & Chronic Airway Follow-up',
+        doctorName: 'Dr. Rajeshwari Patel, MBBS, MD (Pulmonology)',
+        specialty: 'Pulmonary Medicine',
+        facility: 'Kodaikanal High Altitude Health Centre',
+        assessment: 'Chronic Obstructive Pulmonary Disease (COPD) Grade 2. Exertional breathlessness without acute exacerbation. SpO2 94%.',
+        clinicalAdvice: 'Use Budesonide/Formoterol dry powder inhaler 2 puffs twice daily with water mouth rinse. Avoid firewood smoke.'
+      },
+      notes: 'Pulmonary function consultation. Demonstrated correct inhaler technique to patient and family caregiver.',
+    },
+
+    // 3. Vitals Records
+    {
+      patientId: Number(p1), type: 'vitals', date: '2024-09-12',
+      data: {
+        reportName: 'Comprehensive Maternal Vitals Panel',
+        bloodPressure: '110/72 mmHg',
+        pulseRate: '78 bpm',
+        temperature: '98.4 °F',
+        spo2: '99 %',
+        weight: '58 kg',
+        fetalHeartRate: '142 bpm',
+        respiratoryRate: '18 /min',
+        recordedBy: 'Sister Mary (Staff Nurse, Kodaikanal PHC)'
+      },
+      notes: 'Stable maternal hemodynamics. Normal gestational blood pressure and pulse rate.',
+    },
+    {
+      patientId: Number(p2), type: 'vitals', date: '2024-09-10',
+      data: {
+        reportName: 'Chronic Metabolic Vitals Sheet',
+        bloodPressure: '138/85 mmHg',
+        pulseRate: '74 bpm',
+        fastingBloodSugar: '158 mg/dL',
+        postPrandialSugar: '190 mg/dL',
+        temperature: '98.6 °F',
+        spo2: '97 %',
+        weight: '74 kg',
+        recordedBy: 'ASHA Worker Sunita Devi'
+      },
+      notes: 'Home vitals visit checkup. Blood pressure controlled on Amlodipine; fasting blood glucose mildly high.',
+    },
+    {
+      patientId: Number(p4), type: 'vitals', date: '2024-08-25',
+      data: {
+        reportName: 'Routine Adult Vitals Log',
+        bloodPressure: '130/84 mmHg',
+        pulseRate: '76 bpm',
+        temperature: '98.6 °F',
+        spo2: '98 %',
+        weight: '68 kg',
+        recordedBy: 'Guptha Family Health Diary'
+      },
+      notes: 'Guptha family monthly health check. Blood pressure improving with medication compliance.',
+    },
+    {
+      patientId: Number(p7), type: 'vitals', date: '2024-07-28',
+      data: {
+        reportName: 'Geriatric Respiratory Vitals Log',
+        bloodPressure: '140/86 mmHg',
+        pulseRate: '82 bpm',
+        temperature: '98.2 °F',
+        spo2: '94 %',
+        respiratoryRate: '20 /min',
+        weight: '62 kg',
+        recordedBy: 'Community Health Nurse'
+      },
+      notes: 'Geriatric vitals check. SpO2 94% acceptable for COPD baseline; advised to use inhaler on time.',
+    },
+
+    // 4. Prescriptions
+    {
+      patientId: Number(p1), type: 'prescription', date: '2024-09-08',
+      data: {
+        reportName: 'Antenatal Medication Prescription Slip',
+        doctorName: 'Dr. Kavitha Rao, MBBS, MS (OBG)',
+        regNumber: 'TN-MC-44912',
+        diagnosis: 'Intrauterine Pregnancy (28 Weeks), Mild Nutritional Anemia',
+        medicationsList: [
+          { name: 'Tab. Folic Acid 5mg', dose: '1 tablet', timing: 'Once daily (08:00 AM)', duration: 'Till delivery', instructions: 'Take with glass of water after breakfast' },
+          { name: 'Tab. Ferrous Sulphate 200mg', dose: '1 tablet', timing: 'Twice daily (08:00 AM, 08:00 PM)', duration: 'Till delivery', instructions: 'Do not take with milk, tea or coffee' },
+          { name: 'Tab. Calcium Carbonate 500mg', dose: '1 tablet', timing: 'Once daily (01:00 PM)', duration: 'Till delivery', instructions: 'Take with afternoon meal' }
+        ]
+      },
+      notes: 'Maternal prescription valid for 30 days. Medicines dispensed free of cost at Kodaikanal PHC pharmacy.',
+    },
+    {
+      patientId: Number(p2), type: 'prescription', date: '2024-08-28',
+      data: {
+        reportName: 'Diabetic & Cardiac Prescription Slip',
+        doctorName: 'Dr. Arjun Mehta, MBBS, MD (General Medicine)',
+        regNumber: 'TN-MC-32115',
+        diagnosis: 'Type 2 Diabetes Mellitus, Essential Hypertension',
+        medicationsList: [
+          { name: 'Tab. Metformin 500mg', dose: '1 tablet', timing: 'Twice daily (07:30 AM, 07:30 PM)', duration: '90 days', instructions: 'Take with or immediately after food' },
+          { name: 'Tab. Amlodipine 5mg', dose: '1 tablet', timing: 'Once daily (08:00 AM)', duration: '90 days', instructions: 'Take in morning regularly' },
+          { name: 'Tab. Aspirin 75mg (Enteric Coated)', dose: '1 tablet', timing: 'Once daily (09:00 AM)', duration: '90 days', instructions: 'Take after breakfast' }
+        ]
+      },
+      notes: 'Chronic prescription renewal. Next clinical titration review due in 90 days with fresh HbA1c report.',
+    },
+    {
+      patientId: Number(p4), type: 'prescription', date: '2024-08-10',
+      data: {
+        reportName: 'Cardiovascular Antihypertensive Prescription',
+        doctorName: 'Dr. Suresh Balakrishnan, MBBS, MD, DM',
+        regNumber: 'TN-MC-18754',
+        diagnosis: 'Essential Hypertension Grade 1',
+        medicationsList: [
+          { name: 'Tab. Telmisartan 40mg', dose: '1 tablet', timing: 'Once daily (08:00 AM)', duration: '60 days', instructions: 'Take morning before food with water' }
+        ]
+      },
+      notes: 'Prescription for Suresh Guptha. Reduce table salt consumption and maintain daily walking.',
+    },
+    {
+      patientId: Number(p7), type: 'prescription', date: '2024-07-25',
+      data: {
+        reportName: 'Chronic Respiratory Inhalation Prescription',
+        doctorName: 'Dr. Rajeshwari Patel, MBBS, MD (Pulmonology)',
+        regNumber: 'TN-MC-51092',
+        diagnosis: 'Chronic Obstructive Pulmonary Disease (COPD)',
+        medicationsList: [
+          { name: 'Budesonide 200mcg + Formoterol 6mcg DPI', dose: '2 puffs', timing: 'Twice daily (08:00 AM, 08:00 PM)', duration: '60 days', instructions: 'Inhale using dry powder inhaler; rinse mouth with water after use' },
+          { name: 'Tab. Levocetirizine 5mg', dose: '1 tablet', timing: 'At night (SOS)', duration: 'As needed', instructions: 'Take for night-time coughing or allergic rhinitis' }
+        ]
+      },
+      notes: 'Prescription for Gopi Krishnan. Always carry emergency bronchodilator when stepping outdoors.',
     }
   ]);
 
-  // Hospitals
+  // Hospitals (3 Original + 5 New Requested Healthcare Datas = 8 Facilities)
   await db.hospitals.bulkAdd([
     {
       name: 'Kodaikanal Government Hospital', type: 'government_hospital', distance: 5,
@@ -1112,6 +1295,42 @@ export async function seedDatabase() {
       services: ['Emergency', 'ICU', 'Surgery', 'Cardiology', 'Oncology', 'All specialties'],
       openHours: '24/7', hasEmergency: true, village: 'Madurai',
       routeInstructions: 'Take state highway NH-44 from Kodaikanal to Madurai. Approx 2.5 hrs by vehicle. Bus available from main bus stand.',
+    },
+    // 5 More Requested Healthcare Datas:
+    {
+      name: 'Kodaikanal Primary Health Centre (PHC) Vilpatti', type: 'phc', distance: 8,
+      address: 'Vilpatti Main Village Road, Kodaikanal – 624103', phone: '04542-242330',
+      services: ['General OPD', 'Maternal Antenatal Clinic', 'Immunization', 'Essential Drug Dispensing', 'Basic Lab Tests'],
+      openHours: '9:00 AM – 4:00 PM (Mon-Sat)', hasEmergency: false, village: 'Vilpatti',
+      routeInstructions: 'Take Vilpatti village road 8 km north of Kodaikanal bus stand. Mini bus available every 45 mins.',
+    },
+    {
+      name: 'High Altitude Community Health Sub-centre Poombarai', type: 'phc', distance: 18,
+      address: 'Terrace Valley Road, Poombarai – 624103', phone: '04542-244110',
+      services: ['First Aid', 'ASHA Base Station', 'Child Vaccination', 'Maternal Blood Pressure Checks', 'ORS Distribution'],
+      openHours: '8:30 AM – 3:30 PM', hasEmergency: false, village: 'Poombarai',
+      routeInstructions: 'West hill route towards Poombarai garlic terrace farms. Located adjacent to Village Panchayat Office.',
+    },
+    {
+      name: 'Christian Fellowship Hospital (CFH) Oddanchatram', type: 'private', distance: 48,
+      address: 'CFH Campus, Oddanchatram – 624619', phone: '04553-240222',
+      services: ['24/7 Trauma Emergency', 'Emergency Surgery', 'Neonatal ICU', 'Cardiology OPD', 'Dialysis', 'Blood Bank'],
+      openHours: '24/7 Emergency & Inpatient Care', hasEmergency: true, village: 'Oddanchatram',
+      routeInstructions: 'Descend via Ghat Road towards Palani-Dindigul highway. Direct ambulance and taxi connectivity.',
+    },
+    {
+      name: 'Dindigul District Headquarter Government Hospital', type: 'government_hospital', distance: 92,
+      address: 'Collectorate Road, Dindigul – 624004', phone: '0451-2423400',
+      services: ['Tertiary Emergency', 'Surgical Specialties', 'CT & MRI Scan', 'Comprehensive Burn Care', 'Govt PM-JAY Cashless'],
+      openHours: '24/7 Emergency, OPD: 8:00 AM – 2:00 PM', hasEmergency: true, village: 'Dindigul',
+      routeInstructions: 'Main District Headquarters Hospital on Dindigul Central Road. Accessible via express hill buses.',
+    },
+    {
+      name: 'Kodaikanal Mobile Rural Tele-Health Medical Unit (MMU)', type: 'chc', distance: 2,
+      address: 'Rotational Hill Village Stops, Kodaikanal Block', phone: '9800008800',
+      services: ['Mobile Teleconsultation', 'Point-of-Care Vitals', 'Blood Glucose & Hb Screening', 'Free Chronic Medication Dispensing'],
+      openHours: 'Mon-Fri 10:00 AM – 3:00 PM (Weekly village rotation)', hasEmergency: false, village: 'Kodaikanal Rural Blocks',
+      routeInstructions: 'Visits village community hall every Wednesday and Friday. Contact Village Health Nurse (VHN) for stop timing.',
     },
   ]);
 
@@ -1287,16 +1506,36 @@ export async function seedDatabase() {
     },
   ]);
 
-  // Notifications
+  // Notifications (24 Detailed Datas on Recent Health Activity)
   await db.notifications.bulkAdd([
-    { userId: Number(p1), userRole: 'patient', message: 'Your TT Booster vaccination is due next week', type: 'vaccination', isRead: false, createdAt: new Date().toISOString() },
-    { userId: Number(p1), userRole: 'patient', message: 'Antenatal checkup scheduled for next week with Dr. Arjun Mehta', type: 'appointment', isRead: false, createdAt: new Date().toISOString() },
-    { userId: Number(p2), userRole: 'patient', message: 'Metformin 500mg is due at 7:30 PM today', type: 'medicine', isRead: false, createdAt: new Date().toISOString() },
-    { userId: Number(p2), userRole: 'patient', message: 'Influenza vaccine is due in November', type: 'vaccination', isRead: true, createdAt: new Date(Date.now() - 86400000).toISOString() },
-    { userId: Number(p6), userRole: 'patient', message: 'Baby Arjun – Hepatitis B birth dose is due', type: 'vaccination', isRead: false, createdAt: new Date().toISOString() },
+    { userId: Number(p1), userRole: 'patient', message: 'Blood pressure reading recorded at home: 110/72 mmHg (Normal resting range)', type: 'general', isRead: false, createdAt: new Date(Date.now() - 1 * 3600000).toISOString() },
+    { userId: Number(p1), userRole: 'patient', message: 'Maternal ultrasound anomaly scan completed with normal cardiac activity (140 bpm)', type: 'report', isRead: false, createdAt: new Date(Date.now() - 3 * 3600000).toISOString() },
+    { userId: Number(p1), userRole: 'patient', message: 'Folic acid 5mg and Ferrous Sulphate morning doses confirmed taken on schedule', type: 'medicine', isRead: true, createdAt: new Date(Date.now() - 6 * 3600000).toISOString() },
+    { userId: Number(p1), userRole: 'patient', message: 'Your TT Booster vaccination is due next week at Kodaikanal PHC', type: 'vaccination', isRead: false, createdAt: new Date(Date.now() - 12 * 3600000).toISOString() },
+    { userId: Number(p2), userRole: 'patient', message: 'Fasting blood glucose logged: 158 mg/dL — lifestyle dietary guidance prompted', type: 'general', isRead: false, createdAt: new Date(Date.now() - 2 * 3600000).toISOString() },
+    { userId: Number(p2), userRole: 'patient', message: 'Morning 30-minute brisk walk completed around village farm compound', type: 'general', isRead: true, createdAt: new Date(Date.now() - 4 * 3600000).toISOString() },
+    { userId: Number(p2), userRole: 'patient', message: 'Metformin 500mg taken after dinner on schedule', type: 'medicine', isRead: true, createdAt: new Date(Date.now() - 14 * 3600000).toISOString() },
+    { userId: Number(p2), userRole: 'patient', message: 'Annual Influenza booster vaccine is due for senior health protection', type: 'vaccination', isRead: false, createdAt: new Date(Date.now() - 24 * 3600000).toISOString() },
+    { userId: Number(p4), userRole: 'patient', message: 'Cardiovascular risk screening consultation completed with Dr. Suresh Balakrishnan for Suresh Guptha', type: 'appointment', isRead: false, createdAt: new Date(Date.now() - 8 * 3600000).toISOString() },
+    { userId: Number(p4), userRole: 'patient', message: 'Guptha family monthly health check: blood pressure stable at 130/84 mmHg', type: 'general', isRead: true, createdAt: new Date(Date.now() - 16 * 3600000).toISOString() },
+    { userId: Number(p6), userRole: 'patient', message: 'Baby Arjun 2-week neonatal growth check: gained 200g with strong feeding reflexes', type: 'newborn', isRead: false, createdAt: new Date(Date.now() - 10 * 3600000).toISOString() },
+    { userId: Number(p6), userRole: 'patient', message: 'Pentavalent-1 and Rotavirus-1 vaccination session scheduled for Baby Arjun', type: 'vaccination', isRead: false, createdAt: new Date(Date.now() - 18 * 3600000).toISOString() },
+    { userId: Number(p7), userRole: 'patient', message: 'SpO2 pulse oximetry recorded: 94% on room air (Stable chronic COPD baseline)', type: 'general', isRead: true, createdAt: new Date(Date.now() - 5 * 3600000).toISOString() },
+    { userId: Number(p7), userRole: 'patient', message: 'Budesonide/Formoterol dry powder inhaler technique verified with ASHA healthcare worker', type: 'medicine', isRead: false, createdAt: new Date(Date.now() - 20 * 3600000).toISOString() },
+    // 10 Additional Requested Datas on Recent Health Activity:
+    { userId: Number(p1), userRole: 'patient', message: 'Maternal dietary nutrition logged: added Ragi porridge & Drumstick leaves for iron boost', type: 'general', isRead: false, createdAt: new Date(Date.now() - 7 * 3600000).toISOString() },
+    { userId: Number(p1), userRole: 'patient', message: 'Weekly weight check logged: 58.5 kg (steady healthy gestational weight gain)', type: 'general', isRead: true, createdAt: new Date(Date.now() - 15 * 3600000).toISOString() },
+    { userId: Number(p2), userRole: 'patient', message: 'Post-prandial 2-hour blood sugar checked: 142 mg/dL (Within post-meal target)', type: 'general', isRead: true, createdAt: new Date(Date.now() - 9 * 3600000).toISOString() },
+    { userId: Number(p2), userRole: 'patient', message: 'Evening diabetic foot inspection completed: skin intact, no redness or ulcers detected', type: 'general', isRead: false, createdAt: new Date(Date.now() - 22 * 3600000).toISOString() },
+    { userId: Number(p3), userRole: 'patient', message: 'Kavitha Devi antenatal checkup scheduled at Vilpatti Sub-centre for next Tuesday', type: 'appointment', isRead: false, createdAt: new Date(Date.now() - 11 * 3600000).toISOString() },
+    { userId: Number(p4), userRole: 'patient', message: 'Suresh Guptha morning walk: 4,200 steps tracked around village farm perimeter', type: 'general', isRead: true, createdAt: new Date(Date.now() - 13 * 3600000).toISOString() },
+    { userId: Number(p5), userRole: 'patient', message: 'Meena Guptha child growth screening: height 108cm, weight 18.2kg (normal WHO percentiles)', type: 'general', isRead: false, createdAt: new Date(Date.now() - 17 * 3600000).toISOString() },
+    { userId: Number(p6), userRole: 'patient', message: 'Baby Arjun exclusive breastfeeding logged: 9 feeds in past 24 hours with healthy diaper count', type: 'newborn', isRead: true, createdAt: new Date(Date.now() - 21 * 3600000).toISOString() },
+    { userId: Number(p7), userRole: 'patient', message: 'Gopi Krishnan peak flow rate recorded: 320 L/min (In personal green safety zone)', type: 'general', isRead: false, createdAt: new Date(Date.now() - 25 * 3600000).toISOString() },
+    { userId: Number(p7), userRole: 'patient', message: 'Warm steam inhalation completed for morning airway clearance', type: 'general', isRead: true, createdAt: new Date(Date.now() - 28 * 3600000).toISOString() },
   ]);
 
-  // Education content
+  // Education content (including 5 Specific Datas on Diabetes Care)
   await db.education.bulkAdd([
     {
       title: 'Handwashing – Your First Defence', category: 'hygiene', tags: ['hands', 'wash', 'hygiene', 'prevention'],
@@ -1319,12 +1558,48 @@ export async function seedDatabase() {
       contentHi: 'यदि बच्चे का तापमान 104°F से ऊपर हो, या 3 महीने से छोटे बच्चे को बुखार हो, या बुखार के साथ दाने हों, तो तुरंत डॉक्टर को दिखाएं।',
       contentTa: 'காய்ச்சல் 104°F மேல் இருந்தால், 3 மாதத்திற்கு குறைந்த குழந்தைக்கு காய்ச்சல் இருந்தால் உடனே மருத்துவரை பாருங்கள்.',
     },
+    // 5 Comprehensive Datas on Diabetes Care:
     {
-      title: 'Managing Diabetes at Home', category: 'diabetes', tags: ['diabetes', 'sugar', 'blood', 'management'],
+      title: 'Managing Diabetes at Home & Daily Routine', category: 'diabetes', tags: ['diabetes', 'sugar', 'blood', 'management'],
       titleHi: 'घर पर मधुमेह का प्रबंधन', titleTa: 'வீட்டில் நீரிழிவு நோயை நிர்வகிப்பது',
       content: 'Check blood sugar regularly as advised. Take medicines at the same time daily. Eat at regular times, avoid skipping meals. Reduce sugar, white rice, sweets. Walk 30 min daily if able. Check feet daily for cuts/sores. Drink plenty of water. Avoid smoking and alcohol. Attend regular checkups.',
       contentHi: 'नियमित रूप से शुगर चेक करें। दवाइयां समय पर लें। मीठा, चावल कम खाएं। रोज 30 मिनट चलें।',
       contentTa: 'தினமும் சர்க்கரை அளவை சரிபாருங்கள். மருந்துகளை சரியான நேரத்தில் எடுங்கள். இனிப்பு, வெள்ளை அரிசி குறைத்துக்கொள்ளுங்கள்.',
+    },
+    {
+      title: 'Hypoglycemia Emergency: Recognizing & Treating Low Blood Sugar (<70 mg/dL)', category: 'diabetes', tags: ['diabetes', 'hypoglycemia', 'low sugar', 'emergency', 'rule of 15'],
+      titleHi: 'हाइपोग्लाइसीमिया: कम ब्लड शुगर के लक्षण व त्वरित उपचार', titleTa: 'குறைந்த ரத்த சர்க்கரை அவசர சிகிச்சை (ஹைபோகிளைசீமியா)',
+      content: 'Symptoms of low blood sugar: sudden shaking, severe sweating, dizziness, rapid pounding heartbeat, intense hunger, confusion, blurred vision. Apply the "Rule of 15": Immediately consume 15 grams of fast-acting sugar (3 teaspoons of sugar dissolved in water, 1/2 cup fruit juice, or 3 hard candies). Rest for 15 minutes and re-test. If still <70 mg/dL, take another 15g. Never take insulin when feeling shaky. Always carry glucose or jaggery in pocket when working in fields.',
+      contentHi: 'अचानक कंपकंपी, पसीना, चक्कर आए तो तुरंत 3 चम्मच चीनी पानी में घोलकर पिएं। 15 मिनट आराम करें। खेत जाते समय हमेशा गुड़ या चीनी साथ रखें।',
+      contentTa: 'நடுக்கம், அதிக வியர்வை, தலைச்சுற்றல் வந்தால் உடனடியாக 3 ஸ்பூன் சர்க்கரையை நீரில் கலந்து குடியுங்கள். 15 நிமிடம் ஓய்வெடுத்து மீண்டும் பரிசோதியுங்கள்.',
+    },
+    {
+      title: 'Diabetic Foot Care & Daily Inspection Guide for Agricultural Workers', category: 'diabetes', tags: ['diabetes', 'foot care', 'neuropathy', 'prevention', 'ulcer'],
+      titleHi: 'मधुमेह में पैरों की देखभाल एवं रोज जांच', titleTa: 'நீரிழிவு நோயாளிக்கான தினசரி கால் பராமரிப்பு மற்றும் பாதுகாப்பு',
+      content: 'Diabetes impairs blood circulation and damages foot nerves (diabetic neuropathy), preventing you from feeling cuts or thorn pricks. Daily rules: 1. Wash feet daily with lukewarm water and mild soap; dry thoroughly between toes. 2. Inspect feet every evening using a mirror or family member for cuts, red spots, blisters, or embedded thorns. 3. Never walk barefoot in farming fields, mud, or unpaved rural paths; wear fitted protective shoes. 4. Never use razor blades to scrape calluses. 5. Show any non-healing sore to the PHC doctor within 48 hours to prevent severe ulceration.',
+      contentHi: 'खेतों में कभी नंगे पैर न चलें। रोज शाम को पैरों को धोकर तालुओं की जांच करें। किसी भी घाव को नजरअंदाज न करें, तुरंत डॉक्टर को दिखाएं।',
+      contentTa: 'விவசாய நிலங்களில் எப்போதும் வெறும் காலில் நடக்காதீர்கள். தினமும் மாலையில் கால்களை சோப்பு போட்டு கழுவி முட்கள், காயங்கள் உள்ளதா என சோதியுங்கள்.',
+    },
+    {
+      title: 'Dietary Glycemic Index, Millets & Portion Control in Rural Diets', category: 'diabetes', tags: ['diabetes', 'diet', 'millets', 'nutrition', 'glycemic index'],
+      titleHi: 'मधुमेह के लिए देसी खानपान, मिलेट्स और आहार नियंत्रण', titleTa: 'நீரிழிவுக்கான பாரம்பரிய சிறுதானிய உணவு மற்றும் உணவுமுறை',
+      content: 'Refined white polished rice causes sudden blood sugar spikes. Replace with traditional high-fiber millets: Finger millet (Ragi), Foxtail millet (Thinai), Little millet (Samai), or Kodo millet (Varagu). Use the "Plate Method": 1/2 of plate filled with green vegetables (drumstick leaves, gourds, cabbage), 1/4 of plate filled with protein (boiled dal, chickpeas/sundal, boiled egg), and 1/4 of plate with cooked millets or whole wheat roti. Eliminate sweetened milk tea, avoid refined biscuits, and drink 2.5 litres of filtered water daily.',
+      contentHi: 'सफेद चावल की जगह रागी, ज्वार, बाजरा और हरी पत्तेदार सब्जियां खाएं। आधी थाली सब्जी, एक चौथाई दाल और एक चौथाई मिलेट्स रखें। मीठी चाय बंद करें।',
+      contentTa: 'வெள்ளை அரிசிக்கு பதிலாக ராகி, தினை, சாமை மற்றும் கீரைகள் சாப்பிடுங்கள். தட்டில் பாதி அளவு காய்கறிகள், கால் பங்கு பருப்பு, கால் பங்கு சிறுதானியம் இருக்க வேண்டும்.',
+    },
+    {
+      title: 'Oral Hypoglycemic Tablets vs Insulin: Safe Timing & Rural Storage', category: 'diabetes', tags: ['diabetes', 'metformin', 'insulin', 'medication timing', 'storage'],
+      titleHi: 'डायबिटीज की दवाइयां व इंसुलिन: सही समय और रखने का तरीका', titleTa: 'சர்க்கரை மாத்திரைகள் மற்றும் இன்சுலின்: சரியான நேரம் மற்றும் சேமிப்பு',
+      content: 'Medication Rules: 1. Metformin: Always take with or immediately after major meals to prevent stomach irritation. 2. Sulfonylureas (Glimepiride/Glibenclamide): Take 15 minutes before breakfast; never skip food after taking it to avoid low sugar. 3. Rural Insulin Storage: Unopened vials should be stored in a cool domestic clay pot filled with moist river sand if refrigerator is unavailable. Keep out of direct sunlight. Never freeze insulin. 4. Rotate injection sites across abdomen and thighs. Never stop diabetes medications abruptly without doctor consultation.',
+      contentHi: 'मेटफॉर्मिन खाना खाने के तुरंत बाद लें। फ्रिज न होने पर इंसुलिन की शीशी को गीली बालू वाली मटकी में रखें। दवा कभी अचानक बंद न करें।',
+      contentTa: 'மெட்ஃபோர்மின் மாத்திரையை உணவு உண்ட உடனேயே எடுக்கவும். குளிர்சாதன பெட்டி இல்லாதவர்கள் இன்சுலினை ஈர மணல் நிரப்பிய மண் பானையில் வைக்கலாம்.',
+    },
+    {
+      title: 'Monitoring HbA1c, Kidney Function & Annual Preventive Screenings', category: 'diabetes', tags: ['diabetes', 'hba1c', 'kidney', 'eye check', 'screening'],
+      titleHi: 'HbA1c जांच, गुर्दे की सुरक्षा एवं वार्षिक स्वास्थ्य परीक्षण', titleTa: 'HbA1c ரத்த பரிசோதனை, சிறுநீரக பாதுகாப்பு மற்றும் கண் பரிசோதனை',
+      content: 'Routine clinical monitoring schedule for all diabetic patients: 1. Home Blood Sugar: Fasting (target 80–130 mg/dL) and 2-hour post-meal (target <180 mg/dL). 2. HbA1c Test: Once every 3 to 6 months to measure 90-day average glucose (target typically <7.0%). 3. Kidney Health: Annual urine test for microalbuminuria and serum creatinine/eGFR to catch diabetic kidney disease early. 4. Eye Checkup: Annual dilated retinal eye exam at district hospital or mobile eye camp to prevent blindness from diabetic retinopathy. 5. Blood Pressure: Check at every PHC visit (target <130/80 mmHg).',
+      contentHi: 'हर 3 महीने में HbA1c जांच कराएं (लक्ष्य 7% से कम)। साल में एक बार आंखों के पर्दे की जांच और पेशाब की माइक्रोएल्बुमिन जांच अवश्य करवाएं।',
+      contentTa: '3 மாதங்களுக்கு ஒருமுறை HbA1c பரிசோதனை செய்யுங்கள். வருடம் ஒருமுறை கண் விழித்திரை மற்றும் சிறுநீரக பரிசோதனை கட்டாயம் செய்ய வேண்டும்.',
     },
     {
       title: 'Oral Rehydration Solution (ORS) for Diarrhoea', category: 'firstaid', tags: ['diarrhoea', 'dehydration', 'ors', 'first aid'],
@@ -1356,24 +1631,133 @@ export async function seedDatabase() {
     },
   ]);
 
-  // Doctor Summary (demo)
-  await db.doctorSummaries.add({
-    patientId: Number(p2),
-    doctorId: Number(d1),
-    complaint: 'Fatigue, increased thirst, frequent urination',
-    symptoms: ['Fatigue', 'Polydipsia', 'Polyuria', 'Blurred vision'],
-    duration: '2 weeks',
-    history: 'Known case of Type 2 Diabetes (6 years) and Hypertension (4 years)',
-    medicines: 'Metformin 500mg BD, Amlodipine 5mg OD, Aspirin 75mg OD',
-    allergies: 'None known',
-    vitals: 'BP: 138/85 mmHg, Blood Sugar (F): 162 mg/dL, Weight: 74 kg',
-    observations: 'Blood sugar mildly elevated. BP slightly above target. HbA1c 7.8% – suggests suboptimal control.',
-    warningSigns: ['Chest pain', 'Difficulty breathing', 'Sudden weakness', 'Loss of consciousness'],
-    nextStep: 'Review HbA1c in 3 months. Consider Metformin dose adjustment. Dietary counselling. Ophthalmology referral.',
-    createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
-    doctorNotes: 'Patient counselled on diet and exercise. Follow-up in 1 month.',
-    agentType: 'diabetes',
-  });
+  // Doctor Summaries (4 Total: 1 Original + 3 More New Requested Summaries)
+  await db.doctorSummaries.bulkAdd([
+    {
+      patientId: Number(p2),
+      doctorId: Number(d1),
+      complaint: 'Fatigue, increased thirst, frequent urination',
+      symptoms: ['Fatigue', 'Polydipsia', 'Polyuria', 'Blurred vision'],
+      duration: '2 weeks',
+      history: 'Known case of Type 2 Diabetes (6 years) and Hypertension (4 years)',
+      medicines: 'Metformin 500mg BD, Amlodipine 5mg OD, Aspirin 75mg OD',
+      allergies: 'None known',
+      vitals: 'BP: 138/85 mmHg, Blood Sugar (F): 162 mg/dL, Weight: 74 kg',
+      observations: 'Blood sugar mildly elevated. BP slightly above target. HbA1c 7.8% – suggests suboptimal control.',
+      warningSigns: ['Chest pain', 'Difficulty breathing', 'Sudden weakness', 'Loss of consciousness'],
+      nextStep: 'Review HbA1c in 3 months. Consider Metformin dose adjustment. Dietary counselling. Ophthalmology referral.',
+      createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+      doctorNotes: 'Patient counselled on diet and exercise. Follow-up in 1 month.',
+      agentType: 'diabetes',
+    },
+    // Summary 2: Maternal Antenatal Third-Trimester Review
+    {
+      patientId: Number(p1),
+      doctorId: Number(d1),
+      complaint: 'Routine 28-week maternal antenatal evaluation, mild lower limb fatigue',
+      symptoms: ['Mild lower limb fatigue', 'Occasional morning nausea', 'Good fetal movement'],
+      duration: '1 week',
+      history: 'Primi gravida, 28 weeks gestation. Mild nutritional anemia on oral iron therapy.',
+      medicines: 'Folic acid 5mg OD, Ferrous sulphate 200mg BD, Calcium carbonate 500mg OD',
+      allergies: 'Penicillin',
+      vitals: 'BP: 110/72 mmHg, Weight: 58 kg, Pulse: 78 bpm, Fetal Heart Rate: 140 bpm, SpO2: 99%',
+      observations: 'Fundal height corresponds to 28 weeks. No pedal edema or proteinuria. Fetal heart rate regular at 140 bpm.',
+      warningSigns: ['Sudden visual blurring', 'Severe headache', 'Vaginal bleeding', 'Decreased fetal movements <10/2hr'],
+      nextStep: 'Follow-up visit at 32 weeks for growth ultrasound and repeat hemoglobin level.',
+      createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+      doctorNotes: 'Advised balanced rural diet with ragi porridge, drumstick leaves, milk, and adequate rest.',
+      agentType: 'maternity',
+    },
+    // Summary 3: Pediatric & Neonatal Well-Baby Check
+    {
+      patientId: Number(p6),
+      doctorId: Number(d1),
+      complaint: '2-week neonatal well-baby check, umbilical stump inspection',
+      symptoms: ['None reported. Vigorous suckling, normal sleep-wake cycles, active crying'],
+      duration: '15 days since birth',
+      history: 'Full term normal vaginal delivery at Kodaikanal Govt Hospital, birth weight 2.9 kg.',
+      medicines: 'Vitamin D3 drops 400 IU once daily',
+      allergies: 'None',
+      vitals: 'Weight: 3.1 kg (+200g gain), Temp: 98.4°F, Pulse: 130 bpm, SpO2: 99%',
+      observations: 'Umbilical cord clean and dry. No jaundice or conjunctival pallor. Alert and active Moro reflex.',
+      warningSigns: ['Poor suckling or refusal to feed', 'Lethargy/unusual sleepiness', 'Fever or cold extremities', 'Yellow palms/soles'],
+      nextStep: 'Scheduled for 6-week immunization (Pentavalent-1, OPV-1, Rotavirus-1) at village health post.',
+      createdAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+      doctorNotes: 'Mother counselled on exclusive breastfeeding, burping techniques, and keeping baby warm.',
+      agentType: 'newborn',
+    },
+    // Summary 4: Geriatric Respiratory Assessment
+    {
+      patientId: Number(p7),
+      doctorId: Number(d1),
+      complaint: 'Chronic morning cough with mucoid sputum, exertional breathlessness on slope walking',
+      symptoms: ['Chronic productive cough', 'Exertional dyspnea', 'Morning chest tightness'],
+      duration: '3 months, worse during rainy cold mornings',
+      history: 'Former tea estate laborer with 35 years exposure to wood stove smoke. COPD Stage 2.',
+      medicines: 'Budesonide+Formoterol DPI 200/6 mcg BD, Tab Theophylline 300mg OD',
+      allergies: 'None known',
+      vitals: 'BP: 140/86 mmHg, SpO2: 94% on room air, Pulse: 80 bpm, Temp: 98.2°F, RR: 20/min',
+      observations: 'Bilateral expiratory wheezing on chest auscultation. No cyanosis, no pedal edema.',
+      warningSigns: ['Resting breathlessness', 'Bluish discoloration of lips', 'SpO2 falling below 90%', 'High fever'],
+      nextStep: 'Continue dual inhaler with spacer. Annual influenza vaccination. Spirometry review at district hospital.',
+      createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+      doctorNotes: 'Demonstrated correct mouth rinsing after steroid inhaler use. Advised keeping indoor living area well ventilated.',
+      agentType: 'respiratory',
+    },
+  ]);
 
-  console.log('[Medora] Database seeded successfully');
+  console.log('[Medora] Database seeded successfully with 186+ records across all clinical tables');
+}
+
+/**
+ * Migration helper to ensure Nair is replaced by Guptha in any existing browser storage,
+ * and ensures all 186+ records exist.
+ */
+export async function ensureSeedData() {
+  try {
+    // 1. Migrate Nair -> Guptha
+    await db.families.where({ familyName: 'Nair Family (Family 03)' }).modify({ familyName: 'Guptha Family (Family 03)' });
+    await db.patients.where({ name: 'Suresh Nair' }).modify({ name: 'Suresh Guptha' });
+    await db.patients.where({ name: 'Deepa Nair' }).modify({ name: 'Deepa Guptha' });
+
+    // 2. If doctors or records count is low, run seedDatabase
+    const patientCount = await db.patients.count();
+    const docSummaryCount = await db.doctorSummaries.count();
+    const medRecordCount = await db.medicalRecords.count();
+    const hospCount = await db.hospitals.count();
+    
+    if (patientCount === 0 || docSummaryCount < 4 || medRecordCount < 16 || hospCount < 8) {
+      await seedDatabase();
+    }
+  } catch (err) {
+    console.warn('[Medora] ensureSeedData notice:', err);
+  }
+}
+
+/**
+ * Force resets and reseeds with the guaranteed 186+ records.
+ */
+export async function resetAndReseedDatabase() {
+  try {
+    await db.patients.clear();
+    await db.families.clear();
+    await db.doctors.clear();
+    await db.admins.clear();
+    await db.medicines.clear();
+    await db.medicalRecords.clear();
+    await db.healthTests.clear();
+    await db.vaccinations.clear();
+    await db.appointments.clear();
+    await db.notifications.clear();
+    await db.doctorSummaries.clear();
+    await db.hospitals.clear();
+    await db.transport.clear();
+    await db.schemes.clear();
+    await db.education.clear();
+    await seedDatabase();
+    return true;
+  } catch (err) {
+    console.error('Reset and reseed failed:', err);
+    return false;
+  }
 }

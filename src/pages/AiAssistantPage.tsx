@@ -5,13 +5,17 @@ import Layout from '../components/Layout';
 import DemoDataBadge from '../components/DemoDataBadge';
 import { VoiceAIPanel } from '../components/VoiceAIPanel';
 import { MedicalAIPanel } from '../components/MedicalAIPanel';
-import { Stethoscope, Mic, ShieldAlert, FileText, Sparkles } from 'lucide-react';
+import { A2AWorkflow } from '../components/A2AWorkflow';
+import { LanguageCode } from '../types';
+import { Stethoscope, Mic, ShieldAlert, FileText, Sparkles, Bot, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function AiAssistantPage() {
   const { t } = useTranslation();
   const { currentUser } = useAppStore();
-  const [activeSystem, setActiveSystem] = useState<'medical' | 'voice'>('medical');
+  const [activeSystem, setActiveSystem] = useState<'medical' | 'voice' | 'a2a'>('medical');
+
+  const currentLang = (currentUser?.language as LanguageCode) || 'en';
 
   return (
     <Layout>
@@ -20,19 +24,25 @@ export default function AiAssistantPage() {
         <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-teal-900 text-white p-4 rounded-3xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center text-2xl shrink-0 shadow-inner">
-              {activeSystem === 'medical' ? '🩺' : '🗣️'}
+              {activeSystem === 'medical' ? '🩺' : activeSystem === 'voice' ? '🗣️' : '🤖'}
             </div>
             <div>
               <div className="font-black text-sm flex items-center gap-2">
-                <span>Medora Dual AI Architecture</span>
+                <span>Medora Multi-Agent & AI Architecture</span>
                 <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold">
-                  Isolated Systems
+                  {activeSystem === 'medical'
+                    ? 'Clinical Reasoning'
+                    : activeSystem === 'voice'
+                    ? 'Voice Navigation'
+                    : 'Specialist Simulation'}
                 </span>
               </div>
               <p className="text-[11px] text-purple-100 mt-0.5">
                 {activeSystem === 'medical'
                   ? 'Medora Medical AI: Symptom reasoning, differential diagnosis & doctor support.'
-                  : 'Medora Voice AI: Natural conversation, application guidance & accessibility.'}
+                  : activeSystem === 'voice'
+                  ? 'Medora Voice AI: Natural conversation, application guidance & accessibility.'
+                  : 'A2A Simulation: Multi-agent collaborative consultation across 5 specialist doctors.'}
               </p>
             </div>
           </div>
@@ -40,40 +50,57 @@ export default function AiAssistantPage() {
           <DemoDataBadge />
         </div>
 
-        {/* Primary Toggle for the Two Completely Separate AI Systems */}
-        <div className="grid grid-cols-2 gap-2 bg-slate-200/80 p-1.5 rounded-2xl border border-slate-300">
+        {/* Primary Toggle for the AI Systems */}
+        <div className="grid grid-cols-3 gap-1.5 bg-slate-200/80 p-1.5 rounded-2xl border border-slate-300">
           <button
             type="button"
             onClick={() => setActiveSystem('medical')}
-            className={`py-2.5 px-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-all ${
+            className={`py-2 px-2 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all ${
               activeSystem === 'medical'
                 ? 'bg-purple-700 text-white shadow-md ring-2 ring-purple-300'
                 : 'text-slate-700 hover:bg-white/60'
             }`}
           >
-            <Stethoscope className="w-4 h-4 text-purple-200" />
-            <span className="truncate">🩺 Medora Medical AI</span>
+            <Stethoscope className="w-4 h-4 text-purple-200 shrink-0" />
+            <span className="truncate">🩺 Medical AI</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveSystem('voice')}
-            className={`py-2.5 px-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-all ${
+            className={`py-2 px-2 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all ${
               activeSystem === 'voice'
                 ? 'bg-teal-700 text-white shadow-md ring-2 ring-teal-300'
                 : 'text-slate-700 hover:bg-white/60'
             }`}
           >
-            <Mic className="w-4 h-4 text-teal-200" />
-            <span className="truncate">🗣️ Medora Voice AI</span>
+            <Mic className="w-4 h-4 text-teal-200 shrink-0" />
+            <span className="truncate">🗣️ Voice AI</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSystem('a2a')}
+            className={`py-2 px-2 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all ${
+              activeSystem === 'a2a'
+                ? 'bg-indigo-700 text-white shadow-md ring-2 ring-indigo-300'
+                : 'text-slate-700 hover:bg-white/60'
+            }`}
+          >
+            <Bot className="w-4 h-4 text-indigo-200 shrink-0" />
+            <span className="truncate">🤖 A2A Sim</span>
           </button>
         </div>
 
         {/* System Active View */}
         {activeSystem === 'medical' ? (
           <MedicalAIPanel />
-        ) : (
+        ) : activeSystem === 'voice' ? (
           <VoiceAIPanel />
+        ) : (
+          <div className="bg-white rounded-2xl border border-slate-200 p-2 shadow-xs">
+            <A2AWorkflow currentLang={currentLang} />
+          </div>
         )}
 
         {/* Quick Diagnostic / Summary Links */}
