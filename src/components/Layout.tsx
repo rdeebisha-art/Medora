@@ -40,6 +40,7 @@ export default function Layout({ children }: LayoutProps) {
     logout,
     activeDirectCall,
     endDirectCall,
+    setVoiceNavOpen,
   } = useAppStore();
 
   const [moreDrawerOpen, setMoreDrawerOpen] = useState(false);
@@ -111,6 +112,18 @@ export default function Layout({ children }: LayoutProps) {
               title="Toggle Ultra Low-Bandwidth Mode"
             >
               2G {is2GMode ? 'ON' : 'OFF'}
+            </button>
+
+            {/* Voice Navigation Button */}
+            <button
+              type="button"
+              onClick={() => setVoiceNavOpen(true)}
+              className="flex items-center gap-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-2 sm:px-2.5 py-1 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer min-h-[32px] sm:min-h-[36px]"
+              title="Voice Navigation (Multilingual & Offline)"
+              aria-label="Voice Navigation"
+            >
+              <Mic size={14} className="animate-pulse text-emerald-200" />
+              <span className="hidden sm:inline">Voice Nav</span>
             </button>
 
             {/* Language Dropdown Button */}
@@ -216,6 +229,18 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* STRICTLY MINIMAL LIST: ONLY Profile, Settings, FAQ, Help, Login, Sign Out */}
             <nav className="flex-1 py-3 px-3 space-y-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setMoreDrawerOpen(false);
+                  setVoiceNavOpen(true);
+                }}
+                className="w-full text-left flex items-center gap-3 px-3.5 py-3 rounded-2xl text-xs font-bold transition-all text-emerald-800 bg-emerald-50/80 hover:bg-emerald-100 border border-emerald-200 cursor-pointer"
+              >
+                <Mic size={16} className="text-emerald-700 animate-pulse" />
+                <span>🎤 Voice Navigation</span>
+              </button>
+
               <Link
                 to="/call-history"
                 onClick={() => setMoreDrawerOpen(false)}

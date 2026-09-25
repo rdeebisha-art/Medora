@@ -3,6 +3,7 @@ import i18n from '../i18n/config';
 import { seedDatabase } from '../db/db';
 
 export type Role = 'patient' | 'family' | 'doctor' | 'admin';
+export type VoiceNavLanguageOption = 'app' | 'auto' | 'en' | 'ta' | 'hi' | 'te' | 'ml' | 'kn';
 
 export interface ActiveCallInfo {
   callId?: string;
@@ -57,9 +58,13 @@ interface AppState {
   language: string; // for backward compatibility
   activeDirectCall: ActiveCallInfo | null;
   incomingCall: IncomingCallInfo | null;
+  voiceNavigationLanguage: VoiceNavLanguageOption;
+  isVoiceNavOpen: boolean;
   startDirectCall: (callInfo: ActiveCallInfo) => void;
   endDirectCall: () => void;
   setIncomingCall: (call: IncomingCallInfo | null) => void;
+  setVoiceNavigationLanguage: (lang: VoiceNavLanguageOption) => void;
+  setVoiceNavOpen: (open: boolean) => void;
   setOffline: (status: boolean) => void;
   toggle2GMode: () => void;
   toggleSimpleMode: () => void;
@@ -77,6 +82,16 @@ const getStoredLanguage = (): string => {
     }
   }
   return 'en';
+};
+
+const getStoredVoiceNavLanguage = (): VoiceNavLanguageOption => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const saved = localStorage.getItem('medora-voice-nav-language');
+    if (saved && ['app', 'auto', 'en', 'ta', 'hi', 'te', 'ml', 'kn'].includes(saved)) {
+      return saved as VoiceNavLanguageOption;
+    }
+  }
+  return 'app';
 };
 
 const initialLanguage = getStoredLanguage();
@@ -126,10 +141,19 @@ export const useAppStore = create<AppState>((set) => ({
   language: initialLanguage,
   activeDirectCall: null,
   incomingCall: null,
+  voiceNavigationLanguage: getStoredVoiceNavLanguage(),
+  isVoiceNavOpen: false,
 
   startDirectCall: (callInfo) => set({ activeDirectCall: callInfo }),
   endDirectCall: () => set({ activeDirectCall: null }),
   setIncomingCall: (call) => set({ incomingCall: call }),
+  setVoiceNavigationLanguage: (lang) => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('medora-voice-nav-language', lang);
+    }
+    set({ voiceNavigationLanguage: lang });
+  },
+  setVoiceNavOpen: (open) => set({ isVoiceNavOpen: open }),
 
   setOffline: (status) => set({ isOffline: status }),
 

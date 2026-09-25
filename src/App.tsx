@@ -45,6 +45,7 @@ import MedicalHospitalBackground from './components/layout/MedicalHospitalBackgr
 import { ActiveCallModal } from './components/ActiveCallModal';
 import { IncomingCallModal } from './components/IncomingCallModal';
 import OfflineToast from './components/OfflineToast';
+import VoiceNavigationModal from './components/VoiceNavigationModal';
 import { webrtcCallingService } from './services/webrtc/webrtcCallingService';
 import { inAppMessagingService } from './services/messaging/inAppMessagingService';
 import { useEffect } from 'react';
@@ -69,6 +70,7 @@ export default function App() {
   return (
     <MedicalHospitalBackground>
       <OfflineToast />
+      <VoiceNavigationModal />
       {incomingCall && (
         <IncomingCallModal incomingCall={incomingCall} onClose={() => setIncomingCall(null)} />
       )}
