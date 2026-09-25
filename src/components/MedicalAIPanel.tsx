@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
 import { db, MedicalRecord } from '../db/db';
-import { medicalAIService, MedicalAIResponse } from '../services/medicalAI';
+import { medicalService } from '../services/ai/medicalService';
+import { StructuredMedicalResponse } from '../services/ai/types';
 import {
   Stethoscope,
   FileSearch,
@@ -17,6 +18,8 @@ import {
   Clock,
   Sparkles,
   ArrowRight,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -28,7 +31,7 @@ export const MedicalAIPanel: React.FC = () => {
   const [duration, setDuration] = useState('');
   const [temperature, setTemperature] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [currentResponse, setCurrentResponse] = useState<MedicalAIResponse | null>(null);
+  const [currentResponse, setCurrentResponse] = useState<StructuredMedicalResponse | null>(null);
   const [patientRecords, setPatientRecords] = useState<MedicalRecord[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -46,7 +49,7 @@ export const MedicalAIPanel: React.FC = () => {
     setStatusMessage(null);
 
     try {
-      const response = await medicalAIService.analyzeMedicalRequest({
+      const response = await medicalService.analyzeMedicalRequest({
         patientInput: textToAnalyze,
         patientId: currentUser?.id,
         duration: duration.trim() || undefined,
@@ -64,7 +67,7 @@ export const MedicalAIPanel: React.FC = () => {
             { role: 'user', content: textToAnalyze, timestamp: new Date().toISOString() },
             {
               role: 'assistant',
-              content: response.summaryText,
+              content: response.summaryText || response.recommendedNextStep,
               agentType: 'medical_ai_reasoning',
               timestamp: new Date().toISOString(),
             },
@@ -80,6 +83,8 @@ export const MedicalAIPanel: React.FC = () => {
     }
   };
 
+  const isNetworkOnline = typeof navigator !== 'undefined' ? navigator.onLine : false;
+
   return (
     <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-xs overflow-hidden flex flex-col space-y-3 p-4">
       {/* Header */}
@@ -92,18 +97,22 @@ export const MedicalAIPanel: React.FC = () => {
             <div className="font-extrabold text-sm flex items-center gap-2">
               <span>Medora Medical AI</span>
               <span className="text-[10px] bg-purple-500/40 text-purple-100 px-2 py-0.5 rounded-full font-bold">
-                Clinical Reasoning &amp; Gemini
+                Offline-First Clinical Engine
               </span>
             </div>
             <p className="text-[11px] text-purple-100">
-              Symptom reasoning, differential diagnosis, red flag prioritization &amp; Doctor Summary.
+              Deterministic symptom reasoning, emergency triage &amp; differential assessment.
             </p>
           </div>
         </div>
 
-        <div className="text-right">
+        <div className="text-right flex flex-col items-end gap-1">
           <span className="text-[10px] bg-purple-950/60 border border-purple-300/30 px-2 py-0.5 rounded-md font-mono text-purple-200">
-            Gemini 3.8 Flash + Rules
+            {isNetworkOnline ? 'Hybrid Offline + Gemini' : '100% Offline Mode'}
+          </span>
+          <span className="text-[9px] text-purple-200 flex items-center gap-1">
+            {isNetworkOnline ? <Wifi className="w-2.5 h-2.5 text-emerald-400" /> : <WifiOff className="w-2.5 h-2.5 text-amber-300" />}
+            <span>{isNetworkOnline ? 'Online' : 'Offline'}</span>
           </span>
         </div>
       </div>
@@ -195,6 +204,19 @@ export const MedicalAIPanel: React.FC = () => {
             </div>
           )}
 
+          {/* Offline / Fallback Notice Banner */}
+          {(currentResponse.isOfflineFallback || currentResponse.mode === 'OFFLINE' || currentResponse.mode === 'ONLINE_FALLBACK') && (
+            <div className="bg-teal-50 border border-teal-200 rounded-xl p-2.5 flex items-center justify-between text-teal-900 text-xs">
+              <div className="flex items-center gap-1.5 font-bold">
+                <ShieldCheck className="w-4 h-4 text-teal-700" />
+                <span>Offline medical reasoning used</span>
+              </div>
+              <span className="text-[10px] bg-teal-200/60 text-teal-950 px-2 py-0.5 rounded-full font-mono font-semibold">
+                Local Clinical Engine
+              </span>
+            </div>
+          )}
+
           {/* Diagnostic Assessment Section */}
           <div>
             <div className="flex items-center justify-between border-b pb-1.5 mb-2">
@@ -209,17 +231,28 @@ export const MedicalAIPanel: React.FC = () => {
             <div className="bg-purple-50/70 border border-purple-200 rounded-xl p-3">
               <div className="text-[11px] font-semibold text-purple-900">Possible diagnosis / Most likely condition:</div>
               <div className="text-base font-black text-slate-900 mt-0.5">
-                {currentResponse.diagnosticAssessment.mostLikelyCondition}
+                {currentResponse.diagnosticAssessment?.mostLikelyCondition ||
+                  currentResponse.possibleConditions[0]?.condition ||
+                  currentResponse.chiefComplaint}
               </div>
             </div>
           </div>
 
           {/* Differential Diagnoses */}
-          {currentResponse.diagnosticAssessment.differentialDiagnoses.length > 0 && (
+          {((currentResponse.diagnosticAssessment?.differentialDiagnoses?.length || 0) > 0 ||
+            currentResponse.possibleConditions.length > 0) && (
             <div>
               <div className="text-xs font-bold text-slate-700 mb-1.5">Differential Diagnoses:</div>
               <div className="space-y-2">
-                {currentResponse.diagnosticAssessment.differentialDiagnoses.map((diff, i) => (
+                {(
+                  currentResponse.diagnosticAssessment?.differentialDiagnoses ||
+                  currentResponse.possibleConditions.map((pc) => ({
+                    condition: pc.condition,
+                    supportingEvidence: pc.supportingEvidence,
+                    contradictingEvidence: pc.contradictingEvidence,
+                    confidence: null,
+                  }))
+                ).map((diff, i) => (
                   <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs">
                     <div className="font-extrabold text-slate-900 flex items-center justify-between">
                       <span>• {diff.condition}</span>
@@ -227,13 +260,13 @@ export const MedicalAIPanel: React.FC = () => {
                         {diff.confidence === null ? 'Clinical review required' : `${diff.confidence}%`}
                       </span>
                     </div>
-                    {diff.supportingEvidence.length > 0 && (
+                    {diff.supportingEvidence && diff.supportingEvidence.length > 0 && (
                       <div className="text-[11px] text-emerald-800 mt-1">
                         <span className="font-semibold">Supporting: </span>
                         {diff.supportingEvidence.join('; ')}
                       </div>
                     )}
-                    {diff.contradictingEvidence.length > 0 && (
+                    {diff.contradictingEvidence && diff.contradictingEvidence.length > 0 && (
                       <div className="text-[11px] text-slate-500 mt-0.5">
                         <span className="font-semibold">Contradicting / Distinguishing: </span>
                         {diff.contradictingEvidence.join('; ')}

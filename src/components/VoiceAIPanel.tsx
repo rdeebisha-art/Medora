@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
-import { voiceAIService, VoiceAIResponse } from '../services/voiceAI';
+import { voiceService } from '../services/ai/voiceService';
 import { speechRecognitionService } from '../services/voice/speechRecognitionService';
 import { speechSynthesisService } from '../services/voice/speechSynthesisService';
 import { SupportedLanguageCode } from '../data/languages';
@@ -73,8 +73,8 @@ export const VoiceAIPanel: React.FC = () => {
 
     setMessages((prev) => [...prev, userMsg]);
 
-    // Send strictly to Voice AI (NEVER to Medical AI)
-    const response: VoiceAIResponse = await voiceAIService.processVoiceRequest({
+    // Send strictly to Voice AI (NEVER to Medical AI directly)
+    const response = await voiceService.processVoiceRequest({
       text: textToSend,
       language: currentLangCode,
       userName: currentUser?.name,
@@ -85,7 +85,7 @@ export const VoiceAIPanel: React.FC = () => {
       sender: 'voice_ai',
       text: response.responseText,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isTransfer: response.isMedicalTransferRecommended,
+      isTransfer: response.isMedicalQuery || response.suggestedAction === 'TRANSFER_TO_MEDICAL_AI',
     };
 
     setMessages((prev) => [...prev, aiMsg]);

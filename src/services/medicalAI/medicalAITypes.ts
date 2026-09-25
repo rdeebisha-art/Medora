@@ -34,8 +34,16 @@ export type MedicalConfidenceStatus =
 
 export interface MedicalAIResponse {
   source: 'MEDICAL_AI';
+  mode?: 'OFFLINE' | 'ONLINE_FALLBACK' | 'ONLINE';
   clinicalAssessment: ClinicalAssessmentData;
   diagnosticAssessment: DiagnosticAssessmentData;
+  possibleConditions?: Array<{
+    condition: string;
+    supportingEvidence: string[];
+    contradictingEvidence: string[];
+    missingInformation: string[];
+    reasoning: string;
+  }>;
   redFlags: string[];
   missingInformation: string[];
   recommendedNextStep: string;
