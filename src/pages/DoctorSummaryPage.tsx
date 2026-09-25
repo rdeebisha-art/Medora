@@ -10,6 +10,7 @@ export default function DoctorSummaryPage() {
   const { t } = useTranslation();
   const { currentUser } = useAppStore();
   const [summary, setSummary] = useState<DoctorSummary | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!currentUser?.id) return;
@@ -25,7 +26,7 @@ export default function DoctorSummaryPage() {
 
   const addToSms = async () => {
     if (!summary) return;
-    const text = `MEDORA DOCTOR SUMMARY\nPatient ID: ${summary.patientId}\nComplaint: ${summary.complaint}\nMedicines: ${summary.medicines}\nAllergies: ${summary.allergies}\nNext Step: ${summary.nextStep}\n[Demo — not actually sent]`;
+    const text = `MEDORA DOCTOR SUMMARY\nPatient ID: ${summary.patientId}\nComplaint: ${summary.complaint}\nMedicines: ${summary.medicines}\nAllergies: ${summary.allergies}\nNext Step: ${summary.nextStep}\n[Demo — recorded locally in Medora outbox]`;
     await db.smsOutbox.add({
       toPhone: 'Doctor',
       message: text,
@@ -34,7 +35,8 @@ export default function DoctorSummaryPage() {
       status: 'pending',
       createdAt: new Date().toISOString(),
     });
-    alert('Doctor summary added to SMS Outbox (Demo)');
+    setToastMessage('✓ Doctor summary added to SMS Outbox (Demo)');
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
   const Section = ({ title, content }: { title: string; content?: string }) => {
@@ -54,6 +56,12 @@ export default function DoctorSummaryPage() {
           <h1 className="text-xl font-bold text-gray-900">📄 {t('doctorSummary.title')}</h1>
           <DemoDataBadge />
         </div>
+
+        {toastMessage && (
+          <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-2.5 rounded-2xl text-xs font-semibold mb-4 shadow-2xs">
+            {toastMessage}
+          </div>
+        )}
 
         {!summary ? (
           <div className="text-center py-12">

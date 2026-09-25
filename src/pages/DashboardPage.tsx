@@ -71,7 +71,7 @@ export default function DashboardPage() {
       ? [{ type: 'medicine' as const, message: t('dashboard.missedDoseAlert'), link: '/medicines' }]
       : []),
     ...(appointments.length === 0
-      ? [{ type: 'checkup' as const, message: t('dashboard.noCheckupAlert'), link: '/doctor-summary' }]
+      ? [{ type: 'checkup' as const, message: t('dashboard.noCheckupAlert'), link: '/appointments' }]
       : [])
   ];
 
@@ -649,6 +649,7 @@ export default function DashboardPage() {
           </h2>
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {[
+              { path: '/appointments', label: t('appointments.title', 'Appointments'), emoji: '📅', color: 'bg-white border-[#E2E8F0] text-[#0F766E]' },
               { path: '/health-tests', label: t('dashboard.qaRecordTest'), emoji: '🧪', color: 'bg-white border-[#E2E8F0] text-[#0F766E]' },
               { path: '/records', label: t('dashboard.qaAddRecord'), emoji: '📋', color: 'bg-white border-[#E2E8F0] text-[#2563EB]' },
               { path: '/medicines', label: t('dashboard.qaAddMedicine'), emoji: '💊', color: 'bg-white border-[#E2E8F0] text-[#16A34A]' },

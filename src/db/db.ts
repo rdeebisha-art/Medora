@@ -36,6 +36,7 @@ export interface Family {
 
 export interface Doctor {
   id?: number;
+  doctorId?: string;
   name: string;
   specialty: string;
   phone: string;
@@ -44,6 +45,10 @@ export interface Doctor {
   village: string;
   availability: string;
   qualifications: string;
+  experience?: string;
+  languages?: string[];
+  location?: string;
+  consultationType?: string;
 }
 
 export interface Admin {
@@ -405,7 +410,171 @@ export const db = new MedoraDB();
 
 // ─── Seed Data ────────────────────────────────────────────────────────────────
 
+export const SEED_DOCTORS: Omit<Doctor, 'id'>[] = [
+  {
+    doctorId: 'DOC-01',
+    name: 'Dr. Arjun Mehta',
+    specialty: 'General Physician',
+    phone: '9800001111',
+    pin: 'doc123',
+    role: 'doctor',
+    village: 'Kodaikanal',
+    availability: 'Mon–Fri 9:00 AM – 5:00 PM',
+    qualifications: 'MBBS, MD (General Medicine)',
+    experience: '14 years',
+    languages: ['English', 'Tamil', 'Hindi'],
+    location: 'Kodaikanal Government Hospital',
+    consultationType: 'Both (In-person & Teleconsultation)',
+  },
+  {
+    doctorId: 'DOC-02',
+    name: 'Dr. Kavitha Rao',
+    specialty: 'Pediatrics & Gynecology',
+    phone: '9800002222',
+    pin: 'doc123',
+    role: 'doctor',
+    village: 'Kodaikanal',
+    availability: 'Mon–Sat 10:00 AM – 4:00 PM',
+    qualifications: 'MBBS, MS (OBG), DCH',
+    experience: '11 years',
+    languages: ['English', 'Tamil', 'Telugu'],
+    location: 'Kodaikanal Government Hospital',
+    consultationType: 'Both (In-person & Teleconsultation)',
+  },
+  {
+    doctorId: 'DOC-03',
+    name: 'Dr. Suresh Balakrishnan',
+    specialty: 'Cardiology & Internal Medicine',
+    phone: '9800003333',
+    pin: 'doc123',
+    role: 'doctor',
+    village: 'Kodaikanal',
+    availability: 'Tue, Thu, Sat 9:00 AM – 2:00 PM',
+    qualifications: 'MBBS, MD, DM (Cardiology)',
+    experience: '18 years',
+    languages: ['English', 'Tamil', 'Malayalam'],
+    location: 'CHC Palani & Kodaikanal PHC',
+    consultationType: 'Both (In-person & Teleconsultation)',
+  },
+  {
+    doctorId: 'DOC-04',
+    name: 'Dr. Ananya Iyer',
+    specialty: 'Obstetrics & Maternal Care',
+    phone: '9800004444',
+    pin: 'doc123',
+    role: 'doctor',
+    village: 'Kodaikanal',
+    availability: 'Mon–Fri 8:30 AM – 3:30 PM',
+    qualifications: 'MBBS, DGO, DNB (OBGYN)',
+    experience: '9 years',
+    languages: ['English', 'Tamil', 'Hindi', 'Kannada'],
+    location: 'Maternal & Child Health Wing, Kodaikanal',
+    consultationType: 'Both (In-person & Teleconsultation)',
+  },
+  {
+    doctorId: 'DOC-05',
+    name: 'Dr. Meenakshi Sundaram',
+    specialty: 'Orthopedics & Geriatric Care',
+    phone: '9800005555',
+    pin: 'doc123',
+    role: 'doctor',
+    village: 'Kodaikanal',
+    availability: 'Mon, Wed, Fri 10:00 AM – 4:00 PM',
+    qualifications: 'MBBS, MS (Ortho), Fellowship in Geriatrics',
+    experience: '16 years',
+    languages: ['English', 'Tamil', 'Kannada'],
+    location: 'Kodaikanal Govt Hospital',
+    consultationType: 'In-person',
+  },
+  {
+    doctorId: 'DOC-06',
+    name: 'Dr. Priya Nair',
+    specialty: 'Endocrinology & Diabetology',
+    phone: '9800006666',
+    pin: 'doc123',
+    role: 'doctor',
+    village: 'Kodaikanal',
+    availability: 'Mon, Thu 11:00 AM – 5:00 PM',
+    qualifications: 'MBBS, MD, Fellowship in Diabetes Care',
+    experience: '12 years',
+    languages: ['English', 'Malayalam', 'Tamil'],
+    location: 'Palani CHC & Mobile Rural Clinic',
+    consultationType: 'Both (In-person & Teleconsultation)',
+  },
+  {
+    doctorId: 'DOC-07',
+    name: 'Dr. Rajeshwari Patel',
+    specialty: 'Pulmonology & Respiratory Care',
+    phone: '9800007777',
+    pin: 'doc123',
+    role: 'doctor',
+    village: 'Kodaikanal',
+    availability: 'Tue, Fri 9:00 AM – 3:00 PM',
+    qualifications: 'MBBS, DTCD, MD (Pulmonary Medicine)',
+    experience: '15 years',
+    languages: ['English', 'Hindi', 'Gujarati', 'Tamil'],
+    location: 'Kodaikanal High Altitude Health Centre',
+    consultationType: 'Both (In-person & Teleconsultation)',
+  },
+  {
+    doctorId: 'DOC-08',
+    name: 'Dr. Karthik Raman',
+    specialty: 'General Surgery & Emergency Trauma',
+    phone: '9800008888',
+    pin: 'doc123',
+    role: 'doctor',
+    village: 'Kodaikanal',
+    availability: '24/7 On-Call Emergency & OPD Wed/Sat',
+    qualifications: 'MBBS, MS (General Surgery), ATLS',
+    experience: '13 years',
+    languages: ['English', 'Tamil', 'Telugu'],
+    location: 'Kodaikanal Govt Hospital Casualty',
+    consultationType: 'In-person',
+  },
+  {
+    doctorId: 'DOC-09',
+    name: 'Dr. Deepa Shenoy',
+    specialty: 'Ophthalmology & Vision Health',
+    phone: '9800009999',
+    pin: 'doc123',
+    role: 'doctor',
+    village: 'Kodaikanal',
+    availability: 'Mon, Wed 10:00 AM – 3:00 PM',
+    qualifications: 'MBBS, MS (Ophthalmology)',
+    experience: '10 years',
+    languages: ['English', 'Kannada', 'Tamil', 'Hindi'],
+    location: 'Mobile Eye Clinic & Kodaikanal PHC',
+    consultationType: 'In-person',
+  },
+  {
+    doctorId: 'DOC-10',
+    name: 'Dr. Murugan Swaminathan',
+    specialty: 'Dermatology & Infectious Diseases',
+    phone: '9800001010',
+    pin: 'doc123',
+    role: 'doctor',
+    village: 'Kodaikanal',
+    availability: 'Thu, Sat 10:00 AM – 4:00 PM',
+    qualifications: 'MBBS, MD (DVL)',
+    experience: '11 years',
+    languages: ['English', 'Tamil'],
+    location: 'Kodaikanal Govt Hospital',
+    consultationType: 'Both (In-person & Teleconsultation)',
+  },
+];
+
 export async function seedDatabase() {
+  // Ensure all 10 doctors are in database
+  const docCount = await db.doctors.count();
+  if (docCount < 10) {
+    for (const d of SEED_DOCTORS) {
+      const exists = await db.doctors.where({ phone: d.phone }).first();
+      if (!exists) {
+        await db.doctors.add(d);
+      }
+    }
+  }
+
   const existingPatients = await db.patients.count();
   if (existingPatients > 0) return; // Already seeded
 

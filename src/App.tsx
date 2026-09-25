@@ -38,6 +38,7 @@ import SettingsPage from './pages/SettingsPage';
 import FaqPage from './pages/FaqPage';
 import HelpPage from './pages/HelpPage';
 import LanguageBridgePage from './pages/LanguageBridgePage';
+import AppointmentsPage from './pages/AppointmentsPage';
 
 import MedicalHospitalBackground from './components/layout/MedicalHospitalBackground';
 
@@ -76,6 +77,7 @@ export default function App() {
       <Route path="/ivr" element={<ProtectedRoute><IvrPage /></ProtectedRoute>} />
       <Route path="/ussd" element={<ProtectedRoute><UssdPage /></ProtectedRoute>} />
       <Route path="/village" element={<ProtectedRoute><VillagePage /></ProtectedRoute>} />
+      <Route path="/appointments" element={<ProtectedRoute><AppointmentsPage /></ProtectedRoute>} />
       <Route path="/doctor-portal" element={<ProtectedRoute><DoctorPortalPage /></ProtectedRoute>} />
       <Route path="/admin-portal" element={<ProtectedRoute><AdminPortalPage /></ProtectedRoute>} />
       <Route path="/doctor-summary" element={<ProtectedRoute><DoctorSummaryPage /></ProtectedRoute>} />

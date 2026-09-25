@@ -176,18 +176,30 @@ export default function MyHealthPage() {
         )}
 
         {/* Upcoming Appointments */}
-        {appointments.filter(a => a.status === 'scheduled').length > 0 && (
-          <div>
-            <h2 className="font-extrabold text-sm text-[#0F172A] mb-2">📅 {t('dashboard.upcomingAppts')}</h2>
-            {appointments.filter(a => a.status === 'scheduled').map(a => (
-              <div key={a.id} className="bg-[#FFF7ED] border border-[#EA580C]/30 rounded-xl p-3 text-xs mb-2">
+        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-xs">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-extrabold text-sm text-[#0F172A]">📅 {t('dashboard.upcomingAppts', 'Upcoming Appointments')}</h2>
+            <Link to="/appointments" className="text-xs text-[#0F766E] font-bold hover:underline">
+              {t('appointments.viewAll', 'Manage All →')}
+            </Link>
+          </div>
+          {appointments.filter(a => a.status === 'scheduled').length > 0 ? (
+            appointments.filter(a => a.status === 'scheduled').map(a => (
+              <div key={a.id} className="bg-[#FFF7ED] border border-[#EA580C]/30 rounded-xl p-3 text-xs mb-2 last:mb-0">
                 <div className="font-bold text-[#EA580C]">{a.reason}</div>
-                <div className="text-[#475569] mt-0.5">{a.date}</div>
+                <div className="text-[#475569] mt-0.5 font-mono">{a.date}</div>
                 {a.notes && <div className="text-[#64748B] text-[11px] mt-1">{a.notes}</div>}
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          ) : (
+            <div className="text-center py-3 text-xs text-slate-500">
+              <span>No upcoming appointments. </span>
+              <Link to="/appointments" className="text-[#0F766E] font-bold underline">
+                Book with a doctor
+              </Link>
+            </div>
+          )}
+        </div>
 
         {/* Quick links */}
         <div className="grid grid-cols-2 gap-2 pb-4">

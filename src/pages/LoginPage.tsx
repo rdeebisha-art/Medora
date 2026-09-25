@@ -115,12 +115,25 @@ export default function LoginPage() {
             {(() => {
               const roleData = ROLES.find(r => r.role === selectedRole)!;
               return (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
-                  <p className="text-xs text-amber-700 font-medium">🧪 Demo credentials:</p>
-                  <p className="text-xs text-amber-600">
-                    {selectedRole === 'family' ? 'Name/ID' : 'Phone'}: <strong>{roleData.demoPhone}</strong>
-                  </p>
-                  <p className="text-xs text-amber-600">PIN: <strong>{roleData.demoPin}</strong></p>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-xs text-amber-700 font-medium">🧪 Demo credentials:</p>
+                    <p className="text-xs text-amber-600">
+                      {selectedRole === 'family' ? 'Name/ID' : 'Phone'}: <strong>{selectedRole === 'family' ? '2 (Kumar Family)' : roleData.demoPhone}</strong>
+                    </p>
+                    <p className="text-xs text-amber-600">PIN: <strong>{roleData.demoPin}</strong></p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhone(selectedRole === 'family' ? '2' : roleData.demoPhone);
+                      setPin(roleData.demoPin);
+                      setError('');
+                    }}
+                    className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3 py-2 rounded-xl shadow-2xs transition-colors flex-shrink-0"
+                  >
+                    Auto-Fill
+                  </button>
                 </div>
               );
             })()}
