@@ -4,6 +4,7 @@ import { useAppStore } from '../store/useAppStore';
 import { db } from '../db/db';
 import Layout from '../components/Layout';
 import DemoDataBadge from '../components/DemoDataBadge';
+import SyncProgressIndicator from '../components/SyncProgressIndicator';
 
 export default function SyncPage() {
   const { t } = useTranslation();
@@ -12,6 +13,7 @@ export default function SyncPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncDone, setSyncDone] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -21,9 +23,13 @@ export default function SyncPage() {
       db.smsOutbox.count(),
       db.medicalRecords.count(),
       db.smsOutbox.where({ status: 'pending' }).count(),
-    ]).then(([patients, medicines, tests, sms, records, pending]) => {
+      db.syncLog.reverse().first(),
+    ]).then(([patients, medicines, tests, sms, records, pending, lastLog]) => {
       setCounts({ patients, medicines, tests, sms, records });
       setPendingCount(pending);
+      if (lastLog?.createdAt) {
+        setLastSyncTime(new Date(lastLog.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      }
     });
   }, [syncDone]);
 
@@ -31,12 +37,14 @@ export default function SyncPage() {
     setSyncing(true);
     setSyncDone(false);
     await new Promise(r => setTimeout(r, 2000)); // demo delay
+    const now = new Date().toISOString();
     await db.syncLog.add({
       action: 'sync_attempt',
-      data: JSON.stringify({ timestamp: new Date().toISOString(), demo: true, counts }),
+      data: JSON.stringify({ timestamp: now, demo: true, counts }),
       status: 'synced',
-      createdAt: new Date().toISOString(),
+      createdAt: now,
     });
+    setLastSyncTime(new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     setSyncing(false);
     setSyncDone(true);
   };
@@ -48,6 +56,18 @@ export default function SyncPage() {
           <h1 className="text-xl font-bold text-gray-900">🔄 {t('sync.title')}</h1>
           <DemoDataBadge />
         </div>
+
+        {/* Visual Progress Indicator Monitoring IndexedDB-to-Server Sync */}
+        <SyncProgressIndicator
+          isOffline={isOffline}
+          is2GMode={is2GMode}
+          counts={counts}
+          pendingCount={pendingCount}
+          isSyncing={syncing}
+          syncDone={syncDone}
+          onTriggerSync={handleSync}
+          lastSyncTimestamp={lastSyncTime}
+        />
 
         {/* Connection Status */}
         <div className={`rounded-2xl p-4 mb-4 flex items-center gap-3 ${isOffline ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
@@ -91,7 +111,7 @@ export default function SyncPage() {
 
         {/* Last Sync */}
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mb-4 text-sm text-gray-600">
-          🕐 {t('sync.lastSync')}: {t('sync.never')}
+          🕐 {t('sync.lastSync')}: {lastSyncTime || t('sync.never')}
         </div>
 
         {/* Sync Button */}

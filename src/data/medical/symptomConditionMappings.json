@@ -1,0 +1,142 @@
+{
+  "version": "2.0.0",
+  "description": "Deterministic Offline Symptom to Condition Mappings and Differential Assessment",
+  "conditions": [
+    {
+      "id": "COND_VIRAL_URI",
+      "name": "Viral Upper Respiratory Tract Infection",
+      "category": "Infectious / Respiratory",
+      "primarySymptoms": ["FEVER", "COUGH", "COLD", "SORE_THROAT"],
+      "secondarySymptoms": ["HEADACHE", "FATIGUE", "BODY_PAIN"],
+      "contradictingSymptoms": ["BREATHING_DIFFICULTY", "CHEST_PAIN", "BLEEDING"],
+      "typicalDuration": "3 to 7 days",
+      "typicalSeverity": "Mild to Moderate",
+      "missingInformation": [
+        "Presence of yellow/green phlegm or blood in sputum",
+        "Ability to keep oral liquids down without vomiting",
+        "Recent exposure to known COVID-19 or influenza contacts"
+      ],
+      "reasoning": "Combination of fever with upper respiratory symptoms (cough, runny nose, or sore throat) without signs of lower respiratory compromise strongly aligns with a self-limiting viral upper respiratory infection.",
+      "recommendedNextStep": "Rest, maintain adequate oral hydration with boiled warm water and soups, warm saline gargling, monitor temperature. Consult primary care doctor if fever exceeds 102°F or lasts beyond 3 days."
+    },
+    {
+      "id": "COND_INFLUENZA",
+      "name": "Influenza-like Illness (ILI)",
+      "category": "Infectious / Systemic",
+      "primarySymptoms": ["FEVER", "BODY_PAIN", "FATIGUE", "HEADACHE"],
+      "secondarySymptoms": ["COUGH", "SORE_THROAT", "COLD"],
+      "contradictingSymptoms": ["DIARRHEA", "BLEEDING"],
+      "typicalDuration": "5 to 10 days",
+      "typicalSeverity": "Moderate",
+      "missingInformation": [
+        "Sudden vs gradual onset of high fever and severe myalgia",
+        "Influenza vaccination history for current season",
+        "Underlying asthma, COPD, or diabetes"
+      ],
+      "reasoning": "Acute high fever accompanied by prominent generalized body aches, severe fatigue, and headache is classic presentation for influenza-like illness.",
+      "recommendedNextStep": "Strict bed rest, oral rehydration, isolate from vulnerable family members (elderly/infants). Doctor consultation advised for prescription fever antipyretics and clinical monitoring."
+    },
+    {
+      "id": "COND_GASTROENTERITIS",
+      "name": "Acute Gastroenteritis / Acute Enteric Infection",
+      "category": "Gastrointestinal",
+      "primarySymptoms": ["DIARRHEA", "VOMITING", "STOMACH_PAIN"],
+      "secondarySymptoms": ["FEVER", "FATIGUE", "DIZZINESS"],
+      "contradictingSymptoms": ["COUGH", "COLD", "SORE_THROAT"],
+      "typicalDuration": "2 to 5 days",
+      "typicalSeverity": "Moderate to Severe",
+      "missingInformation": [
+        "Frequency of loose motions and vomiting episodes in past 24 hours",
+        "Presence of blood or mucus in stools",
+        "Urine frequency and color (checking for dehydration signs)"
+      ],
+      "reasoning": "Gastrointestinal symptoms with frequent loose stools, abdominal cramping, and nausea/vomiting indicate acute mucosal inflammation, commonly infectious or food/water contamination.",
+      "recommendedNextStep": "Start Oral Rehydration Salts (ORS) solution immediately after every loose stool. Drink sip-by-sip. Do not withhold fluids. If signs of dehydration appear (dry tongue, no urine for 6 hours), visit PHC immediately."
+    },
+    {
+      "id": "COND_TENSION_MIGRAINE",
+      "name": "Tension-Type Headache / Cephalea",
+      "category": "Neurological",
+      "primarySymptoms": ["HEADACHE"],
+      "secondarySymptoms": ["FATIGUE", "BODY_PAIN", "DIZZINESS"],
+      "contradictingSymptoms": ["FEVER", "VOMITING", "BREATHING_DIFFICULTY"],
+      "typicalDuration": "Hours to 2 days",
+      "typicalSeverity": "Mild to Moderate",
+      "missingInformation": [
+        "Location of pain (unilateral vs band-like bilateral tension)",
+        "Sensitivity to bright light (photophobia) or loud sound",
+        "Neck stiffness or sudden 'thunderclap' onset"
+      ],
+      "reasoning": "Isolated headache without fever, neck rigidity, or focal neurological deficits commonly relates to tension, eye strain, dehydration, or stress.",
+      "recommendedNextStep": "Rest in a quiet, dark room, ensure adequate water intake, avoid prolonged screen or direct sunlight exposure. If accompanied by vomiting, visual aura, or neck stiffness, consult doctor."
+    },
+    {
+      "id": "COND_ASTHMA_BRONCHOSPASM",
+      "name": "Bronchial Asthma Exacerbation / Bronchospasm",
+      "category": "Respiratory",
+      "primarySymptoms": ["BREATHING_DIFFICULTY", "COUGH"],
+      "secondarySymptoms": ["CHEST_PAIN", "FATIGUE"],
+      "contradictingSymptoms": ["DIARRHEA", "VOMITING"],
+      "typicalDuration": "Acute episodic",
+      "typicalSeverity": "Moderate to Severe",
+      "missingInformation": [
+        "Audible wheezing sound when breathing out",
+        "History of known asthma or prescribed inhaler use",
+        "SpO2 oxygen saturation level"
+      ],
+      "reasoning": "Breathlessness coupled with cough and chest tightness indicates lower airway narrowing or bronchospasm.",
+      "recommendedNextStep": "Use prescribed rescue reliever inhaler (e.g. Salbutamol) if previously diagnosed. Keep patient seated upright. If breathing does not ease within 10 minutes or pulse oximetry is under 93%, seek urgent emergency care."
+    },
+    {
+      "id": "COND_HYPERTENSION_SURGE",
+      "name": "Essential Hypertension / Blood Pressure Surge",
+      "category": "Cardiovascular",
+      "primarySymptoms": ["HIGH_BLOOD_PRESSURE", "HEADACHE", "DIZZINESS"],
+      "secondarySymptoms": ["FATIGUE", "CHEST_PAIN"],
+      "contradictingSymptoms": ["COUGH", "COLD", "DIARRHEA"],
+      "typicalDuration": "Chronic with acute spikes",
+      "typicalSeverity": "Moderate to High",
+      "missingInformation": [
+        "Exact systolic and diastolic measurement numbers (e.g. 150/95)",
+        "Adherence to regular antihypertensive medicines (e.g. Amlodipine/Telmisartan)",
+        "Blurry vision or chest pressure"
+      ],
+      "reasoning": "Elevated blood pressure values with occipital headache or lightheadedness require evaluation for uncontrolled hypertension or medication non-compliance.",
+      "recommendedNextStep": "Rest calmly for 15 minutes and repeat BP reading. Do not suddenly double medication without doctor review. Visit local PHC or clinic for prescription titration."
+    },
+    {
+      "id": "COND_DIABETES_HYPERGLYCEMIA",
+      "name": "Hyperglycemia / Diabetes Mellitus Exacerbation",
+      "category": "Endocrine / Metabolic",
+      "primarySymptoms": ["HIGH_BLOOD_SUGAR", "FATIGUE"],
+      "secondarySymptoms": ["DIZZINESS", "HEADACHE"],
+      "contradictingSymptoms": ["FEVER", "COUGH"],
+      "typicalDuration": "Subacute / Ongoing",
+      "typicalSeverity": "Moderate",
+      "missingInformation": [
+        "Fasting vs post-prandial glucose reading in mg/dL",
+        "Increased thirst (polydipsia) or frequent urination (polyuria)",
+        "Current anti-diabetic medication or insulin adherence"
+      ],
+      "reasoning": "Reported elevated glucose levels with fatigue suggest glycemic dysregulation requiring dietary review and medical management.",
+      "recommendedNextStep": "Maintain hydration with plain water. Avoid sugary drinks and high-glycemic carbohydrates. Have fasting and PP blood sugar tested at PHC lab and review with physician."
+    },
+    {
+      "id": "COND_DENGUE_TROPICAL_FEVER",
+      "name": "Tropical Febrile Illness / Dengue Suspect",
+      "category": "Vector-borne / Infectious",
+      "primarySymptoms": ["FEVER", "BODY_PAIN", "HEADACHE", "FATIGUE"],
+      "secondarySymptoms": ["VOMITING", "DIZZINESS"],
+      "contradictingSymptoms": ["COLD", "SORE_THROAT"],
+      "typicalDuration": "4 to 8 days",
+      "typicalSeverity": "Moderate to Severe",
+      "missingInformation": [
+        "Pain behind the eyes (retro-orbital pain)",
+        "Skin rash, petechiae, or bleeding gums",
+        "Complete Blood Count (platelet count and hematocrit)"
+      ],
+      "reasoning": "High continuous fever accompanied by severe retro-orbital pain, bone-break myalgia, and profound weakness in endemic rural regions requires screening for vector-borne infections like dengue or chikungunya.",
+      "recommendedNextStep": "Seek doctor consultation for CBC (platelet count) and dengue NS1/serology. Maintain high fluid intake. Avoid NSAIDs (aspirin, ibuprofen); only paracetamol under doctor instruction."
+    }
+  ]
+}

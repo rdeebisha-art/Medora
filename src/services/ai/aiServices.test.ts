@@ -289,4 +289,57 @@ describe('Medora Offline-First AI Services & Router Tests', () => {
       expect(response.medicalHandoff?.chiefComplaint).toBeDefined();
     });
   });
+
+  // ==========================================
+  // LOCAL NOTIFICATION SCHEDULER OFFLINE TESTS
+  // ==========================================
+  describe('Local Notification Scheduler (Offline Reminders)', () => {
+    it('schedules and normalizes medication reminder time to 24h format', async () => {
+      const { localNotificationScheduler } = await import('../notifications/localNotificationScheduler');
+      const reminder = localNotificationScheduler.addReminder({
+        patientId: 1,
+        type: 'medication',
+        title: 'Daily Metformin',
+        medicineName: 'Metformin 500mg',
+        dose: '1 tablet',
+        time: '08:30 AM',
+        recurrence: 'daily',
+        enabled: true,
+        language: 'en',
+        details: 'Take with warm water',
+      });
+
+      expect(reminder.id).toBeDefined();
+      expect(reminder.time24).toBe('08:30');
+      expect(reminder.recurrence).toBe('daily');
+
+      const all = localNotificationScheduler.getReminders(1);
+      expect(all.some((r) => r.id === reminder.id)).toBe(true);
+
+      // Clean up
+      localNotificationScheduler.deleteReminder(reminder.id);
+    });
+
+    it('schedules upcoming vaccination reminder with due date', async () => {
+      const { localNotificationScheduler } = await import('../notifications/localNotificationScheduler');
+      const reminder = localNotificationScheduler.addReminder({
+        patientId: 1,
+        type: 'vaccination',
+        title: 'BCG Vaccine',
+        vaccineName: 'BCG',
+        dueDate: '2026-10-01',
+        time: '09:00 AM',
+        recurrence: 'once',
+        enabled: true,
+        language: 'en',
+        details: 'Infant immunization clinic',
+      });
+
+      expect(reminder.dueDate).toBe('2026-10-01');
+      expect(reminder.time24).toBe('09:00');
+
+      // Clean up
+      localNotificationScheduler.deleteReminder(reminder.id);
+    });
+  });
 });

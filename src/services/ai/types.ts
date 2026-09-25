@@ -24,17 +24,23 @@ export interface AIRouterDecision {
 }
 
 export interface PossibleCondition {
+  id?: string;
+  name?: string;
   condition: string;
   supportingEvidence: string[];
-  contradictingEvidence: string[];
-  missingInformation: string[];
-  reasoning: string;
+  contradictingEvidence?: string[];
+  missingInformation?: string[];
+  redFlags?: string[];
+  requiresDoctorReview?: boolean;
+  reasoning?: string;
 }
 
 export type MedicalConfidenceStatus =
   | 'NOT_CLINICALLY_VALIDATED'
   | 'INSUFFICIENT_INFORMATION'
-  | 'AI_ASSESSMENT_REQUIRES_CLINICAL_VERIFICATION';
+  | 'AI_ASSESSMENT_REQUIRES_CLINICAL_VERIFICATION'
+  | 'UNAVAILABLE'
+  | string;
 
 export type MedicalExecutionMode = 'OFFLINE' | 'ONLINE_FALLBACK' | 'ONLINE';
 
@@ -46,11 +52,13 @@ export interface StructuredMedicalResponse {
   symptoms: string[];
   duration: string;
   severity: string;
-  measurements: string[];
+  measurements: string[] | Record<string, any>;
   medicalHistory: string[];
   medications: string[];
   allergies: string[];
+  observations?: string[];
   possibleConditions: PossibleCondition[];
+  supportingEvidence?: string[];
   redFlags: string[];
   emergencyDetected: boolean;
   recommendedNextStep: string;
@@ -58,6 +66,7 @@ export interface StructuredMedicalResponse {
   requiresDoctorReview: boolean;
   confidenceStatus: MedicalConfidenceStatus;
   source: MedicalResponseSource;
+  missingInformation?: string[];
   
   // Backwards compatibility / rich UI fields
   confidence?: number | null;

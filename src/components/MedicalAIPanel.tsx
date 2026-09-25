@@ -4,6 +4,7 @@ import { useAppStore } from '../store/useAppStore';
 import { db, MedicalRecord } from '../db/db';
 import { medicalService } from '../services/ai/medicalService';
 import { StructuredMedicalResponse } from '../services/ai/types';
+import { OfflineDiagnosticInterface } from './OfflineDiagnosticInterface';
 import {
   Stethoscope,
   FileSearch,
@@ -182,144 +183,10 @@ export const MedicalAIPanel: React.FC = () => {
 
       {/* Structured Diagnostic Assessment Output Card */}
       {currentResponse && (
-        <div className="border border-purple-200 rounded-xl p-3.5 bg-white space-y-3 shadow-xs">
-          {/* Emergency Alert Banner if detected */}
-          {currentResponse.requiresUrgentCare && (
-            <div className="bg-red-50 border-2 border-red-500 rounded-xl p-3 flex items-start gap-2.5 text-red-900 animate-pulse">
-              <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-              <div>
-                <div className="font-black text-xs uppercase tracking-wide">Emergency Warning Signs Detected</div>
-                <div className="text-xs font-medium mt-0.5">
-                  {currentResponse.redFlags.join('; ') || 'Immediate medical attention required.'}
-                </div>
-                <div className="mt-1.5">
-                  <Link
-                    to="/emergency"
-                    className="inline-block bg-red-600 hover:bg-red-700 text-white text-[11px] font-bold px-3 py-1 rounded-lg"
-                  >
-                    Open Emergency Hotline (108) →
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Offline / Fallback Notice Banner */}
-          {(currentResponse.isOfflineFallback || currentResponse.mode === 'OFFLINE' || currentResponse.mode === 'ONLINE_FALLBACK') && (
-            <div className="bg-teal-50 border border-teal-200 rounded-xl p-2.5 flex items-center justify-between text-teal-900 text-xs">
-              <div className="flex items-center gap-1.5 font-bold">
-                <ShieldCheck className="w-4 h-4 text-teal-700" />
-                <span>Offline medical reasoning used</span>
-              </div>
-              <span className="text-[10px] bg-teal-200/60 text-teal-950 px-2 py-0.5 rounded-full font-mono font-semibold">
-                Local Clinical Engine
-              </span>
-            </div>
-          )}
-
-          {/* Diagnostic Assessment Section */}
-          <div>
-            <div className="flex items-center justify-between border-b pb-1.5 mb-2">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Diagnostic Assessment
-              </span>
-              <span className="text-[10px] font-mono bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full font-bold">
-                {currentResponse.confidenceStatus}
-              </span>
-            </div>
-
-            <div className="bg-purple-50/70 border border-purple-200 rounded-xl p-3">
-              <div className="text-[11px] font-semibold text-purple-900">Possible diagnosis / Most likely condition:</div>
-              <div className="text-base font-black text-slate-900 mt-0.5">
-                {currentResponse.diagnosticAssessment?.mostLikelyCondition ||
-                  currentResponse.possibleConditions[0]?.condition ||
-                  currentResponse.chiefComplaint}
-              </div>
-            </div>
-          </div>
-
-          {/* Differential Diagnoses */}
-          {((currentResponse.diagnosticAssessment?.differentialDiagnoses?.length || 0) > 0 ||
-            currentResponse.possibleConditions.length > 0) && (
-            <div>
-              <div className="text-xs font-bold text-slate-700 mb-1.5">Differential Diagnoses:</div>
-              <div className="space-y-2">
-                {(
-                  currentResponse.diagnosticAssessment?.differentialDiagnoses ||
-                  currentResponse.possibleConditions.map((pc) => ({
-                    condition: pc.condition,
-                    supportingEvidence: pc.supportingEvidence,
-                    contradictingEvidence: pc.contradictingEvidence,
-                    confidence: null,
-                  }))
-                ).map((diff, i) => (
-                  <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs">
-                    <div className="font-extrabold text-slate-900 flex items-center justify-between">
-                      <span>• {diff.condition}</span>
-                      <span className="text-[10px] text-slate-500 font-mono">
-                        {diff.confidence === null ? 'Clinical review required' : `${diff.confidence}%`}
-                      </span>
-                    </div>
-                    {diff.supportingEvidence && diff.supportingEvidence.length > 0 && (
-                      <div className="text-[11px] text-emerald-800 mt-1">
-                        <span className="font-semibold">Supporting: </span>
-                        {diff.supportingEvidence.join('; ')}
-                      </div>
-                    )}
-                    {diff.contradictingEvidence && diff.contradictingEvidence.length > 0 && (
-                      <div className="text-[11px] text-slate-500 mt-0.5">
-                        <span className="font-semibold">Contradicting / Distinguishing: </span>
-                        {diff.contradictingEvidence.join('; ')}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Missing Information & Red Flags */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-            <div className="bg-amber-50/60 border border-amber-200 rounded-xl p-2.5">
-              <div className="font-bold text-amber-900 flex items-center gap-1 mb-1">
-                <HelpCircle className="w-3.5 h-3.5 text-amber-700" />
-                <span>Missing Clinical Information</span>
-              </div>
-              {currentResponse.missingInformation.length > 0 ? (
-                <ul className="list-disc pl-4 space-y-0.5 text-[11px] text-amber-950">
-                  {currentResponse.missingInformation.map((info, idx) => (
-                    <li key={idx}>{info}</li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="text-[11px] text-slate-500">None detected</div>
-              )}
-            </div>
-
-            <div className="bg-teal-50/60 border border-teal-200 rounded-xl p-2.5">
-              <div className="font-bold text-teal-900 flex items-center gap-1 mb-1">
-                <ArrowRight className="w-3.5 h-3.5 text-teal-700" />
-                <span>Recommended Next Step</span>
-              </div>
-              <p className="text-[11px] text-teal-950 font-medium">
-                {currentResponse.recommendedNextStep}
-              </p>
-            </div>
-          </div>
-
-          {/* Doctor Confirmation Disclaimer */}
-          <div className="bg-slate-100 rounded-xl p-2.5 text-[11px] text-slate-600 flex items-center justify-between">
-            <span>
-              🔒 <strong>AI decision support:</strong> AI-generated assessment requires healthcare professional review.
-            </span>
-            <Link
-              to="/doctor-summary"
-              className="text-purple-700 font-bold hover:underline shrink-0 ml-2"
-            >
-              Export to Doctor Summary →
-            </Link>
-          </div>
-        </div>
+        <OfflineDiagnosticInterface
+          response={currentResponse}
+          onClear={() => setCurrentResponse(null)}
+        />
       )}
     </div>
   );

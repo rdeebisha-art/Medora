@@ -1,0 +1,158 @@
+{
+  "version": "2.0.0",
+  "description": "Deterministic Offline Emergency Rules for Medora Rural Health",
+  "emergencyHelplines": {
+    "ambulance": "108",
+    "healthHelpline": "104",
+    "emergencyNational": "112"
+  },
+  "rules": [
+    {
+      "id": "EMERG_BREATHING",
+      "concept": "BREATHING_DIFFICULTY",
+      "severity": "CRITICAL",
+      "title": "Severe Respiratory Distress / Acute Airway Compromise",
+      "keywords": {
+        "en": ["cannot breathe", "can't breathe", "unable to breathe", "choking", "gasping", "severe shortness of breath", "struggling to breathe", "blue lips", "bluish skin", "asphyxia", "suffocation"],
+        "ta": ["மூச்சு விட முடியவில்லை", "மூச்சுத்திணறல்", "மூச்சு வாங்க முடியல", "மூச்சு வாங்குது", "நீல உதடுகள்", "மூச்சடைப்பு"],
+        "hi": ["सांस नहीं आ रही", "सांस फूलना", "सांस लेने में बहुत दिक्कत", "दम घुटना", "नीले होंठ"],
+        "te": ["శ్వాస ఆడట్లేదు", "శ్వాస తీసుకోవడంలో తీవ్రమైన ఇబ్బంది", "ఊపిరాడటం లేదు", "నీలి రంగు పెదవులు"],
+        "ml": ["ശ്വാസമെടുക്കാൻ പറ്റുന്നില്ല", "ശ്വാസതടസ്സം", "ശ്വാസം മുട്ടൽ", "ചുണ്ടുകൾ നീലനിറം"],
+        "kn": ["ಉಸಿರಾಡಲು ಕಷ್ಟವಾಗುತ್ತಿದೆ", "ಉಸಿರಾಟದ ತೊಂದರೆ", "ಉಸಿರು ಕಟ್ಟಿದಂತಾಗುವುದು", "ತುಟಿಗಳು ನೀಲಿ"]
+      },
+      "redFlags": [
+        "Acute respiratory failure or severe airway obstruction detected.",
+        "Patient experiencing severe hypoxemia risk or inability to maintain adequate ventilation."
+      ],
+      "actionGuidance": "Immediate 108 Emergency Ambulance dispatch required. Keep patient sitting upright in high-Fowler position. Loosen tight neck and chest clothing. Do not give oral solids or fluids while gasping."
+    },
+    {
+      "id": "EMERG_CHEST_PAIN",
+      "concept": "CHEST_PAIN",
+      "severity": "CRITICAL",
+      "title": "Acute Coronary Syndrome / Crushing Chest Pain",
+      "keywords": {
+        "en": ["severe chest pain", "crushing chest pain", "heart attack", "pain in heart", "chest tight left arm", "heavy pressure on chest", "radiating to jaw", "radiating to left arm"],
+        "ta": ["கடுமையான நெஞ்சு வலி", "நெஞ்சை அடைப்பது", "மாரடைப்பு", "இடது கை வலி நெஞ்சு வலி", "மார்பில் பாரம்"],
+        "hi": ["सीने में तेज दर्द", "छाती में बहुत तेज दर्द", "दिल का दौरा", "सीने में भारीपन बाएं हाथ में दर्द", "हार्ट अटैक"],
+        "te": ["తీవ్రమైన ఛాతీ నొప్పి", "గుండెపోటు", "ఛాతీలో విపరీతమైన భారం", "ఎడమ చేయి లాగడం"],
+        "ml": ["കഠിനമായ നെഞ്ചുവേദന", "ഹൃദയാഘാതം", "നെഞ്ചിൽ ഭാരവും വേദനയും", "ഇടതുകൈ വേദന"],
+        "kn": ["ತೀವ್ರ ಎದೆ ನೋವು", "ಹೃದಯಾಘಾತ", "ಎದೆ ಹಿಂಡಿದಂತಾಗುವುದು", "ಎಡಗೈ ನೋವು"]
+      },
+      "redFlags": [
+        "High risk of acute myocardial infarction (heart attack).",
+        "Severe crushing chest pain radiating to arm, neck, or jaw with diaphoresis or dyspnea."
+      ],
+      "actionGuidance": "Call 108 immediately. Have patient rest completely in a seated position. Avoid any exertion or walking. Keep emergency medical services en route."
+    },
+    {
+      "id": "EMERG_UNCONSCIOUSNESS",
+      "concept": "UNCONSCIOUSNESS",
+      "severity": "CRITICAL",
+      "title": "Loss of Consciousness / Unresponsiveness / Coma",
+      "keywords": {
+        "en": ["unconscious", "loss of consciousness", "fainted and not waking", "unresponsive", "passed out and not waking", "coma", "blackout not responding"],
+        "ta": ["மயக்கம் அடைந்தார்", "மயங்கி விழுந்தார்", "சுயநினைவு இல்லை", "பேசவில்லை மயக்கம்", "விழிப்புணர்வு இல்லை"],
+        "hi": ["बेहोश हो गया", "होश नहीं है", "बेहोशी", "कोई प्रतिक्रिया नहीं"],
+        "te": ["స్పృహ తప్పడం", "స్పృహ లేదు", "కళ్ళు తిరిగి పడిపోయారు స్పృహ లేదు"],
+        "ml": ["ബോധക്ഷയം", "ബോധമില്ല", "പ്രതികരണമില്ല"],
+        "kn": ["ಪ್ರಜ್ಞೆ ತಪ್ಪುವುದು", "ಪ್ರಜ್ಞೆ ಇಲ್ಲ", "ಎಚ್ಚರವಾಗುತ್ತಿಲ್ಲ"]
+      },
+      "redFlags": [
+        "Unresponsive patient with impaired neurological state.",
+        "Risk of airway compromise and aspiration."
+      ],
+      "actionGuidance": "Check pulse and normal breathing. Place in recovery position (lateral decubitus) to keep airway open if breathing. Call 108 immediately. Do not pour water into mouth."
+    },
+    {
+      "id": "EMERG_SEVERE_BLEEDING",
+      "concept": "BLEEDING",
+      "severity": "CRITICAL",
+      "title": "Hemorrhage / Severe Uncontrolled Bleeding / Hematemesis",
+      "keywords": {
+        "en": ["severe bleeding", "profuse bleeding", "uncontrolled bleeding", "vomiting blood", "coughing blood", "blood gushing", "hemoptysis", "hematemesis"],
+        "ta": ["அதிக இரத்தப்போக்கு", "ரத்த வாந்தி", "ரத்தம் நிற்கவில்லை", "ரத்தக் கசிவு அதிகம்"],
+        "hi": ["खून की उल्टी", "बहुत ज्यादा खून बह रहा है", "रक्तस्राव नहीं रुक रहा", "खांसी में खून"],
+        "te": ["రక్తం వాంతులు", "తీవ్రమైన రక్తస్రావం", "రక్తం ఆగడం లేదు"],
+        "ml": ["കഠിനമായ രക്തസ്രാവം", "ചോര ഛർദ്ദിക്കുന്നു", "രക്തം നിൽക്കുന്നില്ല"],
+        "kn": ["ತೀವ್ರ ರಕ್ತಸ್ರಾವ", "ರಕ್ತದ ವಾಂತಿ", "ರಕ್ತ ನಿಲ್ಲುತ್ತಿಲ್ಲ"]
+      },
+      "redFlags": [
+        "Active hypovolemic shock risk due to heavy external or internal bleeding."
+      ],
+      "actionGuidance": "Apply firm direct continuous pressure with a clean cloth. Elevate injured extremity if safe. Call 108 emergency transport immediately."
+    },
+    {
+      "id": "EMERG_STROKE",
+      "concept": "STROKE_SIGNS",
+      "severity": "CRITICAL",
+      "title": "Acute Stroke / FAST Signs / Sudden Paralysis",
+      "keywords": {
+        "en": ["stroke", "face drooping", "arm weakness one side", "slurred speech", "cannot speak suddenly", "paralysis one side", "hemiplegia"],
+        "ta": ["பக்கவாதம்", "முகம் ஒரு பக்கமாக கோணல்", "ஒரு கை கால் இயங்கவில்லை", "திடீர் பேச்சு வரவில்லை"],
+        "hi": ["लकवा", "चेहरे का टेढ़ापन", "एक तरफ कमजोरी", "बोलने में अचानक असमर्थता", "फालिज"],
+        "te": ["పక్షవాతం", "ముఖం వంకర పోవడం", "ఒక వైపు చచ్చుబడటం", "మాట తడబడటం"],
+        "ml": ["പക്ഷാഘാതം", "മുഖം കോടിപ്പോവുക", "ഒരു വശം തളരുക", "സംസാരശേഷി നഷ്ടപ്പെടുക"],
+        "kn": ["ಪಾರ್ಶ್ವವಾಯು", "ಮುಖ ವಕ್ರವಾಗುವುದು", "ಒಂದು ಬದಿ ಪಾರ್ಶ್ವವಾಯು", "ಮಾತು ತೊದಲುವಿಕೆ"]
+      },
+      "redFlags": [
+        "Acute focal neurological deficit suggestive of ischemic or hemorrhagic stroke (FAST)."
+      ],
+      "actionGuidance": "Time is brain. Record exact time of symptom onset. Call 108 ambulance immediately for emergency CT-capable hospital transfer."
+    },
+    {
+      "id": "EMERG_SEIZURE",
+      "concept": "SEIZURE",
+      "severity": "CRITICAL",
+      "title": "Active Convulsions / Status Epilepticus / Fits",
+      "keywords": {
+        "en": ["seizure", "convulsions", "epileptic fit", "jerking uncontrollably", "violent shaking fit", "frothing at mouth"],
+        "ta": ["வலிப்பு", "கைகால் வெட்டுதல்", "ஜன்னி", "வாயில் நுரை தள்ளுதல்"],
+        "hi": ["दौरा", "मिरगी का दौरा", "झटके आना", "मुंह से झाग"],
+        "te": ["ఫిట్స్", "మూర్ఛ", "ఒళ్ళు కొట్టుకోవడం", "నోట్లో నురగ"],
+        "ml": ["അപസ്മാരം", "ഫിറ്റ്സ്", "കൈകാലിട്ടടിക്കുക", "വായിൽ പത"],
+        "kn": ["ಮೂರ್ಛೆ ರೋಗ", "ಫಿಟ್ಸ್", "ಕೈಕಾಲು ನಡುಕ", "ಬಾಯಲ್ಲಿ ನೊರೆ"]
+      },
+      "redFlags": [
+        "Active generalized motor seizure or repetitive seizures without regaining consciousness."
+      ],
+      "actionGuidance": "Clear surrounding sharp objects. Protect head with cushion. Do NOT put any metal keys, spoon, or fingers into the mouth. Turn to side once spasms stop. Call 108."
+    },
+    {
+      "id": "EMERG_ANAPHYLAXIS",
+      "concept": "SEVERE_ALLERGIC_REACTION",
+      "severity": "CRITICAL",
+      "title": "Anaphylaxis / Severe Systemic Allergic Reaction",
+      "keywords": {
+        "en": ["anaphylaxis", "severe allergic reaction", "throat swelling closed", "tongue swollen cannot breathe", "bee sting cannot breathe"],
+        "ta": ["ஒவ்வாமை மூச்சுத்திணறல்", "தொண்டை வீங்கி அடைப்பு", "நாக்கு வீக்கம்"],
+        "hi": ["गंभीर एलर्जी", "गला सूज कर बंद होना", "जीभ में भारी सूजन सांस बंद"],
+        "te": ["తీవ్రమైన అలర్జీ", "గొంతు వాపు ఊపిరాడక", "నాలుక వాపు"],
+        "ml": ["അനാഫൈലാക്സിസ്", "തൊണ്ട വീർത്ത് ശ്വാസം മുട്ടൽ"],
+        "kn": ["ತೀವ್ರ ಅಲರ್ಜಿ", "ಗಂಟಲು ಊದಿಕೊಂಡು ಉಸಿರುಗಟ್ಟುವುದು"]
+      },
+      "redFlags": [
+        "Anaphylactic shock risk with rapid airway swelling and circulatory collapse."
+      ],
+      "actionGuidance": "Inject epinephrine auto-injector if available. Call 108 immediately. Keep patient flat with legs elevated unless breathing is easier sitting."
+    },
+    {
+      "id": "EMERG_SELF_HARM",
+      "concept": "SUICIDAL_SELF_HARM",
+      "severity": "CRITICAL",
+      "title": "Severe Self-Harm / Crisis Red Flag",
+      "keywords": {
+        "en": ["suicide", "want to die", "kill myself", "cut my wrist", "consumed poison", "swallowed pesticide"],
+        "ta": ["தற்கொலை", "விஷம் குடித்துவிட்டேன்", "பூச்சி மருந்து குடித்துவிட்டேன்", "உயிரை மாய்க்க"],
+        "hi": ["आत्महत्या", "जहर खा लिया", "कीटनाशक पी लिया", "मरना चाहता हूँ"],
+        "te": ["ఆత్మహత్య", "విషం తాగడం", "పురుగుల మందు తాగారు"],
+        "ml": ["ആത്മഹത്യ", "വിഷം കഴിച്ചു", "കീടനാശിനി കുടിച്ചു"],
+        "kn": ["ಆತ್ಮಹತ್ಯೆ", "ವಿಷ ಸೇವನೆ", "ಕೀಟನಾಶಕ ಸೇವನೆ"]
+      },
+      "redFlags": [
+        "Immediate danger to life from intentional poisoning, overdose, or acute self-harm crisis."
+      ],
+      "actionGuidance": "Immediate emergency care required. Call 108 ambulance. Call National Mental Health Helpline Tele-MANAS at 14416 or 1800-891-4416. If poison consumed, take the container to the hospital."
+    }
+  ]
+}

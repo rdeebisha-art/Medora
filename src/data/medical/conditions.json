@@ -1,0 +1,156 @@
+{
+  "version": "1.0.0",
+  "description": "Structured mapping of standardized symptoms (FEVER, COUGH, STOMACH_PAIN, etc.) to conditions, evidence, and red flags",
+  "conditions": [
+    {
+      "id": "COND_VIRAL_URI",
+      "name": "Viral Upper Respiratory Tract Infection (Common Cold / Pharyngitis)",
+      "category": "Infectious / Respiratory",
+      "primarySymptoms": ["COUGH", "COLD"],
+      "secondarySymptoms": ["FEVER", "HEADACHE"],
+      "supportingEvidence": [
+        "Concurrent nasal congestion, rhinitis, and upper airway irritation",
+        "Low-to-moderate febrile episode",
+        "Acute self-limiting onset without focal lung consolidation"
+      ],
+      "contradictingEvidence": [
+        "High continuous fever (>103°F) lasting >5 days",
+        "Severe pleuritic chest pain or focal rales on auscultation",
+        "Stridor, wheezing, or intercostal retractions"
+      ],
+      "redFlags": [
+        "SpO2 dropping below 94%",
+        "Severe respiratory distress (stridor or gasping)",
+        "Inability to swallow liquids or drooling",
+        "Altered mental status or extreme lethargy"
+      ],
+      "missingInformation": [
+        "Accurate oral or axillary temperature measurement",
+        "Symptom duration in days",
+        "Presence of earache or sinus facial pain"
+      ],
+      "reasoning": "The combination of cough, nasal discharge, and mild fever indicates acute viral involvement of the nasopharynx and upper respiratory tract.",
+      "recommendedNextStep": "Rest, oral hydration, warm saline gargles, and steam inhalation. Seek formal clinical evaluation if fever persists beyond 3 days or breathing difficulty develops."
+    },
+    {
+      "id": "COND_ILI",
+      "name": "Influenza-like Illness (ILI)",
+      "category": "Infectious / Systemic",
+      "primarySymptoms": ["FEVER", "COUGH"],
+      "secondarySymptoms": ["HEADACHE", "COLD"],
+      "supportingEvidence": [
+        "Acute onset of fever with cough and marked systemic fatigue",
+        "Prominent headache or diffuse myalgia",
+        "Seasonal community respiratory trend"
+      ],
+      "contradictingEvidence": [
+        "Localized acute abdominal tenderness or peritoneal irritation",
+        "Clear productive purulent sputum with lobar consolidation signs",
+        "Absence of fever throughout illness course"
+      ],
+      "redFlags": [
+        "Chest pain or cyanosis (blue lips/face)",
+        "Confusion or delirium during fever spikes",
+        "Hemoptysis (coughing up blood)",
+        "Persistent vomiting causing dehydration"
+      ],
+      "missingInformation": [
+        "Exact duration in hours or days",
+        "Resting respiratory rate and pulse oximetry reading",
+        "Immunization status (e.g. annual flu vaccine)"
+      ],
+      "reasoning": "Acute co-occurrence of high fever and dry or productive cough suggests an acute influenza-like respiratory syndrome requiring close monitoring.",
+      "recommendedNextStep": "Prioritize bed rest and aggressive oral fluid replacement. Consult a primary care physician if fever exceeds 102°F or breathlessness emerges."
+    },
+    {
+      "id": "COND_ACUTE_GASTROENTERITIS",
+      "name": "Acute Gastroenteritis / Enteritis",
+      "category": "Gastrointestinal",
+      "primarySymptoms": ["STOMACH_PAIN"],
+      "secondarySymptoms": ["VOMITING", "DIARRHEA", "FEVER"],
+      "supportingEvidence": [
+        "Crampy abdominal discomfort with loose watery stools or vomiting",
+        "History of questionable food or water ingestion",
+        "Acute onset (<72 hours) with diffuse periumbilical pain"
+      ],
+      "contradictingEvidence": [
+        "Localized sharp right lower quadrant pain with rebound tenderness (Appendicitis)",
+        "Rigid 'board-like' abdomen or absent bowel sounds (Perforation)",
+        "Gross rectal hemorrhage or black tarry stools (Melena)"
+      ],
+      "redFlags": [
+        "Severe signs of dehydration (sunken eyes, dry mucous membranes, no urine >8 hours)",
+        "Intractable vomiting preventing any oral hydration",
+        "Blood or mucus in stool / Coffee-ground vomitus",
+        "Severe localized abdominal rigidity or guarding"
+      ],
+      "missingInformation": [
+        "Frequency of loose stools in last 24 hours",
+        "Ability to retain Oral Rehydration Salts (ORS) solution",
+        "Presence of fever or visible blood in stools"
+      ],
+      "reasoning": "Abdominal cramping accompanied by emesis or loose motions strongly points toward acute infectious or toxin-mediated enteritis.",
+      "recommendedNextStep": "Begin immediate Oral Rehydration Salts (ORS) solution after every loose motion. Present to clinic or PHC for antiemetic/hydration assessment if unable to retain fluids."
+    },
+    {
+      "id": "COND_DYSPEPSIA_GASTRITIS",
+      "name": "Acute Gastritis / Acid Peptic Dyspepsia",
+      "category": "Gastrointestinal",
+      "primarySymptoms": ["STOMACH_PAIN"],
+      "secondarySymptoms": ["VOMITING", "HEADACHE"],
+      "supportingEvidence": [
+        "Epigastric burning or gnawing ache related to meals or empty stomach",
+        "Nausea, bloating, or sour belching",
+        "Recent intake of NSAID pain relievers, spicy food, or fasting"
+      ],
+      "contradictingEvidence": [
+        "Watery diarrhea or high spikes in body temperature",
+        "Radiation to left shoulder or jaw (must rule out inferior wall MI)",
+        "Unintentional significant weight loss or dysphagia"
+      ],
+      "redFlags": [
+        "Hematemesis (vomiting blood) or coffee-ground emesis",
+        "Black tarry stools (melena)",
+        "Severe crushing epigastric pain radiating to back (Pancreatitis)",
+        "Post-prandial syncope"
+      ],
+      "missingInformation": [
+        "Exact anatomical location of abdominal pain (epigastric vs lower quadrants)",
+        "History of NSAID use or past peptic ulcer disease",
+        "Relationship of pain to food intake (relief vs exacerbation)"
+      ],
+      "reasoning": "Epigastric discomfort and nausea without diarrhea or peritoneal signs is consistent with acid-peptic inflammation.",
+      "recommendedNextStep": "Small frequent bland meals, avoid NSAID analgesics, and consult a doctor for clinical confirmation and acid suppression therapy."
+    },
+    {
+      "id": "COND_TROPICAL_FEBRILE",
+      "name": "Acute Undifferentiated Tropical Febrile Illness (Dengue / Malaria Suspect)",
+      "category": "Vector-Borne / Tropical",
+      "primarySymptoms": ["FEVER"],
+      "secondarySymptoms": ["HEADACHE", "STOMACH_PAIN", "VOMITING"],
+      "supportingEvidence": [
+        "High-grade continuous or intermittent fever with intense retro-orbital or frontal headache",
+        "Severe body ache, arthralgia, or flushed appearance",
+        "Residence or travel in vector-borne endemic area"
+      ],
+      "contradictingEvidence": [
+        "Prominent upper airway coryza or productive purulent sputum",
+        "Dysuria with costovertebral angle tenderness (Pyelonephritis)",
+        "Fever duration exceeding 14 days without acute toxic signs"
+      ],
+      "redFlags": [
+        "Spontaneous mucosal bleeding (petechiae, bleeding gums, nosebleed)",
+        "Persistent severe abdominal pain and persistent vomiting",
+        "Clinical fluid accumulation (ascites, pleural effusion)",
+        "Postural dizziness, cold clammy extremities, or hypotension (Dengue Shock)"
+      ],
+      "missingInformation": [
+        "Day of fever illness (critical: days 3 to 7 are the critical phase)",
+        "Platelet count and hematocrit via CBC",
+        "Rapid diagnostic test (NS1 antigen / Malaria smear)"
+      ],
+      "reasoning": "Acute high fever coupled with retro-orbital headache and systemic discomfort requires close clinical observation and laboratory workup for tropical infections.",
+      "recommendedNextStep": "Avoid Aspirin, Ibuprofen, or other NSAIDs (due to bleeding risk). Stay well hydrated with coconut water, ORS, and juices. Visit PHC or hospital for CBC and antigen tests immediately."
+    }
+  ]
+}

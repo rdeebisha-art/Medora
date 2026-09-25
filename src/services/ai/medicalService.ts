@@ -6,6 +6,17 @@ import {
   MedicalExecutionMode,
 } from './types';
 import { protectMedicalValues, restoreMedicalValues } from '../medicalSafety/medicalValueProtection';
+import { validateMedicalSchema, MedicalSchemaValidationResult } from './medicalSchemaValidation';
+import { validateMedicalResponse, createSafeMedicalFallback } from './medicalValidator';
+import {
+  EMERGENCY_RULES,
+  CONDITION_MAPPINGS,
+  MULTILINGUAL_SYMPTOMS,
+  INSUFFICIENT_INFO_MESSAGES,
+  SAFETY_DISCLAIMER,
+  dictionaryData,
+  conditionsData,
+} from '../../data/medical';
 
 /**
  * Multilingual Normalized Symptom Dictionary across 6 supported languages:
@@ -263,7 +274,7 @@ export class MedicalService {
 
     // 3. Unconsciousness / Loss of consciousness / Seizure
     if (
-      /\b(unconscious|passed out|fainted|loss of consciousness|seizure|convulsions|fits|blackout)\b/i.test(
+      /\b(unconscious|passed out|fainted|loss of consciousness|seizure|convulsions|fits|blackout|unresponsive)\b/i.test(
         lower
       ) ||
       /(மயக்கம்|வலிப்பு|நினைவிழப்பு)/.test(raw) ||
@@ -272,7 +283,7 @@ export class MedicalService {
       /(ബോധക്ഷയം|അപസ്മാരം)/.test(raw) ||
       /(ಪ್ರಜ್ಞೆ ತಪ್ಪುವುದು|ಮೂರ್ಛೆ)/.test(raw)
     ) {
-      redFlags.push('Loss of consciousness or active seizure. Risk of hypoxia or airway compromise.');
+      redFlags.push('Loss of consciousness, unresponsive state, or active seizure. Risk of hypoxia or airway compromise.');
       concept = 'UNCONSCIOUSNESS';
     }
 
@@ -314,6 +325,21 @@ export class MedicalService {
       concept = 'ALLERGIC_REACTION';
     }
 
+    // 7. Check JSON-based emergency rules from local medical database
+    for (const rule of EMERGENCY_RULES) {
+      for (const langKeywords of Object.values(rule.keywords)) {
+        for (const kw of langKeywords) {
+          if (lower.includes(kw.toLowerCase()) || raw.includes(kw)) {
+            if (!concept) concept = rule.concept;
+            for (const rf of rule.redFlags) {
+              if (!redFlags.includes(rf)) redFlags.push(rf);
+            }
+            break;
+          }
+        }
+      }
+    }
+
     return {
       isEmergency: redFlags.length > 0,
       redFlags,
@@ -345,6 +371,44 @@ export class MedicalService {
           }
         }
         if (matched) break;
+      }
+    }
+
+    // Check JSON-based multilingual symptom dictionary from local medical database
+    for (const [conceptId, def] of Object.entries(MULTILINGUAL_SYMPTOMS)) {
+      if (matchedConcepts.has(conceptId)) continue;
+      let matched = false;
+      for (const aliases of Object.values(def.aliases)) {
+        for (const alias of aliases) {
+          if (lower.includes(alias.toLowerCase()) || raw.includes(alias)) {
+            matchedConcepts.add(conceptId);
+            canonicalNames.push(def.canonical);
+            matched = true;
+            break;
+          }
+        }
+        if (matched) break;
+      }
+    }
+
+    // Check newly added dictionary.json symptoms schema
+    if (dictionaryData && Array.isArray((dictionaryData as any).symptoms)) {
+      for (const item of (dictionaryData as any).symptoms) {
+        if (matchedConcepts.has(item.token)) continue;
+        let matched = false;
+        if (item.colloquial) {
+          for (const phrases of Object.values(item.colloquial as Record<string, string[]>)) {
+            for (const phrase of phrases) {
+              if (lower.includes(phrase.toLowerCase()) || raw.includes(phrase)) {
+                matchedConcepts.add(item.token);
+                canonicalNames.push(item.canonical || item.token);
+                matched = true;
+                break;
+              }
+            }
+            if (matched) break;
+          }
+        }
       }
     }
 
@@ -530,7 +594,10 @@ export class MedicalService {
         medicalHistory: medicalHistory,
         medications: medications,
         allergies: allergies,
+        observations: [],
         possibleConditions: [],
+        supportingEvidence: [],
+        missingInformation: [],
         redFlags: [],
         emergencyDetected: false,
         recommendedNextStep:
@@ -772,6 +839,62 @@ export class MedicalService {
       });
     }
 
+    // Check JSON-based condition mappings from local medical database
+    for (const mapping of CONDITION_MAPPINGS) {
+      const hasPrimary = mapping.primarySymptoms.some((s) => symptomConcepts.includes(s));
+      const alreadyIncluded = possibleConditions.some((pc) => pc.condition.toLowerCase().includes(mapping.name.toLowerCase()));
+      if (hasPrimary && !alreadyIncluded) {
+        const matchedPrimary = mapping.primarySymptoms.filter((s) => symptomConcepts.includes(s));
+        const matchedSecondary = mapping.secondarySymptoms.filter((s) => symptomConcepts.includes(s));
+        const matchedContra = mapping.contradictingSymptoms.filter((s) => symptomConcepts.includes(s));
+
+        possibleConditions.push({
+          condition: mapping.name,
+          supportingEvidence: [
+            ...matchedPrimary.map((s) => `Primary symptom present: ${s}`),
+            ...matchedSecondary.map((s) => `Associated secondary symptom present: ${s}`),
+            duration !== 'Not recorded' ? `Reported duration: ${duration}` : `Typical course: ${mapping.typicalDuration}`,
+          ],
+          contradictingEvidence:
+            matchedContra.length > 0
+              ? matchedContra.map((s) => `Unusual symptom in this presentation: ${s}`)
+              : ['Clinical differentiation requires in-person medical examination and lab confirmation'],
+          missingInformation: mapping.missingInformation,
+          reasoning: mapping.reasoning,
+        });
+      }
+    }
+
+    // Check JSON-based condition mappings from conditions.json
+    if (conditionsData && Array.isArray((conditionsData as any).conditions)) {
+      for (const cond of (conditionsData as any).conditions) {
+        const hasPrimary = Array.isArray(cond.primarySymptoms) && cond.primarySymptoms.some((s: string) => symptomConcepts.includes(s));
+        const alreadyIncluded = possibleConditions.some((pc) => pc.condition.toLowerCase().includes(cond.name.toLowerCase()));
+        if (hasPrimary && !alreadyIncluded) {
+          const matchedPrimary = (cond.primarySymptoms as string[]).filter((s) => symptomConcepts.includes(s));
+          const matchedSecondary = Array.isArray(cond.secondarySymptoms)
+            ? (cond.secondarySymptoms as string[]).filter((s) => symptomConcepts.includes(s))
+            : [];
+          const matchedContra = Array.isArray(cond.contradictingEvidence)
+            ? cond.contradictingEvidence
+            : ['Clinical differentiation requires in-person physical evaluation'];
+
+          possibleConditions.push({
+            condition: cond.name,
+            supportingEvidence: [
+              ...matchedPrimary.map((s) => `Primary symptom confirmed: ${s}`),
+              ...matchedSecondary.map((s) => `Secondary symptom confirmed: ${s}`),
+              ...(Array.isArray(cond.supportingEvidence) ? cond.supportingEvidence.slice(0, 2) : []),
+              duration !== 'Not recorded' ? `Reported duration: ${duration}` : 'Acute presentation',
+            ],
+            contradictingEvidence: matchedContra,
+            missingInformation: Array.isArray(cond.missingInformation) ? cond.missingInformation : [],
+            reasoning: cond.reasoning || 'Pattern-matched differential diagnosis from local medical database.',
+          });
+        }
+      }
+    }
+
     // Fallback condition if symptoms exist but didn't trigger specific branch
     if (possibleConditions.length === 0 && symptomNames.length > 0) {
       possibleConditions.push({
@@ -802,7 +925,7 @@ export class MedicalService {
     const chiefComplaint =
       symptomNames.length > 0
         ? symptomNames.join(', ')
-        : emergencyCheck.concept || 'Medical symptom evaluation';
+        : (emergencyCheck.redFlags[0] || 'Medical symptom evaluation');
 
     const mostLikely =
       possibleConditions.length > 0 ? possibleConditions[0].condition : chiefComplaint;
@@ -812,6 +935,12 @@ export class MedicalService {
       : `Offline medical assessment completed for: ${chiefComplaint}. Most likely possibility: ${mostLikely}. Duration: ${duration}. Doctor review required.`;
 
     const mode: MedicalExecutionMode = isFallback ? 'ONLINE_FALLBACK' : 'OFFLINE';
+
+    // Supporting evidence summarized across most likely differentials
+    const topSupportingEvidence: string[] =
+      possibleConditions.length > 0 && possibleConditions[0].supportingEvidence
+        ? possibleConditions[0].supportingEvidence
+        : [];
 
     return {
       mode,
@@ -823,7 +952,10 @@ export class MedicalService {
       medicalHistory,
       medications,
       allergies,
+      observations: [],
       possibleConditions,
+      supportingEvidence: topSupportingEvidence,
+      missingInformation,
       redFlags: emergencyCheck.redFlags,
       emergencyDetected: emergencyCheck.isEmergency,
       recommendedNextStep,
@@ -948,32 +1080,71 @@ export class MedicalService {
   }
 
   /**
+   * Performs schema validation on the structured medical response,
+   * returning validation errors if the output does not strictly adhere to Medora JSON schema.
+   */
+  public validateSchema(response: any): MedicalSchemaValidationResult {
+    return validateMedicalSchema(response);
+  }
+
+  /**
    * Validates that the structured response conforms exactly to the required Medora schema.
+   * Runs validateMedicalResponse() and returns a safe fallback if invalid,
+   * while never overriding an emergency detection flag.
    */
   public validateOutput(response: StructuredMedicalResponse): StructuredMedicalResponse {
-    // Ensure all mandatory fields are present and safe
-    return {
+    // 1. First run schema validation directly on raw response
+    const directValidation = validateMedicalResponse(response);
+
+    if (!directValidation.valid) {
+      console.warn('[MedicalService] Direct schema validation failed:', directValidation.errors);
+      const isEmergency = Boolean(
+        response &&
+          typeof response === 'object' &&
+          ((response as any).emergencyDetected || (response as any).requiresUrgentCare)
+      );
+      const redFlags =
+        response && typeof response === 'object' && Array.isArray((response as any).redFlags)
+          ? (response as any).redFlags
+          : [];
+      const fallback = createSafeMedicalFallback(isEmergency, redFlags);
+      return fallback as unknown as StructuredMedicalResponse;
+    }
+
+    // 2. Build sanitized candidate response
+    const candidate: StructuredMedicalResponse = {
       mode: response.mode || 'OFFLINE',
-      chiefComplaint: String(response.chiefComplaint || 'Clinical evaluation in progress'),
+      chiefComplaint: String(response.chiefComplaint ?? ''),
       symptoms: Array.isArray(response.symptoms) ? response.symptoms : [],
-      duration: String(response.duration || 'Not recorded'),
-      severity: String(response.severity || 'Mild'),
-      measurements: Array.isArray(response.measurements) ? response.measurements : [],
+      duration: String(response.duration ?? ''),
+      severity: String(response.severity ?? ''),
+      measurements: response.measurements !== null && typeof response.measurements === 'object'
+        ? response.measurements
+        : [],
       medicalHistory: Array.isArray(response.medicalHistory) ? response.medicalHistory : [],
       medications: Array.isArray(response.medications) ? response.medications : [],
       allergies: Array.isArray(response.allergies) ? response.allergies : [],
+      observations: Array.isArray(response.observations) ? response.observations : [],
       possibleConditions: Array.isArray(response.possibleConditions)
         ? response.possibleConditions.map((pc) => ({
-            condition: String(pc.condition || ''),
+            id: pc.id,
+            name: pc.name || pc.condition,
+            condition: String(pc.condition || pc.name || ''),
             supportingEvidence: Array.isArray(pc.supportingEvidence) ? pc.supportingEvidence : [],
             contradictingEvidence: Array.isArray(pc.contradictingEvidence) ? pc.contradictingEvidence : [],
             missingInformation: Array.isArray(pc.missingInformation) ? pc.missingInformation : [],
+            redFlags: Array.isArray(pc.redFlags) ? pc.redFlags : [],
+            requiresDoctorReview: pc.requiresDoctorReview ?? true,
             reasoning: String(pc.reasoning || ''),
           }))
         : [],
+      supportingEvidence: Array.isArray(response.supportingEvidence)
+        ? response.supportingEvidence
+        : (response.possibleConditions?.[0]?.supportingEvidence || []),
+      missingInformation: Array.isArray(response.missingInformation) ? response.missingInformation : [],
       redFlags: Array.isArray(response.redFlags) ? response.redFlags : [],
       emergencyDetected: Boolean(response.emergencyDetected),
-      recommendedNextStep: String(response.recommendedNextStep || 'Present to a doctor for review.'),
+      recommendedNextStep: String(response.recommendedNextStep ?? ''),
       requiresUrgentCare: Boolean(response.requiresUrgentCare),
       requiresDoctorReview: true, // Always true for clinical safety
       confidenceStatus: response.confidenceStatus || 'NOT_CLINICALLY_VALIDATED',
@@ -983,7 +1154,15 @@ export class MedicalService {
       diagnosticAssessment: response.diagnosticAssessment,
       clinicalAssessment: response.clinicalAssessment,
     };
+
+    return candidate;
   }
 }
 
 export const medicalService = new MedicalService();
+export {
+  validateMedicalSchema,
+  validateMedicalResponse,
+  createSafeMedicalFallback,
+  type MedicalSchemaValidationResult,
+};

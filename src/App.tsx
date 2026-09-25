@@ -48,6 +48,7 @@ import OfflineToast from './components/OfflineToast';
 import VoiceNavigationModal from './components/VoiceNavigationModal';
 import { webrtcCallingService } from './services/webrtc/webrtcCallingService';
 import { inAppMessagingService } from './services/messaging/inAppMessagingService';
+import { localNotificationScheduler } from './services/notifications/localNotificationScheduler';
 import { useEffect } from 'react';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -58,6 +59,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const { activeDirectCall, endDirectCall, incomingCall, setIncomingCall, currentUser } = useAppStore();
+
+  useEffect(() => {
+    const cleanupScheduler = localNotificationScheduler.initScheduler();
+    return () => cleanupScheduler();
+  }, []);
 
   useEffect(() => {
     if (currentUser) {

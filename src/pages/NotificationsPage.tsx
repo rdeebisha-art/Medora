@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
-import { db, Notification } from '../db/db';
+import { db } from '../db/db';
+import type { Notification } from '../db/db';
 import Layout from '../components/Layout';
+import LocalReminderSchedulerModal from '../components/LocalReminderSchedulerModal';
+import { Clock, Plus } from 'lucide-react';
 
 export default function NotificationsPage() {
   const { t } = useTranslation();
   const { currentUser } = useAppStore();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [refresh, setRefresh] = useState(0);
+  const [isSchedulerOpen, setIsSchedulerOpen] = useState(false);
 
   useEffect(() => {
     if (!currentUser?.id) return;
@@ -51,14 +55,33 @@ export default function NotificationsPage() {
 
   return (
     <Layout>
+      <LocalReminderSchedulerModal
+        isOpen={isSchedulerOpen}
+        onClose={() => {
+          setIsSchedulerOpen(false);
+          setRefresh(r => r + 1);
+        }}
+      />
       <div className="px-4 py-4 max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold text-gray-900">🔔 {t('notifications.title')}</h1>
-          {notifications.some(n => !n.isRead) && (
-            <button onClick={markAllRead} className="text-sm text-sky-600 font-medium hover:underline">
-              {t('notifications.markAllRead')}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">🔔 {t('notifications.title')}</h1>
+            <p className="text-xs text-gray-500 mt-0.5">Alerts, scheduled medicine times, and clinic reminders</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsSchedulerOpen(true)}
+              className="px-3 py-1.5 rounded-xl bg-teal-700 text-white font-bold text-xs hover:bg-teal-800 transition-all flex items-center gap-1.5 shadow-sm"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>Offline Reminders</span>
             </button>
-          )}
+            {notifications.some(n => !n.isRead) && (
+              <button onClick={markAllRead} className="text-xs text-sky-600 font-medium hover:underline">
+                {t('notifications.markAllRead')}
+              </button>
+            )}
+          </div>
         </div>
 
         {notifications.length === 0 ? (
