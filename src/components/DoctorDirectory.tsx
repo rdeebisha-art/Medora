@@ -1,8 +1,10 @@
-import React from 'react';
-import { Phone, User, Calendar, PlusCircle, CheckCircle, Video, MapPin, Award, Clock } from 'lucide-react';
+import React, { useState } from 'react';
+import { Phone, User, Calendar, PlusCircle, CheckCircle, Video, MapPin, Award, Clock, MessageSquare, ShieldAlert } from 'lucide-react';
 import { Doctor, LanguageCode } from '../types';
 import { TRANSLATIONS } from '../i18n/translations';
 import { callPhoneNumber } from '../services/calling/phoneNumberUtils';
+import { useAppStore } from '../store/useAppStore';
+import { TwoWayDoctorChatModal } from './TwoWayDoctorChatModal';
 import {
   SPECIALTY_TRANSLATIONS,
   STATUS_TRANSLATIONS,
@@ -30,6 +32,8 @@ export const DoctorDirectory: React.FC<DoctorDirectoryProps> = ({
   selectedReferralDoctorId,
 }) => {
   const t = TRANSLATIONS[currentLang];
+  const { startDirectCall, currentUser } = useAppStore();
+  const [chatDoctor, setChatDoctor] = useState<Doctor | null>(null);
 
   if (doctors.length === 0) {
     return (
@@ -156,52 +160,68 @@ export const DoctorDirectory: React.FC<DoctorDirectoryProps> = ({
 
               {/* Action Buttons */}
               <div className="mt-4 pt-2 space-y-2">
-                <div className="grid grid-cols-2 gap-2">
+                {/* Real In-App Communication Row */}
+                <div className="grid grid-cols-3 gap-2">
                   <button
-                    onClick={() => callPhoneNumber(doctor.contactPhone || '9800001111', doctor.name, 'DOCTOR', doctor.hospitalName)}
-                    className="flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 rounded-xl font-bold text-xs transition-colors"
+                    onClick={() => {
+                      startDirectCall({
+                        name: doctor.name,
+                        phone: doctor.contactPhone || '9800001111',
+                        category: 'DOCTOR',
+                        targetUserId: 'DOC-01',
+                        location: doctor.hospitalName,
+                        emergency: false,
+                      });
+                    }}
+                    className="flex items-center justify-center gap-1 py-2 px-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl font-bold text-xs shadow-xs transition-colors cursor-pointer"
                   >
-                    <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>{t.callDoctor}</span>
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>Call</span>
                   </button>
 
                   <button
-                    onClick={() => onSelectDoctor(doctor)}
-                    className="flex items-center justify-center gap-1.5 py-2 px-3 bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-800 rounded-xl font-bold text-xs border border-emerald-200 transition-colors"
+                    onClick={() => setChatDoctor(doctor)}
+                    className="flex items-center justify-center gap-1 py-2 px-2.5 bg-teal-50 hover:bg-teal-100 active:scale-95 text-teal-800 rounded-xl font-bold text-xs border border-teal-200 transition-colors cursor-pointer"
                   >
-                    <User className="w-3.5 h-3.5" />
-                    <span>{t.viewProfile}</span>
+                    <MessageSquare className="w-3.5 h-3.5 text-teal-600" />
+                    <span>Message</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      startDirectCall({
+                        name: doctor.name,
+                        phone: doctor.contactPhone || '9800001111',
+                        category: 'DOCTOR',
+                        targetUserId: 'DOC-01',
+                        location: doctor.hospitalName,
+                        emergency: true,
+                        emergencyType: 'Direct Emergency Call to Doctor',
+                        symptoms: 'Urgent medical assistance requested via Emergency Call button',
+                      });
+                    }}
+                    className="flex items-center justify-center gap-1 py-2 px-2.5 bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-800 rounded-xl font-bold text-xs border border-rose-200 transition-colors cursor-pointer"
+                  >
+                    <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Emergency</span>
                   </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <button
-                    onClick={() => onRequestConsultation(doctor)}
-                    className="flex items-center justify-center gap-1.5 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl font-bold text-xs shadow-sm transition-colors"
+                    onClick={() => onSelectDoctor(doctor)}
+                    className="flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 rounded-xl font-bold text-xs transition-colors cursor-pointer"
                   >
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>{t.requestConsultation}</span>
+                    <User className="w-3.5 h-3.5" />
+                    <span>{t.viewProfile}</span>
                   </button>
 
                   <button
-                    onClick={() => onConnectToReferral(doctor)}
-                    className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl font-bold text-xs transition-colors ${
-                      isConnected
-                        ? 'bg-emerald-700 text-white shadow-sm'
-                        : 'bg-slate-800 hover:bg-slate-900 active:scale-95 text-white'
-                    }`}
+                    onClick={() => onRequestConsultation(doctor)}
+                    className="flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-800 hover:bg-slate-900 active:scale-95 text-white rounded-xl font-bold text-xs shadow-xs transition-colors cursor-pointer"
                   >
-                    {isConnected ? (
-                      <>
-                        <CheckCircle className="w-3.5 h-3.5 text-emerald-300" />
-                        <span>Connected</span>
-                      </>
-                    ) : (
-                      <>
-                        <PlusCircle className="w-3.5 h-3.5" />
-                        <span>{t.addToReferral}</span>
-                      </>
-                    )}
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>{t.requestConsultation}</span>
                   </button>
                 </div>
               </div>
@@ -209,6 +229,31 @@ export const DoctorDirectory: React.FC<DoctorDirectoryProps> = ({
           );
         })}
       </div>
+
+      {/* Real In-App Two-Way Doctor Chat Modal */}
+      {chatDoctor && (
+        <TwoWayDoctorChatModal
+          isOpen={Boolean(chatDoctor)}
+          onClose={() => setChatDoctor(null)}
+          patientId={currentUser ? `P00${currentUser.id || 1}` : 'P001'}
+          patientName={currentUser?.name || 'Patient'}
+          userRole={currentUser?.role || 'patient'}
+          doctorId="DOC-01"
+          doctorName={chatDoctor.name}
+          onStartCall={() => {
+            const doc = chatDoctor;
+            setChatDoctor(null);
+            startDirectCall({
+              name: doc.name,
+              phone: doc.contactPhone || '9800001111',
+              category: 'DOCTOR',
+              targetUserId: 'DOC-01',
+              location: doc.hospitalName,
+              emergency: false,
+            });
+          }}
+        />
+      )}
     </div>
   );
 };

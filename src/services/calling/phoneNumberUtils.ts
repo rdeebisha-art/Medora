@@ -130,14 +130,17 @@ export function callPhoneNumber(
     defaultName = '112 National Emergency Response Service';
   }
 
-  // Trigger in-browser active web call modal directly in Medora
+  // Trigger in-browser active WebRTC call modal directly in Medora
   try {
     useAppStore.getState().startDirectCall({
       name: defaultName,
       phone: cleanNum,
       category: detectedCategory,
-      location: location || 'Medora In-App Cellular Telephony',
-      notes: 'Active in-browser call session',
+      location: location || 'Medora In-App WebRTC Voice',
+      notes: 'Active in-app WebRTC call session',
+      targetUserId: detectedCategory === 'DOCTOR' ? 'DOC-01' : 'DOC-01',
+      emergency: detectedCategory === 'EMERGENCY',
+      emergencyType: detectedCategory === 'EMERGENCY' ? 'Direct Emergency Call' : undefined,
     });
   } catch (err) {
     console.warn('[Medora Call] In-app call dispatch notice:', err);
@@ -146,7 +149,6 @@ export function callPhoneNumber(
   return {
     success: true,
     message: `Connected in-browser call to ${defaultName} (${cleanNum}).`,
-    telUri: result.telUri,
     actionTaken: 'IN_APP_WEB_CALL_LAUNCHED',
   };
 }

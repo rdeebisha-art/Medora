@@ -287,13 +287,13 @@ export default function FamilyPage() {
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                  {/* Call Family Member via native tel: */}
+                  {/* Call Family Member via in-app Medora WebRTC call */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      callPhoneNumber(member.phone);
+                      callPhoneNumber(member.phone, member.name, 'FAMILY');
                     }}
-                    className="w-8 h-8 rounded-full bg-emerald-100 hover:bg-emerald-200 text-emerald-800 flex items-center justify-center transition-colors"
+                    className="w-8 h-8 rounded-full bg-emerald-100 hover:bg-emerald-200 text-emerald-800 flex items-center justify-center transition-colors cursor-pointer"
                     title={`Call ${member.name} (${member.phone})`}
                   >
                     <Phone size={14} />

@@ -3,6 +3,7 @@ import { Activity, Target, Calendar, Clock, Bell, Stethoscope, CheckCircle2, Ale
 import { PersonalizedProfile } from '../data/personalizedProfiles';
 import { voiceService } from '../services/voiceService';
 import { LanguageCode } from '../types';
+import { useAppStore } from '../store/useAppStore';
 
 interface PersonalizedHealthAnalyzerProps {
   profile: PersonalizedProfile;
@@ -357,13 +358,20 @@ export const PersonalizedHealthAnalyzer: React.FC<PersonalizedHealthAnalyzerProp
         </div>
 
         <div className="pt-2 flex flex-wrap items-center gap-3 text-xs">
-          <a
-            href={`tel:${profile.consultationReminder.phone.replace(/[^0-9]/g, '')}`}
-            className="py-2.5 px-4 bg-white text-slate-900 font-bold rounded-xl flex items-center gap-1.5 shadow-sm hover:bg-blue-50 transition-colors"
+          <button
+            onClick={() => useAppStore.getState().startDirectCall({
+              name: `Dr. ${profile.consultationReminder.specialty} Clinic`,
+              phone: profile.consultationReminder.phone,
+              category: 'DOCTOR',
+              targetUserId: 'DOC-01',
+              location: profile.consultationReminder.hospital,
+              emergency: false,
+            })}
+            className="py-2.5 px-4 bg-white text-slate-900 font-bold rounded-xl flex items-center gap-1.5 shadow-sm hover:bg-blue-50 transition-colors cursor-pointer"
           >
             <Phone className="w-3.5 h-3.5 text-emerald-600" />
             <span>Call Doctor Clinic ({profile.consultationReminder.phone})</span>
-          </a>
+          </button>
 
           <button
             onClick={onNavigateToTransit}

@@ -99,20 +99,22 @@ export async function initiatePhoneCall(
     }
   }
 
-  // Launch direct in-app web call console without opening external apps or Truecaller
+  // Launch direct in-app Medora WebRTC call console without opening external apps, Phone app, or Truecaller
   try {
     const store = useAppStore.getState();
     if (store && store.startDirectCall) {
       store.startDirectCall({
-        name: contactName || `Contact (${sanitized})`,
+        name: contactName || `Medora Contact (${sanitized})`,
         phone: sanitized,
         category: sanitized === '108' || sanitized === '112' ? 'EMERGENCY' : sanitized === '102' ? 'AMBULANCE' : options?.contactType === 'DOCTOR' ? 'DOCTOR' : options?.contactType === 'HOSPITAL' ? 'HOSPITAL' : 'CUSTOM',
-        location: 'Medora Direct VoIP Web Line (In-App)',
+        location: 'Medora Direct WebRTC Audio Line (In-App)',
+        targetUserId: options?.contactType === 'DOCTOR' ? 'DOC-01' : undefined,
+        emergency: sanitized === '108' || sanitized === '112',
       });
       return {
         actionTaken: 'SERVER_CALL_INITIATED',
         status: 'INITIATED',
-        message: `Connecting to ${contactName || sanitized} via Medora Direct In-App Line...`,
+        message: `Connecting to ${contactName || sanitized} via Medora In-App WebRTC Voice...`,
         sanitizedPhone: sanitized,
       };
     }
@@ -121,7 +123,7 @@ export async function initiatePhoneCall(
   return {
     actionTaken: 'SERVER_CALL_INITIATED',
     status: 'INITIATED',
-    message: `Connecting to ${contactName || sanitized} via Medora Direct In-App Line...`,
+    message: `Connecting to ${contactName || sanitized} via Medora In-App WebRTC Voice...`,
     sanitizedPhone: sanitized,
   };
 }

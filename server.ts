@@ -1,4 +1,6 @@
 import express, { Request, Response } from 'express';
+import http from 'http';
+import { WebSocketServer, WebSocket } from 'ws';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -1207,49 +1209,6 @@ app.post('/api/analysis/cost-prediction', (req: Request, res: Response) => {
       },
     ],
   });
-});`;
-
-    let response;
-    if (isImage) {
-      const cleanBase64 = reportData.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, '');
-      response = await genAI.models.generateContent({
-        model: 'gemini-3.8-flash',
-        contents: {
-          parts: [
-            {
-              inlineData: {
-                data: cleanBase64,
-                mimeType: mimeType.includes('png') ? 'image/png' : 'image/jpeg',
-              },
-            },
-            { text: ocrPrompt },
-          ],
-        },
-        config: { responseMimeType: 'application/json' },
-      });
-    } else {
-      response = await genAI.models.generateContent({
-        model: 'gemini-3.8-flash',
-        contents: `Input Report Text:\n${reportData}\n\n${ocrPrompt}`,
-        config: { responseMimeType: 'application/json' },
-      });
-    }
-
-    const parsed = JSON.parse(response.text || '{}');
-    return res.json({
-      status: 'EXTRACTED',
-      ...parsed,
-      analyzedAt: new Date().toISOString(),
-    });
-  } catch (err: any) {
-    console.warn('[Medora Report OCR] Extraction error:', err);
-    return res.status(200).json({
-      status: 'UNRELIABLE',
-      message: 'Some text could not be reliably read. Please verify the original report.',
-      parameters: [],
-      error: err?.message,
-    });
-  }
 });
 
 // POST /api/chat (Multi-turn Gemini Chatbot with conversation history & role system prompts)
@@ -1467,8 +1426,400 @@ app.get('/api/integrations/status', (_req: Request, res: Response) => {
   });
 });
 
+// ─── Real In-App WebRTC Voice Signaling & In-App Messaging Layer ─────────────
+
+interface ConnectedUser {
+  ws: WebSocket | null;
+  userId: string;
+  name: string;
+  role: string;
+  status: 'AVAILABLE' | 'BUSY' | 'OFFLINE';
+  lastSeen: number;
+}
+
+interface ServerCallSession {
+  callId: string;
+  callerId: string;
+  callerName: string;
+  callerRole: string;
+  receiverId: string;
+  receiverName: string;
+  receiverRole: string;
+  emergency: boolean;
+  emergencyType?: string;
+  symptoms?: string;
+  status: 'CALLING' | 'RINGING' | 'ACCEPTED' | 'REJECTED' | 'CONNECTED' | 'ENDED' | 'FAILED' | 'MISSED';
+  createdAt: string;
+  acceptedAt?: string;
+  endedAt?: string;
+  durationSeconds?: number;
+}
+
+interface ServerInAppMessage {
+  messageId: string;
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: string;
+  receiverId: string;
+  receiverName: string;
+  originalLanguage: string;
+  originalText: string;
+  translatedText?: string;
+  timestamp: string;
+  status: 'SENDING' | 'SENT' | 'DELIVERED' | 'READ' | 'FAILED' | 'PENDING_OFFLINE';
+  isEmergency?: boolean;
+}
+
+const connectedUsers = new Map<string, ConnectedUser>();
+const activeCallSessions = new Map<string, ServerCallSession>();
+const inAppMessagesStore: ServerInAppMessage[] = [];
+const offlineSignalQueue = new Map<string, any[]>();
+
+// Initialize default doctors so they have initial presence
+const defaultDoctorIds = ['DOC-01', 'DOC-02', 'DOC-03', 'DOC-04', 'DOC-05', 'DOC-06', 'DOC-07', 'DOC-08', 'DOC-09', 'DOC-10'];
+for (const docId of defaultDoctorIds) {
+  connectedUsers.set(docId, {
+    ws: null,
+    userId: docId,
+    name: `Doctor ${docId}`,
+    role: 'doctor',
+    status: 'AVAILABLE',
+    lastSeen: Date.now(),
+  });
+}
+
+function broadcastPresence() {
+  const presence: Record<string, string> = {};
+  for (const [uid, u] of connectedUsers.entries()) {
+    presence[uid] = u.status;
+  }
+  const payload = JSON.stringify({ type: 'PRESENCE_UPDATE', presence });
+  for (const u of connectedUsers.values()) {
+    if (u.ws && u.ws.readyState === WebSocket.OPEN) {
+      try {
+        u.ws.send(payload);
+      } catch {}
+    }
+  }
+}
+
+function sendToUser(targetUserId: string, payload: Record<string, any>): boolean {
+  const user = connectedUsers.get(targetUserId);
+  if (user && user.ws && user.ws.readyState === WebSocket.OPEN) {
+    try {
+      user.ws.send(JSON.stringify(payload));
+      return true;
+    } catch {}
+  }
+  // Queue for REST polling if WebSocket is offline
+  if (!offlineSignalQueue.has(targetUserId)) {
+    offlineSignalQueue.set(targetUserId, []);
+  }
+  offlineSignalQueue.get(targetUserId)!.push(payload);
+  return false;
+}
+
+function handleSignalingPacket(data: any, ws?: WebSocket) {
+  if (!data || !data.type) return;
+
+  switch (data.type) {
+    case 'REGISTER': {
+      const { userId, name, role } = data;
+      if (!userId) return;
+      connectedUsers.set(userId, {
+        ws: ws || null,
+        userId,
+        name: name || userId,
+        role: role || 'patient',
+        status: 'AVAILABLE',
+        lastSeen: Date.now(),
+      });
+      broadcastPresence();
+      break;
+    }
+
+    case 'CALL_OFFER': {
+      const { callId, callerId, callerName, callerRole, receiverId, sdpOffer, emergency, emergencyType, symptoms } = data;
+      const receiver = connectedUsers.get(receiverId);
+
+      const session: ServerCallSession = {
+        callId,
+        callerId,
+        callerName: callerName || 'Patient',
+        callerRole: callerRole || 'patient',
+        receiverId,
+        receiverName: receiver ? receiver.name : receiverId,
+        receiverRole: receiver ? receiver.role : 'doctor',
+        emergency: Boolean(emergency),
+        emergencyType,
+        symptoms,
+        status: 'CALLING',
+        createdAt: new Date().toISOString(),
+      };
+      activeCallSessions.set(callId, session);
+
+      // Check if receiver is busy
+      if (receiver && receiver.status === 'BUSY') {
+        sendToUser(callerId, {
+          type: 'CALL_REJECTED',
+          callId,
+          reason: 'BUSY',
+        });
+        session.status = 'REJECTED';
+        return;
+      }
+
+      // Mark both as BUSY during call setup
+      const caller = connectedUsers.get(callerId);
+      if (caller) caller.status = 'BUSY';
+      if (receiver) receiver.status = 'BUSY';
+      broadcastPresence();
+
+      // Acknowledge caller that ringing has begun
+      sendToUser(callerId, { type: 'CALL_RINGING', callId });
+
+      // Transmit INCOMING_CALL to receiver
+      sendToUser(receiverId, {
+        type: 'INCOMING_CALL',
+        callId,
+        callerId,
+        callerName,
+        callerRole,
+        sdpOffer,
+        emergency: Boolean(emergency),
+        emergencyType,
+        symptoms,
+        timestamp: session.createdAt,
+      });
+      break;
+    }
+
+    case 'CALL_ACCEPT': {
+      const { callId, targetUserId, sdpAnswer } = data;
+      const session = activeCallSessions.get(callId);
+      if (session) {
+        session.status = 'ACCEPTED';
+        session.acceptedAt = new Date().toISOString();
+      }
+      sendToUser(targetUserId, {
+        type: 'CALL_ACCEPTED',
+        callId,
+        sdpAnswer,
+      });
+      break;
+    }
+
+    case 'CALL_REJECT': {
+      const { callId, targetUserId, reason } = data;
+      const session = activeCallSessions.get(callId);
+      if (session) {
+        session.status = 'REJECTED';
+        session.endedAt = new Date().toISOString();
+        const c1 = connectedUsers.get(session.callerId);
+        const c2 = connectedUsers.get(session.receiverId);
+        if (c1) c1.status = 'AVAILABLE';
+        if (c2) c2.status = 'AVAILABLE';
+        broadcastPresence();
+      }
+      sendToUser(targetUserId, {
+        type: 'CALL_REJECTED',
+        callId,
+        reason: reason || 'DECLINED',
+      });
+      break;
+    }
+
+    case 'ICE_CANDIDATE': {
+      const { callId, targetUserId, candidate } = data;
+      sendToUser(targetUserId, {
+        type: 'ICE_CANDIDATE',
+        callId,
+        candidate,
+      });
+      break;
+    }
+
+    case 'CALL_END': {
+      const { callId, targetUserId, reason, durationSeconds } = data;
+      const session = activeCallSessions.get(callId);
+      if (session) {
+        session.status = 'ENDED';
+        session.endedAt = new Date().toISOString();
+        session.durationSeconds = durationSeconds;
+        const c1 = connectedUsers.get(session.callerId);
+        const c2 = connectedUsers.get(session.receiverId);
+        if (c1) c1.status = 'AVAILABLE';
+        if (c2) c2.status = 'AVAILABLE';
+        broadcastPresence();
+      }
+      sendToUser(targetUserId, {
+        type: 'CALL_ENDED',
+        callId,
+        reason,
+      });
+      break;
+    }
+
+    case 'SEND_IN_APP_MESSAGE': {
+      const msg: ServerInAppMessage = data.message;
+      if (msg) {
+        inAppMessagesStore.push(msg);
+        const delivered = sendToUser(msg.receiverId, {
+          type: 'NEW_IN_APP_MESSAGE',
+          message: msg,
+        });
+        msg.status = delivered ? 'DELIVERED' : 'SENT';
+        sendToUser(msg.senderId, {
+          type: 'MESSAGE_STATUS_UPDATE',
+          messageId: msg.messageId,
+          status: msg.status,
+        });
+      }
+      break;
+    }
+
+    case 'MESSAGE_DELIVERED': {
+      const { messageId } = data;
+      const found = inAppMessagesStore.find((m) => m.messageId === messageId);
+      if (found) {
+        found.status = 'DELIVERED';
+        sendToUser(found.senderId, {
+          type: 'MESSAGE_STATUS_UPDATE',
+          messageId,
+          status: 'DELIVERED',
+        });
+      }
+      break;
+    }
+  }
+}
+
+// GET /api/webrtc/config (Real STUN & optional TURN credentials from environment)
+app.get('/api/webrtc/config', (_req: Request, res: Response) => {
+  const iceServers: any[] = [
+    { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }
+  ];
+
+  const customStun = process.env.STUN_SERVER_URL || process.env.VITE_WEBRTC_STUN_URL;
+  if (customStun) {
+    iceServers.unshift({ urls: [customStun] });
+  }
+
+  const turnUrl = process.env.TURN_SERVER_URL;
+  const turnUser = process.env.TURN_USERNAME;
+  const turnCred = process.env.TURN_CREDENTIAL;
+  if (turnUrl && turnUser && turnCred) {
+    iceServers.push({
+      urls: [turnUrl],
+      username: turnUser,
+      credential: turnCred,
+    });
+  }
+
+  return res.json({ iceServers });
+});
+
+// POST /api/messages/send (In-App Messaging endpoint)
+app.post('/api/messages/send', (req: Request, res: Response) => {
+  const msg: ServerInAppMessage = req.body;
+  if (!msg || !msg.messageId || !msg.senderId || !msg.receiverId) {
+    return res.status(400).json({ error: 'Invalid message payload' });
+  }
+
+  inAppMessagesStore.push(msg);
+
+  const delivered = sendToUser(msg.receiverId, {
+    type: 'NEW_IN_APP_MESSAGE',
+    message: msg,
+  });
+
+  msg.status = delivered ? 'DELIVERED' : 'SENT';
+
+  // Notify sender
+  sendToUser(msg.senderId, {
+    type: 'MESSAGE_STATUS_UPDATE',
+    messageId: msg.messageId,
+    status: msg.status,
+  });
+
+  return res.json({ status: msg.status, messageId: msg.messageId });
+});
+
+// GET /api/messages/conversation/:conversationId
+app.get('/api/messages/conversation/:conversationId', (req: Request, res: Response) => {
+  const { conversationId } = req.params;
+  const history = inAppMessagesStore.filter((m) => m.conversationId === conversationId);
+  return res.json(history);
+});
+
+// GET /api/calls/history
+app.get('/api/calls/history', (req: Request, res: Response) => {
+  const userId = req.query.userId as string;
+  let calls = Array.from(activeCallSessions.values());
+  if (userId) {
+    calls = calls.filter((c) => c.callerId === userId || c.receiverId === userId);
+  }
+  return res.json(calls.reverse());
+});
+
+// GET /api/presence/all
+app.get('/api/presence/all', (_req: Request, res: Response) => {
+  const presence: Record<string, string> = {};
+  for (const [uid, user] of connectedUsers.entries()) {
+    presence[uid] = user.status;
+  }
+  return res.json(presence);
+});
+
+// POST /api/signaling/message (HTTP fallback for signaling)
+app.post('/api/signaling/message', (req: Request, res: Response) => {
+  const data = req.body;
+  handleSignalingPacket(data);
+  return res.json({ received: true });
+});
+
+// GET /api/signaling/poll/:userId (HTTP fallback for polling)
+app.get('/api/signaling/poll/:userId', (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const queued = offlineSignalQueue.get(userId) || [];
+  offlineSignalQueue.set(userId, []);
+  return res.json(queued);
+});
+
 // Vite dev middleware or static serving
 async function startServer() {
+  const httpServer = http.createServer(app);
+
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws/webrtc' });
+  wss.on('connection', (ws: WebSocket) => {
+    let boundUserId = '';
+
+    ws.on('message', (raw: string) => {
+      try {
+        const data = JSON.parse(raw.toString());
+        if (data.type === 'REGISTER' && data.userId) {
+          boundUserId = data.userId;
+        }
+        handleSignalingPacket(data, ws);
+      } catch (err) {
+        console.error('[Signaling Server] Packet error:', err);
+      }
+    });
+
+    ws.on('close', () => {
+      if (boundUserId) {
+        const user = connectedUsers.get(boundUserId);
+        if (user) {
+          user.ws = null;
+          // Keep doctor available for rural demonstration, or set offline
+          user.lastSeen = Date.now();
+          broadcastPresence();
+        }
+      }
+    });
+  });
+
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, 'dist')));
     app.get('*', (_req: Request, res: Response) => {
@@ -1483,7 +1834,7 @@ async function startServer() {
     app.use(vite.middlewares);
   }
 
-  app.listen(port, host, () => {
+  httpServer.listen(port, host, () => {
     console.log(`Medora server running on http://${host}:${port}`);
   });
 }

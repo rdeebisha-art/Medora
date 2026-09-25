@@ -3,6 +3,7 @@ import { EMERGENCY_RED_FLAGS } from '../../data/medicalKnowledge/emergency/redFl
 import { ALL_CONDITIONS } from '../../data/medicalKnowledge/conditions';
 import { extractSymptomsFromText } from '../../data/medicalKnowledge/symptoms/symptomDatabase';
 import { MedicalCondition, MedicalSourceReference, MedicalSafetyValidationResult } from '../../data/medicalKnowledge/types';
+import { MEDICAL_SOURCES } from '../../data/medicalKnowledge/sources/sourceRegistry';
 
 export interface StructuredClinicalResponse {
   detectedLanguage: SupportedLanguageCode;
@@ -117,7 +118,7 @@ export class MedicalSafetyEngine {
         whatShouldBeChecked: ['Routine vitals (Blood pressure, blood sugar)'],
         warningSignsToWatch: ['Any sudden chest pain, breathing difficulty, or high fever'],
         whenToSeekDoctor: ['Whenever symptoms persist or worsen'],
-        sourceReference: 'Medora Clinical Knowledge Base',
+        sourceReference: MEDICAL_SOURCES.MOHFW_STG_HYPERTENSION,
         isSafe: true,
         disclaimer: this.getLocalizedDisclaimer(langKey),
         fullFormattedResponse: welcome,

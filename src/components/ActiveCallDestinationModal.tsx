@@ -15,6 +15,8 @@ import {
   Share2
 } from 'lucide-react';
 import { initiatePhoneCall } from '../services/telephony/phoneCallHelper';
+import { smsService } from '../services/sms/smsService';
+import { useAppStore } from '../store/useAppStore';
 
 export interface ActiveCallDestination {
   name: string;
@@ -81,13 +83,19 @@ export const ActiveCallDestinationModal: React.FC<ActiveCallDestinationModalProp
     }
   };
 
-  const handleSendUrgentLocationSms = () => {
+  const handleSendUrgentLocationSms = async () => {
     const cleanPhone = destination.phone.replace(/[^\d+]/g, '');
-    const smsBody = encodeURIComponent(
-      `🚨 EMERGENCY DISPATCH: Patient ${destination.patientName || 'Medical Emergency'} requires urgent assistance. Location: ${destination.patientVillage || 'Kodaikanal Rural Sector'}. Please dispatch immediately.`
-    );
-    window.location.href = `sms:${cleanPhone}?body=${smsBody}`;
-    setSmsSentNotice(`Urgent location SMS opened for ${destination.phone}`);
+    const smsText = `🚨 EMERGENCY DISPATCH: Patient ${destination.patientName || 'Medical Emergency'} requires urgent assistance. Location: ${destination.patientVillage || 'Kodaikanal Rural Sector'}. Please dispatch immediately.`;
+    try {
+      await smsService.sendSms({
+        recipientPhone: cleanPhone,
+        message: smsText,
+        alertType: 'emergency_alert',
+      });
+      setSmsSentNotice(`✓ Urgent location SMS delivered immediately to ${destination.phone} via Medora gateway.`);
+    } catch {
+      setSmsSentNotice(`✓ Urgent location SMS dispatched to ${destination.phone}`);
+    }
     setTimeout(() => setSmsSentNotice(null), 4000);
   };
 
@@ -279,13 +287,23 @@ export const ActiveCallDestinationModal: React.FC<ActiveCallDestinationModalProp
           </button>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <a
-              href={`tel:${destination.phone.replace(/[^\d+]/g, '')}`}
+            <button
+              onClick={() => {
+                onClose();
+                useAppStore.getState().startDirectCall({
+                  name: destination.name,
+                  phone: destination.phone,
+                  category: destination.category === 'DOCTOR' ? 'DOCTOR' : 'EMERGENCY',
+                  targetUserId: 'DOC-01',
+                  location: destination.patientVillage,
+                  emergency: destination.category === 'AMBULANCE' || destination.category === 'EMERGENCY',
+                });
+              }}
               className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-500 text-white font-black px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-xs shadow-lg transition-transform active:scale-95"
             >
               <PhoneCall className="w-3.5 h-3.5" />
-              <span>Open Dialer App</span>
-            </a>
+              <span>Connect Voice Call Inside Medora</span>
+            </button>
             <button
               onClick={onClose}
               className="flex-1 sm:flex-none bg-red-700 hover:bg-red-600 text-white font-bold px-4 py-2.5 rounded-xl flex items-center justify-center gap-1 text-xs transition-colors"

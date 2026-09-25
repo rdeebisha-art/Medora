@@ -1,6 +1,7 @@
 import React from 'react';
-import { PhoneCall, X, Info, Phone } from 'lucide-react';
+import { PhoneCall, X, Info, Phone, Radio } from 'lucide-react';
 import { LanguageCode } from '../types';
+import { useAppStore } from '../store/useAppStore';
 
 interface VoiceIVRModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ export const VoiceIVRModal: React.FC<VoiceIVRModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const { startDirectCall } = useAppStore();
   if (!isOpen) return null;
 
   return (
@@ -26,30 +28,38 @@ export const VoiceIVRModal: React.FC<VoiceIVRModalProps> = ({
             <PhoneCall className="w-6 h-6 text-blue-700" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-slate-900">Voice Call</h3>
-            <p className="text-xs text-slate-500">Real Telephony Integration</p>
+            <h3 className="text-lg font-black text-slate-900">Medora Voice Call</h3>
+            <p className="text-xs text-slate-500">Real-Time In-App Calling</p>
           </div>
         </div>
 
-        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-6 flex gap-3">
-          <Info className="w-5 h-5 text-blue-600 shrink-0" />
-          <p className="text-sm text-blue-800">
-            A normal web browser cannot directly simulate phone calls natively.
-            To place a real call, your device's actual phone dialer will be used.
+        <div className="bg-teal-50 border border-teal-100 rounded-2xl p-4 mb-6 flex gap-3">
+          <Radio className="w-5 h-5 text-teal-600 shrink-0" />
+          <p className="text-sm text-teal-900">
+            Real peer-to-peer WebRTC voice call directly within Medora. No phone app or external dialer needed.
           </p>
         </div>
 
         <div className="space-y-3">
-          <a
-            href="tel:18001234567"
-            className="flex items-center justify-center gap-2 w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all"
+          <button
+            onClick={() => {
+              onClose();
+              startDirectCall({
+                name: 'Medora Health Telehealth Support',
+                phone: '18001234567',
+                category: 'SUPPORT',
+                targetUserId: 'DOC-01',
+                emergency: false,
+              });
+            }}
+            className="flex items-center justify-center gap-2 w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl font-bold transition-all cursor-pointer shadow-md"
           >
             <Phone className="w-5 h-5" />
-            Call Medora (1800-123-4567)
-          </a>
+            <span>Call Inside Medora (1800-123-4567)</span>
+          </button>
           <button
             onClick={onClose}
-            className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all"
+            className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all cursor-pointer"
           >
             Close
           </button>

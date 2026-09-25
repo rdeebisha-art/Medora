@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  PhoneOff, PhoneCall, Volume2, VolumeX, Mic, MicOff,
-  Building2, Ambulance, ShieldAlert, User, Hash, Clock, MapPin, Radio, Sparkles
+  PhoneOff, Volume2, VolumeX, Mic, MicOff,
+  ShieldAlert, User, Clock, Languages, FileText, CheckCircle2,
+  AlertCircle, Wifi, Radio
 } from 'lucide-react';
 import { db } from '../db/db';
-import { ActiveCallInfo } from '../store/useAppStore';
+import { ActiveCallInfo, useAppStore } from '../store/useAppStore';
+import { webrtcCallingService, WebRtcCallState } from '../services/webrtc/webrtcCallingService';
+import { translateString } from '../i18n/pageTranslator';
 
 export type { ActiveCallInfo };
 
@@ -13,471 +16,418 @@ interface ActiveCallModalProps {
   onClose: () => void;
 }
 
-// DTMF Frequencies (Hz) for authentic telephone keypad beeps
-const DTMF_FREQS: Record<string, [number, number]> = {
-  '1': [697, 1209], '2': [697, 1336], '3': [697, 1477],
-  '4': [770, 1209], '5': [770, 1336], '6': [770, 1477],
-  '7': [852, 1209], '8': [852, 1336], '9': [852, 1477],
-  '*': [941, 1209], '0': [941, 1336], '#': [941, 1477],
-};
-
 export const ActiveCallModal: React.FC<ActiveCallModalProps> = ({ callInfo, onClose }) => {
-  const [callState, setCallState] = useState<'DIALING' | 'RINGING' | 'CONNECTED' | 'ENDED'>('DIALING');
-  const [seconds, setSeconds] = useState(0);
+  const { currentUser, language } = useAppStore();
+  const [callState, setCallState] = useState<WebRtcCallState>('IDLE');
+  const [durationSeconds, setDurationSeconds] = useState(0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeaker, setIsSpeaker] = useState(true);
-  const [showKeypad, setShowKeypad] = useState(false);
-  const [keypadInput, setKeypadInput] = useState('');
-  const [micActive, setMicActive] = useState(false);
-  const [operatorSpeech, setOperatorSpeech] = useState<string>('');
+  const [showLanguageBridge, setShowLanguageBridge] = useState(false);
+  const [bridgePatientLang, setBridgePatientLang] = useState<string>(currentUser?.language || 'ta');
+  const [bridgeDoctorLang, setBridgeDoctorLang] = useState<string>('en');
+  const [showSummaryForm, setShowSummaryForm] = useState(false);
+  const [summaryChiefComplaint, setSummaryChiefComplaint] = useState(callInfo?.symptoms || 'General clinical consultation');
+  const [summaryNotes, setSummaryNotes] = useState('');
+  const [summarySaved, setSummarySaved] = useState(false);
 
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const ringOscillatorsRef = useRef<OscillatorNode[]>([]);
-  const ringGainRef = useRef<GainNode | null>(null);
-  const ringIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-
-  // Play realistic telecom ringing tone in browser speaker
-  const startRingingAudio = () => {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      audioCtxRef.current = ctx;
-
-      const playRingBurst = () => {
-        if (!audioCtxRef.current || callState === 'CONNECTED' || callState === 'ENDED') return;
-        const now = ctx.currentTime;
-        const osc1 = ctx.createOscillator();
-        const osc2 = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        // 400Hz and 450Hz Indian/European telecom ring frequencies
-        osc1.frequency.setValueAtTime(400, now);
-        osc2.frequency.setValueAtTime(450, now);
-        osc1.type = 'sine';
-        osc2.type = 'sine';
-
-        // Gain envelope: 1.5s on, smooth fade
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.08, now + 0.05);
-        gain.gain.setValueAtTime(0.08, now + 1.4);
-        gain.gain.linearRampToValueAtTime(0, now + 1.5);
-
-        osc1.connect(gain);
-        osc2.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc1.start(now);
-        osc2.start(now);
-        osc1.stop(now + 1.6);
-        osc2.stop(now + 1.6);
-      };
-
-      playRingBurst();
-      ringIntervalRef.current = setInterval(playRingBurst, 3000);
-    } catch {
-      // AudioContext could be blocked by autoplay policies
-    }
-  };
-
-  const stopRingingAudio = () => {
-    if (ringIntervalRef.current) {
-      clearInterval(ringIntervalRef.current);
-      ringIntervalRef.current = null;
-    }
-  };
-
-  // Play DTMF Touch Tone when pressing keypad numbers
-  const playDtmfTone = (key: string) => {
-    try {
-      const freqs = DTMF_FREQS[key];
-      if (!freqs) return;
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = audioCtxRef.current || new AudioCtx();
-      audioCtxRef.current = ctx;
-
-      const now = ctx.currentTime;
-      const osc1 = ctx.createOscillator();
-      const osc2 = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc1.frequency.setValueAtTime(freqs[0], now);
-      osc2.frequency.setValueAtTime(freqs[1], now);
-      osc1.type = 'sine';
-      osc2.type = 'sine';
-
-      gain.gain.setValueAtTime(0.08, now);
-      gain.gain.linearRampToValueAtTime(0, now + 0.15);
-
-      osc1.connect(gain);
-      osc2.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc1.start(now);
-      osc2.start(now);
-      osc1.stop(now + 0.16);
-      osc2.stop(now + 0.16);
-    } catch {}
-  };
-
-  // Play Connected Chime
-  const playConnectedChime = () => {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = audioCtxRef.current || new AudioCtx();
-      audioCtxRef.current = ctx;
-
-      const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.frequency.setValueAtTime(587.33, now); // D5
-      osc.frequency.exponentialRampToValueAtTime(880, now + 0.2); // A5
-      gain.gain.setValueAtTime(0.1, now);
-      gain.gain.linearRampToValueAtTime(0, now + 0.4);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.45);
-    } catch {}
-  };
-
-  // Request browser microphone for real in-browser audio call
-  const initUserMicrophone = async () => {
-    try {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaStreamRef.current = stream;
-        setMicActive(true);
-      }
-    } catch {
-      // User may reject mic permission, call continues with speaker output
-      setMicActive(false);
-    }
-  };
-
+  // Initialize and subscribe to WebRTC calling service
   useEffect(() => {
     if (!callInfo) return;
 
-    setCallState('DIALING');
-    setSeconds(0);
-    setIsMuted(false);
-    setShowKeypad(false);
-    setKeypadInput('');
-    setOperatorSpeech('');
+    // Ensure signaling is registered with current user
+    const currentUserId = currentUser ? (currentUser.role === 'doctor' ? `DOC-0${currentUser.id || 1}` : `P00${currentUser.id || 1}`) : 'GUEST-1';
+    const currentUserName = currentUser?.name || 'Medora User';
+    const currentUserRole = currentUser?.role || 'patient';
+    webrtcCallingService.initSignaling(currentUserId, currentUserName, currentUserRole);
 
-    // Step 1: Dialing (0 - 1.2s)
-    const tDial = setTimeout(() => {
-      setCallState('RINGING');
-      startRingingAudio();
-    }, 1200);
-
-    // Step 2: Recipient picks up -> CONNECTED (at 3.5s)
-    const tConnect = setTimeout(() => {
-      stopRingingAudio();
-      setCallState('CONNECTED');
-      playConnectedChime();
-      initUserMicrophone();
-
-      // Automated operator greeting based on destination
-      let greeting = '';
-      if (callInfo.category === 'EMERGENCY' || callInfo.category === 'AMBULANCE' || callInfo.phone === '108') {
-        greeting = '108 Emergency Medical Services connected. An ambulance dispatch team is on the line. Please state your village location and emergency.';
-      } else if (callInfo.category === 'HOSPITAL') {
-        greeting = `Direct triage line for ${callInfo.name} connected. Please state your patient symptoms.`;
-      } else if (callInfo.category === 'DOCTOR') {
-        greeting = `${callInfo.name} direct clinic line connected. How may the doctor assist you today?`;
-      } else {
-        greeting = `Direct Web voice connection established with ${callInfo.name} (${callInfo.phone}). Speak now.`;
+    const unsubscribeState = webrtcCallingService.subscribe((state, _session, error) => {
+      setCallState(state);
+      setIsMuted(webrtcCallingService.getIsMuted());
+      setIsSpeaker(webrtcCallingService.getIsSpeakerOn());
+      if (error) {
+        setErrorMessage(error);
       }
-      setOperatorSpeech(greeting);
-
-      // Synthesize spoken voice into browser speaker if available
-      try {
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(greeting);
-          utterance.rate = 0.95;
-          utterance.pitch = 1.0;
-          window.speechSynthesis.speak(utterance);
+      if (state === 'ENDED' || state === 'REJECTED' || state === 'FAILED' || state === 'BUSY' || state === 'OFFLINE') {
+        if (!error && state === 'ENDED') {
+          setErrorMessage('Call ended');
         }
-      } catch {}
-    }, 3600);
+      }
+    });
 
-    return () => {
-      clearTimeout(tDial);
-      clearTimeout(tConnect);
-      stopRingingAudio();
-      if (audioCtxRef.current) {
-        try { audioCtxRef.current.close(); } catch {}
-      }
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach(t => t.stop());
-      }
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
-    };
-  }, [callInfo]);
+    const unsubscribeDuration = webrtcCallingService.subscribeDuration((sec) => {
+      setDurationSeconds(sec);
+    });
 
-  // Timer during active call
-  useEffect(() => {
-    if (callState === 'CONNECTED') {
-      timerRef.current = setInterval(() => {
-        setSeconds((prev) => prev + 1);
-      }, 1000);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
+    // Start outgoing call if not already in session and not an incoming acceptance
+    if (!callInfo.isIncoming && webrtcCallingService.getCallState() === 'IDLE') {
+      const targetUserId = callInfo.targetUserId || (callInfo.category === 'DOCTOR' ? 'DOC-01' : 'DOC-01');
+      webrtcCallingService.startCall({
+        targetUserId,
+        targetName: callInfo.name,
+        targetRole: callInfo.category === 'DOCTOR' ? 'doctor' : 'patient',
+        emergency: callInfo.emergency,
+        emergencyType: callInfo.emergencyType,
+        symptoms: callInfo.symptoms,
+      });
     }
+
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      unsubscribeState();
+      unsubscribeDuration();
     };
-  }, [callState]);
+  }, [callInfo, currentUser]);
+
+  const handleToggleMute = () => {
+    const muted = webrtcCallingService.toggleMute();
+    setIsMuted(muted);
+  };
+
+  const handleToggleSpeaker = () => {
+    const speaker = webrtcCallingService.toggleSpeaker();
+    setIsSpeaker(speaker);
+  };
+
+  const handleEndCall = () => {
+    webrtcCallingService.endCall('USER_TERMINATION');
+  };
+
+  const formatTimer = (totalSeconds: number): string => {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleSaveSummary = async () => {
+    if (!callInfo) return;
+    try {
+      await db.doctorSummaries.add({
+        patientId: currentUser?.id || 1,
+        doctorId: 1,
+        complaint: summaryChiefComplaint,
+        symptoms: callInfo.symptoms ? [callInfo.symptoms] : ['Clinical assessment via WebRTC in-app voice call'],
+        duration: `${durationSeconds} seconds`,
+        history: 'Medora Real-time WebRTC Voice Consultation',
+        medicines: 'Prescribed as per clinician instructions',
+        allergies: 'None recorded during call',
+        vitals: 'Stable during voice consult',
+        observations: summaryNotes || 'Patient participated in clear live two-way voice call.',
+        warningSigns: callInfo.emergency ? ['Emergency symptoms discussed during call'] : [],
+        nextStep: 'Follow-up consultation recommended within 7 days.',
+        createdAt: new Date().toISOString(),
+        doctorNotes: summaryNotes,
+      });
+      setSummarySaved(true);
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    } catch (err) {
+      console.error('[WebRTC Call] Error saving summary:', err);
+    }
+  };
 
   if (!callInfo) return null;
 
-  const formatDuration = (totalSec: number) => {
-    const mins = Math.floor(totalSec / 60);
-    const secs = totalSec % 60;
-    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-  };
-
-  const handleEndCall = async () => {
-    stopRingingAudio();
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(t => t.stop());
-    }
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-    setCallState('ENDED');
-
-    // Save call record to IndexedDB
-    try {
-      await db.callHistory.add({
-        phoneNumber: callInfo.phone,
-        contactName: callInfo.name,
-        contactType: callInfo.category === 'EMERGENCY' || callInfo.category === 'AMBULANCE' ? 'EMERGENCY' : callInfo.category === 'HOSPITAL' ? 'HOSPITAL' : 'PERSON',
-        action: 'CALL_COMPLETED',
-        timestamp: new Date().toISOString(),
-      });
-    } catch {}
-
-    setTimeout(() => {
-      onClose();
-    }, 700);
-  };
-
-  const handleKeypadPress = (digit: string) => {
-    setKeypadInput(prev => prev + digit);
-    playDtmfTone(digit);
-  };
-
-  const getCategoryIcon = () => {
-    switch (callInfo.category) {
-      case 'EMERGENCY':
-        return <ShieldAlert className="w-8 h-8 text-red-500 animate-pulse" />;
-      case 'AMBULANCE':
-        return <Ambulance className="w-8 h-8 text-red-500 animate-bounce" />;
-      case 'HOSPITAL':
-        return <Building2 className="w-8 h-8 text-blue-400" />;
-      case 'DOCTOR':
-        return <PhoneCall className="w-8 h-8 text-emerald-400" />;
-      default:
-        return <User className="w-8 h-8 text-teal-400" />;
-    }
-  };
-
-  const getStatusBadge = () => {
-    switch (callState) {
-      case 'DIALING':
-        return (
-          <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold px-3 py-1 rounded-full animate-pulse flex items-center gap-1.5">
-            <Radio className="w-3.5 h-3.5 animate-spin" />
-            CONNECTING DIRECT WEB LINE...
-          </span>
-        );
-      case 'RINGING':
-        return (
-          <span className="bg-blue-500/20 text-blue-300 border border-blue-500/40 text-xs font-bold px-3 py-1 rounded-full animate-pulse flex items-center gap-1.5">
-            <PhoneCall className="w-3.5 h-3.5 animate-bounce" />
-            RINGING RECIPIENT...
-          </span>
-        );
-      case 'CONNECTED':
-        return (
-          <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            CONNECTED (HD AUDIO) • {formatDuration(seconds)}
-          </span>
-        );
-      case 'ENDED':
-        return (
-          <span className="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs font-bold px-3 py-1 rounded-full">
-            CALL ENDED
-          </span>
-        );
-    }
-  };
-
   return (
-    <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex items-center justify-center p-3 animate-in fade-in duration-200">
-      <div className="bg-slate-950 border-2 border-teal-600/60 rounded-3xl max-w-sm w-full p-6 shadow-2xl relative text-white flex flex-col items-center space-y-4 overflow-hidden">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Medora Live WebRTC Voice Call"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200"
+    >
+      <div className="relative w-full max-w-md bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white rounded-3xl shadow-2xl border border-slate-700/60 overflow-hidden flex flex-col">
         
-        {/* Glow ambient background */}
-        <div
-          className={`absolute -top-24 -left-24 w-48 h-48 rounded-full blur-3xl opacity-25 pointer-events-none ${
-            callInfo.category === 'EMERGENCY' || callInfo.category === 'AMBULANCE'
-              ? 'bg-red-500'
-              : callInfo.category === 'HOSPITAL'
-              ? 'bg-blue-500'
-              : 'bg-teal-500'
-          }`}
-        />
-
-        {/* Top Direct Web Call Guarantee Badge */}
-        <div className="flex flex-col items-center space-y-1 w-full text-center">
-          <div className="bg-teal-950/80 border border-teal-500/40 px-3 py-1 rounded-full flex items-center gap-1.5 text-[10px] text-teal-300 font-bold">
-            <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
-            MEDORA DIRECT WEB CALL · NO EXTERNAL APPS
-          </div>
-          <div className="pt-1">{getStatusBadge()}</div>
-        </div>
-
-        {/* Destination Card */}
-        <div className="flex flex-col items-center text-center space-y-2 w-full bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-inner">
-          <div className="w-16 h-16 rounded-2xl bg-slate-800/90 border border-slate-700 flex items-center justify-center shadow-lg">
-            {getCategoryIcon()}
-          </div>
-
-          <div>
-            <h2 className="text-xl font-black text-white tracking-tight">
-              {callInfo.name}
-            </h2>
-            <div className="text-sm font-black font-mono text-teal-400 mt-0.5 tracking-wider">
-              {callInfo.phone}
-            </div>
-            {callInfo.location && (
-              <p className="text-[11px] text-slate-400 flex items-center justify-center gap-1 mt-1">
-                <MapPin className="w-3 h-3 text-rose-400 shrink-0" />
-                <span>{callInfo.location}</span>
-              </p>
+        {/* Call Banner Header */}
+        <div className={`p-5 text-center ${callInfo.emergency ? 'bg-rose-900/60 border-b border-rose-700/50' : 'bg-teal-900/40 border-b border-teal-800/40'}`}>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase mb-2 bg-black/30 text-white/90">
+            {callInfo.emergency ? (
+              <>
+                <ShieldAlert className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+                <span className="text-rose-300">Medora Emergency Voice Call</span>
+              </>
+            ) : (
+              <>
+                <Radio className="w-3.5 h-3.5 text-teal-400 animate-pulse" />
+                <span className="text-teal-300">Medora Real-Time In-App Call</span>
+              </>
             )}
           </div>
 
-          {/* Connection specs */}
-          <div className="w-full bg-slate-950/80 border border-slate-800/80 rounded-xl p-2.5 text-left text-[11px] text-slate-300 space-y-1">
-            <div className="flex items-center justify-between text-slate-400">
-              <span className="font-semibold">Channel:</span>
-              <span className="text-teal-300 font-bold">In-Browser VoIP HD Voice</span>
-            </div>
-            <div className="flex items-center justify-between text-slate-400">
-              <span className="font-semibold">Microphone:</span>
-              <span className={micActive && !isMuted ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
-                {isMuted ? 'Muted' : micActive ? 'Active (Live)' : 'Browser Ready'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-slate-400">
-              <span className="font-semibold">Audio Output:</span>
-              <span className="text-white font-mono">{isSpeaker ? 'Speakerphone (On)' : 'Earpiece Mode'}</span>
-            </div>
-          </div>
+          <h2 className="text-xl font-bold text-white tracking-tight">{callInfo.name}</h2>
+          <p className="text-xs text-slate-300 mt-0.5">
+            {callInfo.category === 'DOCTOR' ? 'Verified Medora Medical Officer' : 'Medora Registered Patient'}
+          </p>
         </div>
 
-        {/* Active Audio Waveform & Operator Transcript */}
-        {callState === 'CONNECTED' && (
-          <div className="w-full space-y-2">
-            <div className="flex items-center justify-center gap-1 h-6">
-              <span className="w-1.5 bg-teal-400 rounded-full animate-bounce [animation-delay:0ms] h-3" />
-              <span className="w-1.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:150ms] h-6" />
-              <span className="w-1.5 bg-teal-300 rounded-full animate-bounce [animation-delay:300ms] h-4" />
-              <span className="w-1.5 bg-emerald-300 rounded-full animate-bounce [animation-delay:450ms] h-5" />
-              <span className="w-1.5 bg-teal-400 rounded-full animate-bounce [animation-delay:200ms] h-3" />
+        {/* Live Status & Visual Indicator */}
+        <div className="p-6 flex flex-col items-center justify-center text-center space-y-4">
+          
+          {/* Avatar Ring */}
+          <div className="relative">
+            <div className={`w-28 h-28 rounded-full flex items-center justify-center shadow-inner transition-all duration-500 ${
+              callState === 'CONNECTED'
+                ? 'bg-emerald-600/20 ring-4 ring-emerald-500/50 scale-105'
+                : callState === 'RINGING' || callState === 'CALLING' || callState === 'CONNECTING'
+                ? 'bg-amber-600/20 ring-4 ring-amber-500/40 animate-pulse'
+                : callState === 'FAILED' || callState === 'REJECTED' || callState === 'BUSY' || callState === 'OFFLINE'
+                ? 'bg-rose-600/20 ring-4 ring-rose-500/40'
+                : 'bg-slate-800 ring-2 ring-slate-700'
+            }`}>
+              <User className={`w-14 h-14 ${
+                callState === 'CONNECTED' ? 'text-emerald-400' :
+                callState === 'RINGING' || callState === 'CALLING' ? 'text-amber-300' :
+                callState === 'FAILED' || callState === 'REJECTED' ? 'text-rose-400' : 'text-slate-400'
+              }`} />
             </div>
 
-            {operatorSpeech && (
-              <div className="bg-slate-900 border border-teal-800/50 rounded-xl p-2.5 text-xs text-teal-200 text-center leading-relaxed">
-                <span className="font-bold text-teal-400 block mb-0.5">🎙️ Live Audio Line:</span>
-                "{operatorSpeech}"
+            {/* Live Audio indicator dot */}
+            {callState === 'CONNECTED' && (
+              <span className="absolute bottom-1 right-1 flex h-4 w-4">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-slate-900"></span>
+              </span>
+            )}
+          </div>
+
+          {/* Connection Status Text */}
+          <div className="space-y-1">
+            {callState === 'REQUESTING_PERMISSION' && (
+              <div className="text-amber-300 font-semibold text-sm flex items-center justify-center gap-1.5 animate-pulse">
+                <Mic className="w-4 h-4" />
+                <span>Requesting microphone permission...</span>
+              </div>
+            )}
+            {callState === 'CALLING' && (
+              <div className="text-amber-300 font-semibold text-sm flex items-center justify-center gap-1.5">
+                <Radio className="w-4 h-4 animate-spin" />
+                <span>Calling {callInfo.name}...</span>
+              </div>
+            )}
+            {callState === 'RINGING' && (
+              <div className="text-emerald-400 font-semibold text-sm flex items-center justify-center gap-1.5 animate-bounce">
+                <span>Ringing...</span>
+              </div>
+            )}
+            {callState === 'CONNECTING' && (
+              <div className="text-cyan-300 font-semibold text-sm flex items-center justify-center gap-1.5">
+                <Wifi className="w-4 h-4 animate-pulse" />
+                <span>Establishing peer-to-peer WebRTC voice...</span>
+              </div>
+            )}
+            {callState === 'CONNECTED' && (
+              <div className="space-y-1">
+                <div className="text-emerald-400 font-bold text-sm tracking-wide flex items-center justify-center gap-2">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>CONNECTED</span>
+                </div>
+                {/* Real Live Timer */}
+                <div className="text-3xl font-mono font-bold tracking-widest text-white">
+                  {formatTimer(durationSeconds)}
+                </div>
+                <p className="text-[11px] text-slate-400">Live 2-Way Human Voice via WebRTC</p>
+              </div>
+            )}
+            {callState === 'RECONNECTING' && (
+              <div className="text-amber-400 font-semibold text-sm flex items-center justify-center gap-1.5 animate-pulse">
+                <Wifi className="w-4 h-4" />
+                <span>Reconnecting voice stream...</span>
+              </div>
+            )}
+            {(callState === 'ENDED' || callState === 'REJECTED' || callState === 'FAILED' || callState === 'BUSY' || callState === 'OFFLINE') && (
+              <div className="space-y-1">
+                <div className="text-rose-400 font-bold text-sm flex items-center justify-center gap-1.5">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{errorMessage || 'Call terminated'}</span>
+                </div>
+                {callState === 'OFFLINE' && (
+                  <p className="text-xs text-slate-400 max-w-xs mx-auto">
+                    Medora offline features remain accessible, but live real-time voice calls require internet connection.
+                  </p>
+                )}
+                {callState === 'BUSY' && (
+                  <p className="text-xs text-slate-400 max-w-xs mx-auto">
+                    The doctor is currently attending another patient consultation. Please try again shortly.
+                  </p>
+                )}
               </div>
             )}
           </div>
-        )}
 
-        {/* In-Call Keypad (if opened) */}
-        {showKeypad && (
-          <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl p-3 space-y-2 animate-in fade-in">
-            <div className="text-center font-mono text-sm tracking-widest text-emerald-400 min-h-[24px]">
-              {keypadInput || '—'}
+          {/* Emergency Reason badge if applicable */}
+          {callInfo.emergency && callInfo.symptoms && (
+            <div className="bg-rose-950/70 border border-rose-800/70 rounded-xl px-3 py-2 text-xs text-rose-200 text-left w-full">
+              <span className="font-bold text-rose-300">Reported Symptoms:</span> {callInfo.symptoms}
             </div>
-            <div className="grid grid-cols-3 gap-2 text-sm font-bold">
-              {['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'].map((k) => (
-                <button
-                  key={k}
-                  onClick={() => handleKeypadPress(k)}
-                  className="bg-slate-800 hover:bg-slate-700 active:scale-95 py-2 rounded-xl text-slate-200 transition-all font-mono"
-                >
-                  {k}
-                </button>
-              ))}
+          )}
+
+          {/* Optional Language Bridge Translation Overlay during Call */}
+          {callState === 'CONNECTED' && (
+            <div className="w-full pt-2">
+              <button
+                type="button"
+                onClick={() => setShowLanguageBridge(!showLanguageBridge)}
+                className="inline-flex items-center gap-1.5 text-xs text-teal-300 hover:text-teal-200 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700 transition"
+              >
+                <Languages className="w-3.5 h-3.5" />
+                <span>{showLanguageBridge ? 'Hide Language Bridge' : '🌐 Enable Language Bridge Subtitles'}</span>
+              </button>
+
+              {showLanguageBridge && (
+                <div className="mt-3 p-3 bg-slate-800/90 rounded-2xl border border-slate-700/80 text-left space-y-2 text-xs">
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 font-semibold border-b border-slate-700/50 pb-1.5">
+                    <span>Patient: {bridgePatientLang.toUpperCase()}</span>
+                    <span>Doctor: {bridgeDoctorLang.toUpperCase()}</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-700/40">
+                      <p className="text-[10px] text-teal-400 font-bold uppercase">Spoken Human Audio Active</p>
+                      <p className="text-slate-200 text-xs">Two-way real audio stream is continuous and uncompressed.</p>
+                    </div>
+                    <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-700/40">
+                      <p className="text-[10px] text-amber-400 font-bold uppercase">Translation Reference</p>
+                      <p className="text-slate-300 text-[11px]">
+                        {translateString('Symptoms and guidance are cross-referenced with Medora Clinical Protocol.', bridgePatientLang as any)}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-400 italic">
+                    ⚠️ Auxiliary clinical reference. Real human audio is not altered or replaced by synthetic voice.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Call Controls */}
+        <div className="p-5 bg-slate-950/90 border-t border-slate-800 flex items-center justify-around">
+          
+          {/* Mute Button */}
+          <button
+            type="button"
+            disabled={callState !== 'CONNECTED'}
+            onClick={handleToggleMute}
+            aria-label={isMuted ? 'Unmute Microphone' : 'Mute Microphone'}
+            className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl transition ${
+              isMuted
+                ? 'bg-rose-600/30 text-rose-300 ring-2 ring-rose-500'
+                : 'bg-slate-800 hover:bg-slate-700 text-white'
+            } ${callState !== 'CONNECTED' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+          >
+            {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+            <span className="text-[11px] font-medium">{isMuted ? 'Muted' : 'Mute'}</span>
+          </button>
+
+          {/* End Call / Close Button */}
+          {callState === 'CONNECTED' || callState === 'CALLING' || callState === 'RINGING' || callState === 'CONNECTING' ? (
+            <button
+              type="button"
+              onClick={handleEndCall}
+              aria-label="End Medora Call"
+              className="flex flex-col items-center gap-1.5 p-4 rounded-full bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-950/60 transition scale-105 active:scale-95 cursor-pointer"
+            >
+              <PhoneOff className="w-7 h-7" />
+              <span className="sr-only">End Call</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                if (durationSeconds > 5 && !summarySaved) {
+                  setShowSummaryForm(true);
+                } else {
+                  onClose();
+                }
+              }}
+              className="px-6 py-3 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm shadow-md transition cursor-pointer"
+            >
+              {durationSeconds > 5 && !summarySaved ? 'Save Summary' : 'Close'}
+            </button>
+          )}
+
+          {/* Speaker Button */}
+          <button
+            type="button"
+            disabled={callState !== 'CONNECTED'}
+            onClick={handleToggleSpeaker}
+            aria-label={isSpeaker ? 'Mute Speaker' : 'Enable Speaker'}
+            className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl transition ${
+              isSpeaker
+                ? 'bg-slate-800 hover:bg-slate-700 text-white'
+                : 'bg-rose-600/30 text-rose-300 ring-2 ring-rose-500'
+            } ${callState !== 'CONNECTED' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+          >
+            {isSpeaker ? <Volume2 className="w-6 h-6" /> : <VolumeX className="w-6 h-6" />}
+            <span className="text-[11px] font-medium">{isSpeaker ? 'Speaker' : 'Muted'}</span>
+          </button>
+        </div>
+
+        {/* Doctor Summary Modal after Call ends */}
+        {showSummaryForm && (
+          <div className="absolute inset-0 bg-slate-950/95 p-5 flex flex-col justify-between overflow-y-auto z-20">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-teal-400">
+                <FileText className="w-5 h-5" />
+                <h3 className="font-bold text-base text-white">Create Doctor Consultation Summary</h3>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="block text-slate-400 mb-1 font-medium">Patient / Contact</label>
+                  <p className="bg-slate-900 p-2.5 rounded-xl border border-slate-800 font-semibold text-white">
+                    {callInfo.name} ({durationSeconds}s call)
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1 font-medium">Chief Complaint / Symptoms</label>
+                  <input
+                    type="text"
+                    value={summaryChiefComplaint}
+                    onChange={(e) => setSummaryChiefComplaint(e.target.value)}
+                    className="w-full bg-slate-900 p-2.5 rounded-xl border border-slate-700 text-white focus:outline-none focus:ring-1 focus:ring-teal-500"
+                    placeholder="e.g. Fever, persistent cough"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1 font-medium">Doctor Clinical Notes & Observations</label>
+                  <textarea
+                    rows={3}
+                    value={summaryNotes}
+                    onChange={(e) => setSummaryNotes(e.target.value)}
+                    className="w-full bg-slate-900 p-2.5 rounded-xl border border-slate-700 text-white focus:outline-none focus:ring-1 focus:ring-teal-500"
+                    placeholder="Enter examination notes, recommended remedies, or follow-up plans..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs transition"
+              >
+                Skip Summary
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveSummary}
+                className="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5"
+              >
+                {summarySaved ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                    <span>Saved!</span>
+                  </>
+                ) : (
+                  <span>Save to Patient Record</span>
+                )}
+              </button>
             </div>
           </div>
         )}
-
-        {/* In-Call Controls */}
-        <div className="grid grid-cols-3 gap-3 w-full">
-          <button
-            onClick={() => setIsMuted(!isMuted)}
-            className={`py-3 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all ${
-              isMuted
-                ? 'bg-rose-500/20 border-rose-500 text-rose-300'
-                : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
-            }`}
-          >
-            {isMuted ? <MicOff className="w-5 h-5 text-rose-400" /> : <Mic className="w-5 h-5 text-teal-400" />}
-            <span>{isMuted ? 'Muted' : 'Mute'}</span>
-          </button>
-
-          <button
-            onClick={() => setShowKeypad(!showKeypad)}
-            className={`py-3 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all ${
-              showKeypad
-                ? 'bg-teal-500/20 border-teal-500 text-teal-300'
-                : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
-            }`}
-          >
-            <Hash className="w-5 h-5 text-teal-400" />
-            <span>Keypad</span>
-          </button>
-
-          <button
-            onClick={() => setIsSpeaker(!isSpeaker)}
-            className={`py-3 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all ${
-              isSpeaker
-                ? 'bg-blue-500/20 border-blue-500 text-blue-300'
-                : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
-            }`}
-          >
-            {isSpeaker ? <Volume2 className="w-5 h-5 text-blue-400" /> : <VolumeX className="w-5 h-5" />}
-            <span>Speaker</span>
-          </button>
-        </div>
-
-        {/* End Call Button */}
-        <div className="w-full pt-1">
-          <button
-            onClick={handleEndCall}
-            className="w-full py-3.5 px-4 bg-red-600 hover:bg-red-700 active:scale-95 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-900/40 transition-all min-h-[48px]"
-          >
-            <PhoneOff className="w-5 h-5" />
-            <span>END CALL</span>
-          </button>
-        </div>
       </div>
     </div>
   );

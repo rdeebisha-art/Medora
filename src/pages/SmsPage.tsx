@@ -230,15 +230,8 @@ export default function SmsPage() {
                     className="w-full bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-teal-900/40 active:scale-95 transition-all text-xs"
                   >
                     <Send size={14} />
-                    <span>Send SMS Immediately to {form.toPhone || 'Phone'}</span>
+                    <span>Send SMS Directly from Medora to {form.toPhone || 'Phone'}</span>
                   </button>
-
-                  <a
-                    href={`sms:${form.toPhone.replace(/[^\d+]/g, '')}?body=${encodeURIComponent(form.message)}`}
-                    className="w-full bg-slate-800 hover:bg-slate-700 text-teal-300 font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 border border-slate-700 text-xs transition-all active:scale-95"
-                  >
-                    <span>📱 Open Mobile SMS App (Send from SIM)</span>
-                  </a>
 
                   <button
                     onClick={handleOpenPreview}

@@ -119,14 +119,6 @@ export const SmsPreviewModal: React.FC<SmsPreviewModalProps> = ({
 
         {/* Actions */}
         <div className="flex flex-col gap-2 pt-1">
-          {/* Native SMS Direct Launcher */}
-          <a
-            href={`sms:${(payload.recipientPhone || '').replace(/[^\d+]/g, '')}?body=${encodeURIComponent(payload.message)}`}
-            className="w-full py-2.5 px-4 rounded-xl bg-teal-50 hover:bg-teal-100 border border-teal-300 text-teal-900 font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95"
-          >
-            <span>📱 Open in Phone SMS App (Send from SIM)</span>
-          </a>
-
           <div className="flex gap-2">
             <button
               onClick={onClose}
@@ -147,7 +139,7 @@ export const SmsPreviewModal: React.FC<SmsPreviewModalProps> = ({
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  <span>{result ? 'Send Again' : 'Send Immediately'}</span>
+                  <span>{result ? 'Send Again' : 'Send Immediately from Medora'}</span>
                 </>
               )}
             </button>

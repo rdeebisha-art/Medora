@@ -42,6 +42,10 @@ import AppointmentsPage from './pages/AppointmentsPage';
 
 import MedicalHospitalBackground from './components/layout/MedicalHospitalBackground';
 import { ActiveCallModal } from './components/ActiveCallModal';
+import { IncomingCallModal } from './components/IncomingCallModal';
+import { webrtcCallingService } from './services/webrtc/webrtcCallingService';
+import { inAppMessagingService } from './services/messaging/inAppMessagingService';
+import { useEffect } from 'react';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAppStore();
@@ -50,10 +54,21 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const { activeDirectCall, endDirectCall } = useAppStore();
+  const { activeDirectCall, endDirectCall, incomingCall, setIncomingCall, currentUser } = useAppStore();
+
+  useEffect(() => {
+    if (currentUser) {
+      const userId = currentUser.role === 'doctor' ? `DOC-0${currentUser.id || 1}` : `P00${currentUser.id || 1}`;
+      webrtcCallingService.initSignaling(userId, currentUser.name, currentUser.role);
+      inAppMessagingService.init(userId, currentUser.name, currentUser.role);
+    }
+  }, [currentUser]);
 
   return (
     <MedicalHospitalBackground>
+      {incomingCall && (
+        <IncomingCallModal incomingCall={incomingCall} onClose={() => setIncomingCall(null)} />
+      )}
       {activeDirectCall && (
         <ActiveCallModal callInfo={activeDirectCall} onClose={endDirectCall} />
       )}

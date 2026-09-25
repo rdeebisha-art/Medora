@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ShieldCheck, PhoneCall, CheckCircle2, HelpCircle, FileText, ArrowRight, Volume2, Sparkles, Building2, Heart, Award, ExternalLink } from 'lucide-react';
 import { LanguageCode } from '../types';
 import { voiceService } from '../services/voiceService';
+import { useAppStore } from '../store/useAppStore';
 
 interface GovernmentSchemesPageProps {
   currentLang: LanguageCode;
@@ -173,59 +174,95 @@ export const GovernmentSchemesPage: React.FC<GovernmentSchemesPageProps> = ({
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <a
-            href="tel:108"
-            className="p-3 bg-black/20 hover:bg-black/30 rounded-2xl border border-white/20 text-center transition-all group"
+          <button
+            onClick={() => useAppStore.getState().startDirectCall({
+              name: '108 Free Emergency Ambulance',
+              phone: '108',
+              category: 'AMBULANCE',
+              targetUserId: 'DOC-01',
+              emergency: true,
+            })}
+            className="p-3 bg-black/20 hover:bg-black/30 rounded-2xl border border-white/20 text-center transition-all group cursor-pointer"
           >
             <span className="text-[11px] font-extrabold text-rose-200 block uppercase">Free Ambulance</span>
             <span className="text-2xl font-black text-white group-hover:scale-105 transition-transform block">108</span>
             <span className="text-[10px] text-rose-100">Medical Emergencies</span>
-          </a>
+          </button>
 
-          <a
-            href="tel:102"
-            className="p-3 bg-black/20 hover:bg-black/30 rounded-2xl border border-white/20 text-center transition-all group"
+          <button
+            onClick={() => useAppStore.getState().startDirectCall({
+              name: '102 Maternal Delivery Ambulance',
+              phone: '102',
+              category: 'AMBULANCE',
+              targetUserId: 'DOC-01',
+              emergency: true,
+            })}
+            className="p-3 bg-black/20 hover:bg-black/30 rounded-2xl border border-white/20 text-center transition-all group cursor-pointer"
           >
             <span className="text-[11px] font-extrabold text-rose-200 block uppercase">Maternal Delivery</span>
             <span className="text-2xl font-black text-white group-hover:scale-105 transition-transform block">102</span>
             <span className="text-[10px] text-rose-100">Janani Shishu Ambulance</span>
-          </a>
+          </button>
 
-          <a
-            href="tel:112"
-            className="p-3 bg-black/20 hover:bg-black/30 rounded-2xl border border-white/20 text-center transition-all group"
+          <button
+            onClick={() => useAppStore.getState().startDirectCall({
+              name: '112 Unified Emergency Helpline',
+              phone: '112',
+              category: 'EMERGENCY',
+              targetUserId: 'DOC-01',
+              emergency: true,
+            })}
+            className="p-3 bg-black/20 hover:bg-black/30 rounded-2xl border border-white/20 text-center transition-all group cursor-pointer"
           >
             <span className="text-[11px] font-extrabold text-rose-200 block uppercase">Police Helpline</span>
             <span className="text-2xl font-black text-white group-hover:scale-105 transition-transform block">112</span>
             <span className="text-[10px] text-rose-100">Police & Disaster (100)</span>
-          </a>
+          </button>
 
-          <a
-            href="tel:1091"
-            className="p-3 bg-black/20 hover:bg-black/30 rounded-2xl border border-white/20 text-center transition-all group"
+          <button
+            onClick={() => useAppStore.getState().startDirectCall({
+              name: '1091 Women Protection Helpline',
+              phone: '1091',
+              category: 'EMERGENCY',
+              targetUserId: 'DOC-01',
+              emergency: true,
+            })}
+            className="p-3 bg-black/20 hover:bg-black/30 rounded-2xl border border-white/20 text-center transition-all group cursor-pointer"
           >
             <span className="text-[11px] font-extrabold text-rose-200 block uppercase">Women Helpline</span>
             <span className="text-2xl font-black text-white group-hover:scale-105 transition-transform block">1091</span>
             <span className="text-[10px] text-rose-100">Women Protection (181)</span>
-          </a>
+          </button>
 
-          <a
-            href="tel:1098"
-            className="p-3 bg-black/20 hover:bg-black/30 rounded-2xl border border-white/20 text-center transition-all group"
+          <button
+            onClick={() => useAppStore.getState().startDirectCall({
+              name: '1098 Childline Distress Helpline',
+              phone: '1098',
+              category: 'EMERGENCY',
+              targetUserId: 'DOC-01',
+              emergency: true,
+            })}
+            className="p-3 bg-black/20 hover:bg-black/30 rounded-2xl border border-white/20 text-center transition-all group cursor-pointer"
           >
             <span className="text-[11px] font-extrabold text-rose-200 block uppercase">Childline</span>
             <span className="text-2xl font-black text-white group-hover:scale-105 transition-transform block">1098</span>
             <span className="text-[10px] text-rose-100">Child In Distress</span>
-          </a>
+          </button>
 
-          <a
-            href="tel:14555"
-            className="p-3 bg-black/20 hover:bg-black/30 rounded-2xl border border-white/20 text-center transition-all group"
+          <button
+            onClick={() => useAppStore.getState().startDirectCall({
+              name: '14555 Ayushman PM-JAY Helpdesk',
+              phone: '14555',
+              category: 'HOSPITAL',
+              targetUserId: 'DOC-01',
+              emergency: false,
+            })}
+            className="p-3 bg-black/20 hover:bg-black/30 rounded-2xl border border-white/20 text-center transition-all group cursor-pointer"
           >
             <span className="text-[11px] font-extrabold text-rose-200 block uppercase">Ayushman PMJAY</span>
             <span className="text-2xl font-black text-white group-hover:scale-105 transition-transform block">14555</span>
             <span className="text-[10px] text-rose-100">Hospital Empanelled Desk</span>
-          </a>
+          </button>
         </div>
       </div>
 

@@ -5,11 +5,35 @@ import { seedDatabase } from '../db/db';
 export type Role = 'patient' | 'family' | 'doctor' | 'admin';
 
 export interface ActiveCallInfo {
+  callId?: string;
   name: string;
   phone: string;
   category: 'EMERGENCY' | 'AMBULANCE' | 'HOSPITAL' | 'DOCTOR' | 'FAMILY' | 'SUPPORT' | 'CUSTOM';
   location?: string;
   notes?: string;
+  targetUserId?: string;
+  callerId?: string;
+  callerName?: string;
+  callerRole?: 'patient' | 'doctor' | 'admin';
+  receiverId?: string;
+  isIncoming?: boolean;
+  emergency?: boolean;
+  emergencyType?: string;
+  symptoms?: string;
+  sdpOffer?: any;
+}
+
+export interface IncomingCallInfo {
+  callId: string;
+  callerId: string;
+  callerName: string;
+  callerRole: 'patient' | 'doctor' | 'admin';
+  receiverId: string;
+  emergency: boolean;
+  emergencyType?: string;
+  symptoms?: string;
+  sdpOffer?: any;
+  timestamp: string;
 }
 
 export interface CurrentUser {
@@ -32,8 +56,10 @@ interface AppState {
   appLanguage: string;
   language: string; // for backward compatibility
   activeDirectCall: ActiveCallInfo | null;
+  incomingCall: IncomingCallInfo | null;
   startDirectCall: (callInfo: ActiveCallInfo) => void;
   endDirectCall: () => void;
+  setIncomingCall: (call: IncomingCallInfo | null) => void;
   setOffline: (status: boolean) => void;
   toggle2GMode: () => void;
   toggleSimpleMode: () => void;
@@ -99,9 +125,11 @@ export const useAppStore = create<AppState>((set) => ({
   appLanguage: initialLanguage,
   language: initialLanguage,
   activeDirectCall: null,
+  incomingCall: null,
 
   startDirectCall: (callInfo) => set({ activeDirectCall: callInfo }),
   endDirectCall: () => set({ activeDirectCall: null }),
+  setIncomingCall: (call) => set({ incomingCall: call }),
 
   setOffline: (status) => set({ isOffline: status }),
 

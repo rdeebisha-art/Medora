@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CheckCircle2, Circle, Clock, ArrowRight, UserCheck, Calendar, Building2, Stethoscope, AlertCircle, Plus, FileText } from 'lucide-react';
 import { Referral, ReferralStatus, ReferralPriority, Specialization, Doctor, Hospital, LanguageCode, FamilyMember } from '../types';
 import { TRANSLATIONS } from '../i18n/translations';
+import { useAppStore } from '../store/useAppStore';
 
 interface SmartReferralTrackerProps {
   referrals: Referral[];
@@ -315,12 +316,19 @@ export const SmartReferralTracker: React.FC<SmartReferralTrackerProps> = ({
                     >
                       Change Doctor
                     </button>
-                    <a
-                      href={`tel:${activeReferral.contactInfo.replace(/[^0-9]/g, '')}`}
-                      className="text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors"
+                    <button
+                      onClick={() => useAppStore.getState().startDirectCall({
+                        name: activeReferral.selectedDoctorName || 'Consulting Specialist',
+                        phone: activeReferral.contactInfo,
+                        category: 'DOCTOR',
+                        targetUserId: activeReferral.selectedDoctorId || 'DOC-01',
+                        location: activeReferral.selectedHospitalName,
+                        emergency: activeReferral.priority === 'Emergency' || activeReferral.priority === 'Urgent',
+                      })}
+                      className="text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
                     >
                       📞 Call Doctor
-                    </a>
+                    </button>
                   </div>
                 </div>
               ) : (

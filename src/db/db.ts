@@ -362,6 +362,60 @@ export interface UploadedDocument {
   doctorConfirmedDiagnosis?: string;
 }
 
+export interface CallSessionRecord {
+  id?: number;
+  callId: string;
+  callerId: string;
+  callerName: string;
+  callerRole: 'patient' | 'doctor' | 'admin';
+  receiverId: string;
+  receiverName: string;
+  receiverRole: 'patient' | 'doctor' | 'admin';
+  status: 'CALLING' | 'RINGING' | 'ACCEPTED' | 'REJECTED' | 'CONNECTING' | 'CONNECTED' | 'ENDED' | 'FAILED' | 'MISSED';
+  createdAt: string;
+  acceptedAt?: string;
+  endedAt?: string;
+  durationSeconds?: number;
+  emergency: boolean;
+  emergencyType?: string;
+  consultationId?: string;
+  doctorNotes?: string;
+}
+
+export interface InAppMessageRecord {
+  id?: number;
+  messageId: string;
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: 'patient' | 'doctor' | 'admin';
+  receiverId: string;
+  receiverName: string;
+  originalLanguage: string;
+  originalText: string;
+  translatedText?: string;
+  timestamp: string;
+  status: 'SENDING' | 'SENT' | 'DELIVERED' | 'READ' | 'FAILED' | 'PENDING_OFFLINE';
+  isEmergency?: boolean;
+}
+
+export interface OfflineOutboxItem {
+  id?: number;
+  messageId: string;
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: 'patient' | 'doctor' | 'admin';
+  receiverId: string;
+  receiverName: string;
+  originalLanguage: string;
+  originalText: string;
+  translatedText?: string;
+  timestamp: string;
+  status: 'PENDING_OFFLINE' | 'SENDING' | 'SENT' | 'FAILED';
+  retryCount: number;
+}
+
 export class MedoraDB extends Dexie {
   patients!: Table<Patient, number>;
   families!: Table<Family, number>;
@@ -390,6 +444,9 @@ export class MedoraDB extends Dexie {
   ussdSessions!: Table<UssdSessionRecord, number>;
   ussdMessages!: Table<UssdMessageRecord, number>;
   uploadedDocuments!: Table<UploadedDocument, number>;
+  callSessions!: Table<CallSessionRecord, number>;
+  inAppMessages!: Table<InAppMessageRecord, number>;
+  offlineOutboxMessages!: Table<OfflineOutboxItem, number>;
 
   constructor() {
     super('MedoraDB');
@@ -427,6 +484,11 @@ export class MedoraDB extends Dexie {
     });
     this.version(4).stores({
       uploadedDocuments: '++id, documentId, patientId, consultationId, documentType, analysisStatus, uploadedAt',
+    });
+    this.version(5).stores({
+      callSessions: '++id, callId, callerId, receiverId, status, createdAt, emergency',
+      inAppMessages: '++id, messageId, conversationId, senderId, receiverId, status, timestamp',
+      offlineOutboxMessages: '++id, messageId, receiverId, status, timestamp',
     });
   }
 }

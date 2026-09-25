@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigation, Bus, Phone, MapPin, Ambulance, ArrowRight, ShieldCheck, Car, Bike, Clock } from 'lucide-react';
 import { Hospital, LanguageCode } from '../types';
+import { useAppStore } from '../store/useAppStore';
 
 interface HospitalTransitGuideProps {
   hospitals: Hospital[];
@@ -14,6 +15,8 @@ export const HospitalTransitGuide: React.FC<HospitalTransitGuideProps> = ({
   onOpenDirections,
   onOpenEmergency,
 }) => {
+  const { startDirectCall } = useAppStore();
+
   return (
     <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-6">
       {/* Immediate Hospital Contact Hotlines (Speed Dial) */}
@@ -30,39 +33,67 @@ export const HospitalTransitGuide: React.FC<HospitalTransitGuideProps> = ({
           </span>
         </div>
         <p className="text-xs text-rose-100 leading-relaxed max-w-2xl">
-          Tap any button to instantly connect your phone call. Free emergency services under National Health Mission.
+          Tap any button to instantly connect in-app voice call within Medora. Free emergency services under National Health Mission.
         </p>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 text-xs">
-          <a
-            href="tel:108"
-            className="flex items-center justify-center gap-2 py-3 px-3 bg-white text-red-700 hover:bg-red-50 font-black rounded-2xl shadow-sm transition-all"
+          <button
+            onClick={() => startDirectCall({
+              name: '108 Rural Ambulance & Trauma',
+              phone: '108',
+              category: 'AMBULANCE',
+              targetUserId: 'DOC-01',
+              location: 'Tamil Nadu Emergency Dispatch',
+              emergency: true,
+            })}
+            className="flex items-center justify-center gap-2 py-3 px-3 bg-white text-red-700 hover:bg-red-50 font-black rounded-2xl shadow-sm transition-all cursor-pointer"
           >
             <Ambulance className="w-4 h-4 text-red-600" />
             <span>108 Ambulance</span>
-          </a>
+          </button>
 
-          <a
-            href="tel:102"
-            className="flex items-center justify-center gap-2 py-3 px-3 bg-white text-rose-700 hover:bg-rose-50 font-black rounded-2xl shadow-sm transition-all"
+          <button
+            onClick={() => startDirectCall({
+              name: '102 Maternal & Child Janani Transport',
+              phone: '102',
+              category: 'AMBULANCE',
+              targetUserId: 'DOC-01',
+              location: 'Janani Shishu Suraksha Karyakram',
+              emergency: true,
+            })}
+            className="flex items-center justify-center gap-2 py-3 px-3 bg-white text-rose-700 hover:bg-rose-50 font-black rounded-2xl shadow-sm transition-all cursor-pointer"
           >
             <Phone className="w-4 h-4 text-rose-600" />
             <span>102 Maternal</span>
-          </a>
+          </button>
 
-          <a
-            href="tel:+911123456780"
-            className="flex items-center justify-center gap-2 py-3 px-3 bg-slate-900/90 text-white hover:bg-slate-950 font-bold rounded-2xl border border-white/20 transition-all text-center"
+          <button
+            onClick={() => startDirectCall({
+              name: 'Civil Hospital Casualty Desk',
+              phone: '+91 11 2345 6780',
+              category: 'HOSPITAL',
+              targetUserId: 'DOC-01',
+              location: 'District Civil Hospital',
+              emergency: true,
+            })}
+            className="flex items-center justify-center gap-2 py-3 px-3 bg-slate-900/90 text-white hover:bg-slate-950 font-bold rounded-2xl border border-white/20 transition-all text-center cursor-pointer"
           >
             <span>Civil Hospital Desk</span>
-          </a>
+          </button>
 
-          <a
-            href="tel:+918028123450"
-            className="flex items-center justify-center gap-2 py-3 px-3 bg-slate-900/90 text-white hover:bg-slate-950 font-bold rounded-2xl border border-white/20 transition-all text-center"
+          <button
+            onClick={() => startDirectCall({
+              name: 'Primary Health Centre Rampur',
+              phone: '+91 80 2812 3450',
+              category: 'HOSPITAL',
+              targetUserId: 'DOC-01',
+              location: 'Rampur PHC',
+              emergency: false,
+            })}
+            className="flex items-center justify-center gap-2 py-3 px-3 bg-slate-900/90 text-white hover:bg-slate-950 font-bold rounded-2xl border border-white/20 transition-all text-center cursor-pointer"
           >
             <span>Local PHC Rampur</span>
-          </a>
+          </button>
         </div>
       </div>
 

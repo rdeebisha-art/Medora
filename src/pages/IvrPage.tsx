@@ -129,13 +129,13 @@ export default function IvrPage() {
               📞
             </div>
             <div>
-              <h2 className="text-base font-black text-slate-900">CALL ANY PERSON</h2>
-              <p className="text-xs text-slate-500">Uses your phone's normal cellular calling system</p>
+              <h2 className="text-base font-black text-slate-900">MEDORA REAL-TIME VOICE CALL</h2>
+              <p className="text-xs text-slate-500">Live peer-to-peer WebRTC voice call directly inside Medora</p>
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-slate-700">Enter Phone Number:</label>
+            <label className="block text-xs font-bold text-slate-700">Enter Doctor or Contact Number:</label>
             <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="tel"
@@ -147,21 +147,21 @@ export default function IvrPage() {
               />
               <button
                 onClick={() => handleMakeCall()}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base px-6 py-3 rounded-2xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 min-h-[50px]"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base px-6 py-3 rounded-2xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 min-h-[50px] cursor-pointer"
               >
                 <Phone size={18} />
-                <span>CALL</span>
+                <span>CALL IN-APP</span>
               </button>
             </div>
           </div>
 
-          {/* Offline & Desktop Clarity Notice */}
+          {/* In-App WebRTC Clarity Notice */}
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-[11px] text-slate-600 space-y-1">
             <p>
-              • <strong>Offline Ready:</strong> Internet is not required for Medora to launch the phone dialer. A cellular SIM is required for the phone call itself.
+              • <strong>Real-Time WebRTC:</strong> The entire two-way voice call happens inside the Medora web app. Does not open external dialers or Truecaller.
             </p>
             <p>
-              • <strong>Desktop Devices:</strong> On laptops/PCs, phone calling is available if your operating system has a supported calling app (FaceTime, Skype, Phone Link).
+              • <strong>Live Microphone:</strong> Connects microphone stream directly between patient and doctor with STUN/TURN traversal.
             </p>
           </div>
         </div>

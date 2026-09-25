@@ -5,16 +5,18 @@ import { useAppStore } from '../store/useAppStore';
 import { db, Patient, DoctorSummary, Medicine, Doctor, Appointment } from '../db/db';
 import Layout from '../components/Layout';
 import DemoDataBadge from '../components/DemoDataBadge';
+import { TwoWayDoctorChatModal } from '../components/TwoWayDoctorChatModal';
 import {
   Stethoscope, User, Calendar, Pill, FileText, AlertTriangle,
   CheckCircle2, Plus, ArrowLeft, Printer, Phone, Clock,
-  Check, ChevronRight, Search, ShieldAlert
+  Check, ChevronRight, Search, ShieldAlert, MessageSquare, PhoneCall
 } from 'lucide-react';
 
 export default function DoctorPortalPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { currentUser, login, language } = useAppStore();
+  const { currentUser, login, language, startDirectCall } = useAppStore();
+  const [showChatModal, setShowChatModal] = useState(false);
 
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -372,7 +374,61 @@ export default function DoctorPortalPage() {
                   📞 Emergency: {selected.emergencyContact || '108'}
                 </span>
               </div>
+
+              {/* Direct Doctor-Patient In-App Communication Action Bar */}
+              <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    startDirectCall({
+                      name: selected.name,
+                      phone: selected.phone || selected.emergencyContact || '9876543210',
+                      category: 'PATIENT' as any,
+                      targetUserId: `P00${selected.id || 1}`,
+                      location: selected.village,
+                      emergency: false,
+                    });
+                  }}
+                  className="flex items-center gap-1.5 py-2 px-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl font-bold text-xs shadow-xs transition-colors cursor-pointer"
+                >
+                  <PhoneCall className="w-3.5 h-3.5" />
+                  <span>Start Live WebRTC Voice Call</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowChatModal(true)}
+                  className="flex items-center gap-1.5 py-2 px-3.5 bg-teal-50 hover:bg-teal-100 active:scale-95 text-teal-800 rounded-xl font-bold text-xs border border-teal-200 transition-colors cursor-pointer"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-teal-600" />
+                  <span>In-App Message Patient</span>
+                </button>
+              </div>
             </div>
+
+            {/* In-App Two-Way Chat Modal for Doctor */}
+            {showChatModal && selected && (
+              <TwoWayDoctorChatModal
+                isOpen={showChatModal}
+                onClose={() => setShowChatModal(false)}
+                patientId={`P00${selected.id || 1}`}
+                patientName={selected.name}
+                userRole="doctor"
+                doctorId={currentUser ? `DOC-0${currentUser.id || 1}` : 'DOC-01'}
+                doctorName={currentUser?.name || 'Dr. Arjun Mehta'}
+                onStartCall={() => {
+                  setShowChatModal(false);
+                  startDirectCall({
+                    name: selected.name,
+                    phone: selected.phone || selected.emergencyContact || '9876543210',
+                    category: 'PATIENT' as any,
+                    targetUserId: `P00${selected.id || 1}`,
+                    location: selected.village,
+                    emergency: false,
+                  });
+                }}
+              />
+            )}
 
             {/* AI Triage / Language Bridge Consultation Summary */}
             <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-3xl p-5 shadow-sm space-y-3">

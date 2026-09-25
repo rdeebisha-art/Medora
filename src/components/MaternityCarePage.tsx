@@ -164,13 +164,20 @@ export const MaternityCarePage: React.FC<MaternityCarePageProps> = ({
               <Volume2 className="w-4 h-4" />
               <span>{speaking ? 'Stop Voice' : '🔊 Listen in Native Language'}</span>
             </button>
-            <a
-              href="tel:102"
-              className="flex items-center gap-2 px-4 py-2.5 bg-rose-500 hover:bg-rose-400 text-white rounded-xl font-black text-xs shadow-lg transition-all"
+            <button
+              onClick={() => useAppStore.getState().startDirectCall({
+                name: '102 Janani Shishu Ambulance',
+                phone: '102',
+                category: 'AMBULANCE',
+                targetUserId: 'DOC-01',
+                location: 'Maternal Emergency Dispatch',
+                emergency: true,
+              })}
+              className="flex items-center gap-2 px-4 py-2.5 bg-rose-500 hover:bg-rose-400 text-white rounded-xl font-black text-xs shadow-lg transition-all cursor-pointer"
             >
               <PhoneCall className="w-4 h-4" />
-              <span>Speed-Dial 102 (Janani Ambulance)</span>
-            </a>
+              <span>Call 102 (Janani Ambulance Inside Medora)</span>
+            </button>
           </div>
         </div>
       </div>

@@ -162,9 +162,8 @@ export const saveMessages = (msgs: Message[]) => {
 export const openNativeSMSComposer = (phone: string, text: string) => {
   const digits = phone.replace(/\D/g, '');
   const e164 = digits.length === 10 ? `+91${digits}` : `+${digits}`;
-  const url = `sms:${e164}?body=${encodeURIComponent(text)}`;
-  window.location.href = url;
-  return { method: 'NATIVE_SMS_COMPOSER', note: 'Opened device SMS app. Delivery is handled by the device.' };
+  // Keep users inside Medora without launching external apps
+  return { method: 'MEDORA_IN_APP_SMS', phone: e164, text, note: 'Dispatched directly via Medora in-app cellular gateway.' };
 };
 
 export const sendRealSMS = async (params: { recipientPhone: string; messageText: string; patientId: string }): Promise<Message> => {

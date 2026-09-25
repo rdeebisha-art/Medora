@@ -471,6 +471,46 @@ export default function EmergencyPage() {
       category: 'AMBULANCE',
       location: 'Tamil Nadu Rural Emergency Medical Services (24x7)',
       notes: 'Direct Trauma & Life Support Unit (Level 1 Emergency)',
+      emergency: true,
+    });
+  };
+
+  const handleEmergencyCallDoctor = async () => {
+    const callId = `CALL-EMG-${Date.now()}`;
+    const emergencyId = `EMG-${Date.now()}`;
+    const patientId = currentPatient?.id || 1;
+    const doctorId = 'DOC-01';
+
+    // Record in local Dexie emergency incidents
+    try {
+      await db.emergencyIncidents.add({
+        incidentId: emergencyId,
+        patientId,
+        timestamp: new Date().toISOString(),
+        detectedLanguage: appLanguage,
+        emergencyType: '🚨 Critical Emergency Doctor Call',
+        severity: 'CRITICAL',
+        locationIfAvailable: currentPatient?.village || 'Rampur / Kodaikanal Sector',
+        source: 'MANUAL_BUTTON',
+        status: 'SENT',
+        dispatchStatus: 'SENT',
+        createdAt: new Date().toISOString(),
+      });
+    } catch {}
+
+    // Initiate REAL WebRTC emergency call
+    setActiveCall({
+      callId,
+      name: 'Dr. Arjun Mehta (Emergency Medical Officer)',
+      phone: '9800001111',
+      category: 'DOCTOR',
+      targetUserId: doctorId,
+      callerId: `P00${patientId}`,
+      callerName: currentPatient?.name || 'Emergency Patient',
+      location: 'Kodaikanal Government Hospital Casualty',
+      emergency: true,
+      emergencyType: '🚨 Critical Emergency Voice Call',
+      symptoms: 'Patient initiated urgent emergency call from Emergency Mode.',
     });
   };
 
@@ -594,6 +634,34 @@ export default function EmergencyPage() {
             <span>CALL 108 NOW</span>
           </button>
         </div>
+
+        {/* Large Prominent In-App WebRTC Doctor Emergency Call Button */}
+        <button
+          type="button"
+          onClick={handleEmergencyCallDoctor}
+          className="w-full bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-700 hover:to-rose-800 text-white p-5 rounded-3xl font-black shadow-xl transition-all scale-[1.01] active:scale-[0.99] border-2 border-red-300 flex items-center justify-between gap-4 cursor-pointer"
+        >
+          <div className="flex items-center gap-3.5 text-left">
+            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-3xl shrink-0 shadow-inner">
+              🚨
+            </div>
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-black/40 text-rose-200 mb-1 border border-rose-400/40">
+                <span className="w-2 h-2 rounded-full bg-red-400 animate-ping" />
+                <span>Instant In-App WebRTC Voice</span>
+              </div>
+              <div className="text-xl sm:text-2xl font-black tracking-tight text-white leading-tight">
+                CALL DOCTOR NOW
+              </div>
+              <p className="text-xs text-rose-100 font-medium">
+                Live 2-Way Voice Call with Dr. Arjun Mehta · No Phone App or Carrier Fee
+              </p>
+            </div>
+          </div>
+          <div className="hidden sm:flex p-3 rounded-2xl bg-white/20 text-white">
+            <PhoneCall className="w-6 h-6 animate-pulse" />
+          </div>
+        </button>
 
         {/* STEP 2: Large Emergency Primary Action Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

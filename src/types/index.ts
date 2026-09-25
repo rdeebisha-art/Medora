@@ -8,7 +8,13 @@ export type Specialization =
   | 'Nutritionist'
   | 'Mental Wellness Professional'
   | 'Maternal Care'
-  | 'Pediatric Care';
+  | 'Pediatric Care'
+  | 'Orthopedic Surgeon'
+  | 'Pediatric Specialist'
+  | 'Dermatologist'
+  | 'Ophthalmologist (Eye Surgeon)'
+  | 'Endocrinologist & Diabetologist'
+  | (string & {});
 
 export type HospitalType = 
   | 'Government Hospital'
@@ -18,7 +24,14 @@ export type HospitalType =
   | 'Specialty Hospital'
   | 'Maternal Care'
   | 'Child Care'
-  | 'Emergency Care';
+  | 'Emergency Care'
+  | 'AIIMS / Apex Medical Institute'
+  | 'Sub-District Government Hospital'
+  | 'Specialty Eye Hospital'
+  | 'AYUSH Integrative Hospital'
+  | 'Specialty Infectious Diseases Hospital'
+  | 'Geriatric & Palliative Care'
+  | (string & {});
 
 export type ConsultationType = 'In-person' | 'Teleconsultation' | 'Both';
 
@@ -61,7 +74,7 @@ export interface Hospital {
   isOfficialWebsiteVerified: boolean;
   departments: string[];
   consultationAvailable: boolean;
-  status: 'Open 24/7' | 'OPD Active' | 'Emergency Only';
+  status: 'Open 24/7' | 'OPD Active' | 'Emergency Only' | (string & {});
   referralSuitability: string;
   mapCoordinates: { lat: number; lng: number };
   landmark: string;
@@ -408,7 +421,7 @@ export interface MedicalDisease {
 // Medical Knowledge Base: Medicine
 export interface ApprovedAlternative {
   genericName: string;
-  type: 'Generic Alternative' | 'Therapeutic Alternative';
+  type: 'Generic Alternative' | 'Therapeutic Alternative' | 'Safer Alternative' | (string & {});
   reason: string;
   restrictions: string;
   requiresPrescription: boolean;

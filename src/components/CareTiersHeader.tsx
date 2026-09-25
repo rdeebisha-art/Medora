@@ -1,6 +1,7 @@
 import React from 'react';
 import { HeartPulse, Baby, Shield, ArrowRight, Phone, CheckCircle, Calendar } from 'lucide-react';
 import { Specialization, LanguageCode } from '../types';
+import { useAppStore } from '../store/useAppStore';
 
 interface CareTiersHeaderProps {
   onSelectCategory: (category: Specialization) => void;
@@ -12,6 +13,7 @@ export const CareTiersHeader: React.FC<CareTiersHeaderProps> = ({
   onSelectCategory,
   onOpenEmergency,
 }) => {
+  const { startDirectCall } = useAppStore();
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -76,13 +78,19 @@ export const CareTiersHeader: React.FC<CareTiersHeaderProps> = ({
               <span>Find Senior Doctor</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
-            <a
-              href="tel:108"
-              className="p-2 bg-amber-900/80 hover:bg-amber-950 text-white rounded-xl text-xs font-bold"
-              title="Emergency"
+            <button
+              onClick={() => startDirectCall({
+                name: '108 Rural Ambulance & Trauma',
+                phone: '108',
+                category: 'AMBULANCE',
+                targetUserId: 'DOC-01',
+                emergency: true,
+              })}
+              className="p-2 bg-amber-900/80 hover:bg-amber-950 text-white rounded-xl text-xs font-bold cursor-pointer"
+              title="Emergency Call Inside Medora"
             >
               <Phone className="w-4 h-4" />
-            </a>
+            </button>
           </div>
         </div>
 
@@ -133,14 +141,20 @@ export const CareTiersHeader: React.FC<CareTiersHeaderProps> = ({
               <span>Find Gynecologist</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
-            <a
-              href="tel:102"
-              className="p-2 bg-rose-900/80 hover:bg-rose-950 text-white rounded-xl text-xs font-bold flex items-center gap-1"
-              title="Janani Shishu 102"
+            <button
+              onClick={() => startDirectCall({
+                name: '102 Janani Shishu Express',
+                phone: '102',
+                category: 'AMBULANCE',
+                targetUserId: 'DOC-01',
+                emergency: true,
+              })}
+              className="p-2 bg-rose-900/80 hover:bg-rose-950 text-white rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer"
+              title="Janani Shishu 102 In-App Call"
             >
               <Phone className="w-4 h-4" />
               <span className="text-[10px] font-mono">102</span>
-            </a>
+            </button>
           </div>
         </div>
 
@@ -191,13 +205,19 @@ export const CareTiersHeader: React.FC<CareTiersHeaderProps> = ({
               <span>Find Pediatrician</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
-            <a
-              href="tel:108"
-              className="p-2 bg-sky-900/80 hover:bg-sky-950 text-white rounded-xl text-xs font-bold"
-              title="Emergency"
+            <button
+              onClick={() => startDirectCall({
+                name: '108 Rural Pediatric Emergency',
+                phone: '108',
+                category: 'AMBULANCE',
+                targetUserId: 'DOC-01',
+                emergency: true,
+              })}
+              className="p-2 bg-sky-900/80 hover:bg-sky-950 text-white rounded-xl text-xs font-bold cursor-pointer"
+              title="Pediatric Emergency Call Inside Medora"
             >
               <Phone className="w-4 h-4" />
-            </a>
+            </button>
           </div>
         </div>
       </div>
