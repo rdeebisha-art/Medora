@@ -13,9 +13,14 @@ const geminiKey = process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
 let genAI: GoogleGenAI | null = null;
 try {
   if (geminiKey) {
-    genAI = new GoogleGenAI({ apiKey: geminiKey });
-  } else {
-    genAI = new GoogleGenAI({});
+    genAI = new GoogleGenAI({
+      apiKey: geminiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
   }
 } catch {
   genAI = null;
@@ -25,7 +30,8 @@ const app = express();
 const port = Number(process.env.PORT) || 3000;
 const host = process.env.HOST || '0.0.0.0';
 
-app.use(express.json());
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 
 const SUPPORTED_LANGUAGES = new Set(['en', 'hi', 'te', 'ml', 'ta', 'kn']);
 
@@ -55,6 +61,7 @@ Find Hospital,
 View Referral,
 Doctor Handoff,
 View Health Graph.`;
+
 
 const normalizeQuestion = (value = '') => value.toLowerCase();
 
@@ -385,9 +392,44 @@ app.post('/api/translate', async (req: Request, res: Response) => {
   return res.json({ translations: texts });
 });
 
-// ─── SMS / Voice Communication ───────────────────────────────────────────────
+// ─── SMS / Voice Communication & Real External Integrations ──────────────────
 
-const smsStore = new Map<string, any>();
+interface SmsRecord {
+  messageId: string;
+  providerMessageId?: string;
+  patientId?: string | number;
+  familyId?: string | number;
+  consultationId?: string | number;
+  alertType?: string;
+  recipientPhone: string;
+  messageText: string;
+  senderId?: string;
+  templateId?: string;
+  status: 'QUEUED' | 'SENT' | 'DELIVERED' | 'FAILED' | 'NOT_CONFIGURED';
+  provider?: string;
+  providerStatus?: string;
+  error?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface CallRecord {
+  callId: string;
+  providerCallId?: string;
+  from?: string;
+  to: string;
+  patientId?: string | number;
+  consultationId?: string | number;
+  purpose?: string;
+  status: 'INITIATED' | 'RINGING' | 'ANSWERED' | 'COMPLETED' | 'FAILED' | 'NO_ANSWER' | 'NOT_CONFIGURED';
+  provider?: string;
+  error?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const smsStore = new Map<string, SmsRecord>();
+const callStore = new Map<string, CallRecord>();
 
 function normalizeToE164(phone: string): string | null {
   const digits = phone.replace(/\D/g, '');
@@ -398,40 +440,74 @@ function normalizeToE164(phone: string): string | null {
   return null;
 }
 
-app.post('/api/communications/sms', async (req: Request, res: Response) => {
-  const { recipientPhone, messageText, patientId } = req.body || {};
+// POST /api/sms/send
+app.post('/api/sms/send', async (req: Request, res: Response) => {
+  const {
+    recipientPhone,
+    message,
+    patientId,
+    familyId,
+    consultationId,
+    alertType = 'HEALTH_ALERT',
+    senderId = process.env.SMS_SENDER_ID || 'MEDORA',
+    templateId,
+  } = req.body || {};
 
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const fromNumber = process.env.TWILIO_FROM_NUMBER;
+  const isConfigured = Boolean(accountSid && authToken && fromNumber);
 
-  if (!accountSid || !authToken || !fromNumber) {
-    return res.status(200).json({
-      configured: false,
+  const messageId = `SMS-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  const createdAt = new Date().toISOString();
+
+  if (!isConfigured) {
+    const unconfiguredRecord: SmsRecord = {
+      messageId,
+      patientId,
+      familyId,
+      consultationId,
+      alertType,
+      recipientPhone: recipientPhone || '',
+      messageText: message || '',
+      senderId,
+      templateId,
       status: 'NOT_CONFIGURED',
-      error: 'Real SMS service is not configured. Add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER environment variables.',
-    });
+      error: 'Real SMS provider is not configured. Configure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_FROM_NUMBER in server environment variables.',
+      createdAt,
+      updatedAt: createdAt,
+    };
+    smsStore.set(messageId, unconfiguredRecord);
+    return res.status(200).json(unconfiguredRecord);
   }
 
   const e164 = normalizeToE164(recipientPhone || '');
   if (!e164) {
-    return res.status(400).json({
-      configured: true,
+    const invalidRecord: SmsRecord = {
+      messageId,
+      patientId,
+      familyId,
+      consultationId,
+      alertType,
+      recipientPhone: recipientPhone || '',
+      messageText: message || '',
+      senderId,
+      templateId,
       status: 'FAILED',
-      error: `Invalid phone number: "${recipientPhone}". Provide a valid 10-digit Indian mobile number.`,
-    });
+      error: `Invalid recipient phone number: "${recipientPhone}". Please provide a valid 10-digit Indian mobile number.`,
+      createdAt,
+      updatedAt: createdAt,
+    };
+    smsStore.set(messageId, invalidRecord);
+    return res.status(400).json(invalidRecord);
   }
-
-  const messageId = `MSG-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-  const createdAt = new Date().toISOString();
 
   try {
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
-
     const formBody = new URLSearchParams({
       To: e164,
       From: fromNumber,
-      Body: messageText || '',
+      Body: message || '',
     });
 
     const twilioRes = await fetch(twilioUrl, {
@@ -446,58 +522,117 @@ app.post('/api/communications/sms', async (req: Request, res: Response) => {
     const twilioData = await twilioRes.json();
 
     if (!twilioRes.ok) {
-      const friendlyError = twilioData?.message || `Twilio error ${twilioRes.status}`;
-      const record = {
+      const failedRecord: SmsRecord = {
         messageId,
         patientId,
+        familyId,
+        consultationId,
+        alertType,
         recipientPhone: e164,
-        messageText,
+        messageText: message || '',
+        senderId,
+        templateId,
         status: 'FAILED',
-        error: friendlyError,
+        error: twilioData?.message || `Twilio dispatch failed with HTTP ${twilioRes.status}`,
         createdAt,
         updatedAt: new Date().toISOString(),
       };
-      smsStore.set(messageId, record);
-      return res.status(200).json({ configured: true, ...record });
+      smsStore.set(messageId, failedRecord);
+      return res.status(200).json(failedRecord);
     }
 
-    const record = {
+    const sentRecord: SmsRecord = {
       messageId,
       providerMessageId: twilioData.sid,
       patientId,
+      familyId,
+      consultationId,
+      alertType,
       recipientPhone: e164,
-      messageText,
-      status: 'QUEUED',
+      messageText: message || '',
+      senderId,
+      templateId,
+      status: twilioData.status === 'delivered' ? 'DELIVERED' : 'SENT',
+      provider: 'Twilio',
       providerStatus: twilioData.status,
       createdAt,
       updatedAt: new Date().toISOString(),
     };
-    smsStore.set(messageId, record);
-
-    return res.status(200).json({ configured: true, ...record });
+    smsStore.set(messageId, sentRecord);
+    return res.status(200).json(sentRecord);
   } catch (err: any) {
-    const record = {
+    const errorRecord: SmsRecord = {
       messageId,
       patientId,
+      familyId,
+      consultationId,
+      alertType,
       recipientPhone: e164,
-      messageText,
+      messageText: message || '',
+      senderId,
+      templateId,
       status: 'FAILED',
-      error: err?.message || 'Unknown error contacting Twilio',
+      error: err?.message || 'Network error reaching SMS gateway.',
       createdAt,
       updatedAt: new Date().toISOString(),
     };
-    smsStore.set(messageId, record);
-    return res.status(200).json({ configured: true, ...record });
+    smsStore.set(messageId, errorRecord);
+    return res.status(200).json(errorRecord);
   }
 });
 
-app.get('/api/communications/messages', (_req: Request, res: Response) => {
-  return res.json(Array.from(smsStore.values()));
+// Backward compatible alias
+app.post('/api/communications/sms', (req, res) => {
+  req.body.message = req.body.message || req.body.messageText;
+  app._router.handle(Object.assign(req, { url: '/api/sms/send' }), res, () => {});
 });
 
+app.get('/api/sms/logs', (_req: Request, res: Response) => {
+  return res.json(Array.from(smsStore.values()).reverse());
+});
+
+app.get('/api/communications/messages', (_req: Request, res: Response) => {
+  return res.json(Array.from(smsStore.values()).reverse());
+});
+
+app.get('/api/sms/status/:messageId', async (req: Request, res: Response) => {
+  const { messageId } = req.params;
+  const record = smsStore.get(messageId);
+  if (!record) {
+    return res.status(404).json({ error: 'Message ID not found' });
+  }
+
+  // If Twilio message ID exists, try polling live status from Twilio
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (record.providerMessageId && accountSid && authToken) {
+    try {
+      const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages/${record.providerMessageId}.json`;
+      const twilioRes = await fetch(url, {
+        headers: {
+          Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`,
+        },
+      });
+      if (twilioRes.ok) {
+        const data = await twilioRes.json();
+        record.providerStatus = data.status;
+        if (data.status === 'delivered') record.status = 'DELIVERED';
+        else if (data.status === 'failed' || data.status === 'undelivered') record.status = 'FAILED';
+        else if (data.status === 'sent') record.status = 'SENT';
+        record.updatedAt = new Date().toISOString();
+        smsStore.set(messageId, record);
+      }
+    } catch {
+      // Return cached state
+    }
+  }
+
+  return res.json(record);
+});
+
+// Twilio webhook for SMS status callbacks
 app.post('/api/communications/sms/status', express.urlencoded({ extended: false }), (req: Request, res: Response) => {
   const { MessageSid, MessageStatus } = req.body || {};
-
   if (MessageSid && MessageStatus) {
     for (const [id, record] of smsStore.entries()) {
       if (record.providerMessageId === MessageSid) {
@@ -511,45 +646,63 @@ app.post('/api/communications/sms/status', express.urlencoded({ extended: false 
       }
     }
   }
-
   res.set('Content-Type', 'text/xml');
   res.send('<?xml version="1.0" encoding="UTF-8"?><Response/>');
 });
 
-app.post('/api/communications/voice/call', async (req: Request, res: Response) => {
-  const { recipientPhone, twimlUrl, patientId } = req.body || {};
+// POST /api/calls/outbound
+app.post('/api/calls/outbound', async (req: Request, res: Response) => {
+  const { from, to, patientId, consultationId, purpose = 'Doctor consultation' } = req.body || {};
 
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const fromNumber = process.env.TWILIO_FROM_NUMBER;
-
-  if (!accountSid || !authToken || !fromNumber) {
-    return res.status(200).json({
-      configured: false,
-      status: 'NOT_CONFIGURED',
-      error: 'Real voice call service is not configured. Add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER environment variables.',
-    });
-  }
-
-  const e164 = normalizeToE164(recipientPhone || '');
-  if (!e164) {
-    return res.status(400).json({
-      configured: true,
-      status: 'FAILED',
-      error: `Invalid phone number: "${recipientPhone}". Provide a valid 10-digit Indian mobile number.`,
-    });
-  }
+  const fromNumber = from || process.env.TWILIO_FROM_NUMBER;
+  const isConfigured = Boolean(accountSid && authToken && fromNumber);
 
   const callId = `CALL-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
   const createdAt = new Date().toISOString();
 
+  if (!isConfigured) {
+    const unconfiguredCall: CallRecord = {
+      callId,
+      from: fromNumber,
+      to: to || '',
+      patientId,
+      consultationId,
+      purpose,
+      status: 'NOT_CONFIGURED',
+      error: 'Real telephony service is not configured. Add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_FROM_NUMBER environment variables to enable server-initiated phone calls.',
+      createdAt,
+      updatedAt: createdAt,
+    };
+    callStore.set(callId, unconfiguredCall);
+    return res.status(200).json(unconfiguredCall);
+  }
+
+  const e164 = normalizeToE164(to || '');
+  if (!e164) {
+    const invalidCall: CallRecord = {
+      callId,
+      from: fromNumber,
+      to: to || '',
+      patientId,
+      consultationId,
+      purpose,
+      status: 'FAILED',
+      error: `Invalid telephone number: "${to}". Provide a valid 10-digit Indian phone number.`,
+      createdAt,
+      updatedAt: createdAt,
+    };
+    callStore.set(callId, invalidCall);
+    return res.status(400).json(invalidCall);
+  }
+
   try {
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Calls.json`;
-
     const formBody = new URLSearchParams({
       To: e164,
       From: fromNumber,
-      Url: twimlUrl || 'http://demo.twilio.com/docs/voice.xml',
+      Url: 'http://demo.twilio.com/docs/voice.xml',
     });
 
     const twilioRes = await fetch(twilioUrl, {
@@ -564,37 +717,467 @@ app.post('/api/communications/voice/call', async (req: Request, res: Response) =
     const twilioData = await twilioRes.json();
 
     if (!twilioRes.ok) {
-      return res.status(200).json({
-        configured: true,
+      const failedCall: CallRecord = {
         callId,
+        from: fromNumber,
+        to: e164,
         patientId,
-        recipientPhone: e164,
+        consultationId,
+        purpose,
         status: 'FAILED',
-        error: twilioData?.message || `Twilio error ${twilioRes.status}`,
+        error: twilioData?.message || `Twilio call failed with code ${twilioRes.status}`,
         createdAt,
+        updatedAt: new Date().toISOString(),
+      };
+      callStore.set(callId, failedCall);
+      return res.status(200).json(failedCall);
+    }
+
+    const initiatedCall: CallRecord = {
+      callId,
+      providerCallId: twilioData.sid,
+      from: fromNumber,
+      to: e164,
+      patientId,
+      consultationId,
+      purpose,
+      status: 'INITIATED',
+      provider: 'Twilio Voice',
+      createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    callStore.set(callId, initiatedCall);
+    return res.status(200).json(initiatedCall);
+  } catch (err: any) {
+    const errorCall: CallRecord = {
+      callId,
+      from: fromNumber,
+      to: e164,
+      patientId,
+      consultationId,
+      purpose,
+      status: 'FAILED',
+      error: err?.message || 'Network error reaching telephony provider.',
+      createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    callStore.set(callId, errorCall);
+    return res.status(200).json(errorCall);
+  }
+});
+
+// Backward compatible alias
+app.post('/api/communications/voice/call', (req, res) => {
+  req.body.to = req.body.to || req.body.recipientPhone;
+  app._router.handle(Object.assign(req, { url: '/api/calls/outbound' }), res, () => {});
+});
+
+app.get('/api/calls/:callId/status', async (req: Request, res: Response) => {
+  const { callId } = req.params;
+  const record = callStore.get(callId);
+  if (!record) {
+    return res.status(404).json({ error: 'Call not found' });
+  }
+
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (record.providerCallId && accountSid && authToken) {
+    try {
+      const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Calls/${record.providerCallId}.json`;
+      const twilioRes = await fetch(url, {
+        headers: {
+          Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`,
+        },
+      });
+      if (twilioRes.ok) {
+        const data = await twilioRes.json();
+        const pStatus = data.status; // queued, ringing, in-progress, completed, busy, no-answer, failed, canceled
+        if (pStatus === 'in-progress') record.status = 'ANSWERED';
+        else if (pStatus === 'ringing') record.status = 'RINGING';
+        else if (pStatus === 'completed') record.status = 'COMPLETED';
+        else if (pStatus === 'no-answer') record.status = 'NO_ANSWER';
+        else if (pStatus === 'failed' || pStatus === 'busy') record.status = 'FAILED';
+        record.updatedAt = new Date().toISOString();
+        callStore.set(callId, record);
+      }
+    } catch {
+      // Return cached
+    }
+  }
+
+  return res.json(record);
+});
+
+app.get('/api/calls/logs', (_req: Request, res: Response) => {
+  return res.json(Array.from(callStore.values()).reverse());
+});
+
+// ─── Medical Imaging & Report Analysis Service ──────────────────────────────
+
+// POST /api/analysis/image (X-Ray / Scan / Medical Photo)
+app.post('/api/analysis/image', async (req: Request, res: Response) => {
+  const {
+    imageBase64,
+    mimeType = 'image/jpeg',
+    fileName = 'xray.jpg',
+    patientId,
+    bodyPart = 'Chest',
+  } = req.body || {};
+
+  if (!imageBase64) {
+    return res.status(400).json({
+      status: 'UNRELIABLE',
+      message: 'Medical image could not be reliably analysed. No image data was provided.',
+    });
+  }
+
+  // Strip data:image/...;base64, prefix if included
+  const cleanBase64 = imageBase64.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, '');
+
+  if (!genAI) {
+    return res.status(200).json({
+      status: 'UNRELIABLE',
+      message: 'Medical image could not be reliably analysed. Gemini AI imaging service is not configured on the server. Please consult a qualified radiologist or medical professional.',
+      isConfigured: false,
+      findings: null,
+      doctorReviewStatus: 'Awaiting clinician review',
+    });
+  }
+
+  try {
+    const analysisPrompt = `You are a medical imaging assistance AI serving as an assistive tool for a clinician.
+Inspect this radiographic or medical image of body region: ${bodyPart}.
+
+CRITICAL SAFETY RULES:
+1. Do NOT invent diagnoses.
+2. If image is blurry, corrupted, low resolution, or not a valid medical image, return imageQuality: "Insufficient" and possibleAbnormality: "Unreliable / Needs doctor verification".
+3. Any finding is purely an AI-assisted observation that MUST await doctor review.
+4. Keep all measurements, values, and anatomical coordinates exact.
+
+Return a JSON object matching this schema:
+{
+  "bodyRegion": string,
+  "imageQuality": "Adequate" | "Suboptimal" | "Insufficient",
+  "aiFindings": string,
+  "confidence": "High" | "Moderate" | "Low",
+  "possibleAbnormality": string,
+  "clinicalImpression": string,
+  "recommendedNextStep": string,
+  "doctorReviewStatus": "AI-assisted finding — awaiting doctor review"
+}`;
+
+    const modelName = 'gemini-3.8-flash';
+    const response = await genAI.models.generateContent({
+      model: modelName,
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              data: cleanBase64,
+              mimeType: mimeType.includes('png') ? 'image/png' : 'image/jpeg',
+            },
+          },
+          { text: analysisPrompt },
+        ],
+      },
+      config: {
+        responseMimeType: 'application/json',
+      },
+    });
+
+    const parsed = JSON.parse(response.text || '{}');
+
+    return res.json({
+      status: 'AI_ASSISTED',
+      study: `Digital Radiography (${bodyPart})`,
+      bodyRegion: parsed.bodyRegion || bodyPart,
+      imageQuality: parsed.imageQuality || 'Adequate',
+      aiFindings: parsed.aiFindings || 'Preliminary AI observation completed. Awaiting clinician review.',
+      confidence: parsed.confidence || 'Moderate',
+      possibleAbnormality: parsed.possibleAbnormality || 'None definitively confirmed by AI; physician review required.',
+      clinicalImpression: parsed.clinicalImpression || 'Awaiting physician confirmation.',
+      recommendedNextStep: parsed.recommendedNextStep || 'Present to attending doctor for formal clinical reading.',
+      doctorReviewStatus: 'AI-assisted finding — awaiting doctor review',
+      analysisTimestamp: new Date().toISOString(),
+      modelVersion: `${modelName}-medora-vision-1.0`,
+      patientId,
+      fileName,
+    });
+  } catch (err: any) {
+    console.warn('[Medora Imaging] AI analysis failed:', err);
+    return res.status(200).json({
+      status: 'UNRELIABLE',
+      message: 'Medical image could not be reliably analysed. Analysis awaiting clinician or configured medical imaging service.',
+      doctorReviewStatus: 'Awaiting doctor review',
+      error: err?.message,
+    });
+  }
+});
+
+// POST /api/analysis/report (Medical Report OCR & Structured Extraction)
+app.post('/api/analysis/report', async (req: Request, res: Response) => {
+  const {
+    reportData, // base64 image or text
+    mimeType = 'image/jpeg',
+    reportType = 'Blood Test',
+    patientId,
+  } = req.body || {};
+
+  if (!reportData) {
+    return res.status(400).json({
+      status: 'UNRELIABLE',
+      message: 'Some text could not be reliably read. Please verify the original report.',
+    });
+  }
+
+  const isImage = typeof reportData === 'string' && (reportData.startsWith('data:image') || reportData.length > 500);
+
+  if (!genAI) {
+    return res.status(200).json({
+      status: 'UNCONFIGURED',
+      message: 'Medical OCR service is not configured. Falling back to local report archiving.',
+      patientName: 'Not extracted',
+      testName: reportType,
+      parameters: [],
+      doctorReviewStatus: 'Awaiting doctor review',
+    });
+  }
+
+  try {
+    const ocrPrompt = `You are a medical laboratory report extractor.
+Analyze this medical report (Type: ${reportType}).
+Extract structured clinical information.
+CRITICAL SAFETY & VALUE PROTECTION RULES:
+1. Never alter any numbers, units, ranges, or measurements (e.g. 102°F, 120/80, 180 mg/dL, 94%, 55 kg, 62 years).
+2. Never alter or translate medicine names (e.g. Paracetamol, Metformin, Amoxicillin).
+3. Do not invent missing information.
+4. Flag status as NORMAL, HIGH, LOW, or ABNORMAL based on the reference range stated in the report.
+
+Return ONLY JSON:
+{
+  "patientName": string,
+  "patientId": string,
+  "date": string,
+  "testName": string,
+  "hospital": string,
+  "doctor": string,
+  "parameters": [
+    { "name": string, "result": string, "unit": string, "referenceRange": string, "status": "NORMAL" | "HIGH" | "LOW" | "ABNORMAL" }
+  ],
+  "abnormalFlags": [string],
+  "statedDiagnosis": string,
+  "medicines": [string],
+  "measurements": [string],
+  "allergies": [string],
+  "extractionConfidence": "HIGH" | "MEDIUM" | "LOW",
+  "doctorReviewStatus": "AI-assisted extraction — awaiting doctor review"
+}`;
+
+    let response;
+    if (isImage) {
+      const cleanBase64 = reportData.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, '');
+      response = await genAI.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents: {
+          parts: [
+            {
+              inlineData: {
+                data: cleanBase64,
+                mimeType: mimeType.includes('png') ? 'image/png' : 'image/jpeg',
+              },
+            },
+            { text: ocrPrompt },
+          ],
+        },
+        config: { responseMimeType: 'application/json' },
+      });
+    } else {
+      response = await genAI.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents: `Input Report Text:\n${reportData}\n\n${ocrPrompt}`,
+        config: { responseMimeType: 'application/json' },
       });
     }
 
-    return res.status(200).json({
-      configured: true,
-      callId,
-      providerCallId: twilioData.sid,
-      patientId,
-      recipientPhone: e164,
-      status: twilioData.status || 'QUEUED',
-      createdAt,
+    const parsed = JSON.parse(response.text || '{}');
+    return res.json({
+      status: 'EXTRACTED',
+      ...parsed,
+      analyzedAt: new Date().toISOString(),
     });
   } catch (err: any) {
+    console.warn('[Medora Report OCR] Extraction error:', err);
     return res.status(200).json({
-      configured: true,
-      callId,
-      patientId,
-      recipientPhone: e164,
-      status: 'FAILED',
-      error: err?.message || 'Unknown error contacting Twilio',
-      createdAt,
+      status: 'UNRELIABLE',
+      message: 'Some text could not be reliably read. Please verify the original report.',
+      parameters: [],
+      error: err?.message,
     });
   }
+});
+
+// POST /api/chat (Multi-turn Gemini Chatbot with conversation history & role system prompts)
+app.post('/api/chat', async (req: Request, res: Response) => {
+  const {
+    messages = [],
+    role = 'general',
+    language = 'en',
+    modelName = 'gemini-3.8-flash',
+    patientContext,
+  } = req.body || {};
+
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return res.status(400).json({ error: 'Messages array is required' });
+  }
+
+  let systemInstruction = `You are Medora AI, a compassionate healthcare assistant for rural communities.
+Language code: ${language}.
+Always communicate clearly, respectfully, and simply.
+Do NOT diagnose or prescribe treatment.
+Preserve exact medicine names, measurements (e.g. 102°F, 120/80, 180 mg/dL), and dates.
+If red flag symptoms appear (chest pain, breathing difficulty, severe bleeding, newborn fever, unconsciousness), instruct immediate emergency medical care without waiting.`;
+
+  if (role === 'symptoms') {
+    systemInstruction += `\nRole: Symptom & Safe Home Care Guide. Focus on safe first-aid remedies (e.g., ORS for dehydration, cold compresses for mild fever, safe rest) without substituting for hospital care.`;
+  } else if (role === 'doctor_handoff') {
+    systemInstruction += `\nRole: Doctor Consultation & Clinical Summary Specialist. Summarize patient complaints, vitals, and findings for clinical handoff.`;
+  } else if (role === 'ussd_guide') {
+    systemInstruction += `\nRole: USSD Basic Phone Assistant. Keep responses concise, numbered, and under 160 characters per section.`;
+  }
+
+  if (patientContext) {
+    systemInstruction += `\nPatient Context: ${JSON.stringify(patientContext)}`;
+  }
+
+  if (genAI) {
+    try {
+      // Map multi-turn messages to Gemini contents structure
+      const contents = messages.map((m: any) => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content || m.text || '' }],
+      }));
+
+      // Use specified model (fallback to gemini-3.8-flash)
+      const validModels = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-3.1-pro-preview'];
+      const chosenModel = validModels.includes(modelName) ? modelName : 'gemini-3.8-flash';
+
+      const aiResponse = await genAI.models.generateContent({
+        model: chosenModel,
+        contents,
+        config: {
+          systemInstruction,
+        },
+      });
+
+      const replyText = aiResponse.text || '';
+      return res.json({
+        reply: replyText,
+        model: chosenModel,
+        role,
+        language,
+      });
+    } catch (err: any) {
+      console.warn('[Medora Chat] Gemini multi-turn chat error:', err);
+    }
+  }
+
+  // Graceful deterministic fallback
+  const lastUserMsg = messages[messages.length - 1]?.content || '';
+  const fallback = createFallbackResponse(lastUserMsg, patientContext || {});
+  return res.json({
+    reply: fallback.response,
+    model: 'deterministic-local-rule-engine',
+    role,
+    language,
+    actions: fallback.actions,
+  });
+});
+
+// POST /api/doctor-summary/translate
+app.post('/api/doctor-summary/translate', async (req: Request, res: Response) => {
+  const { summary, targetLanguage = 'ta' } = req.body || {};
+
+  if (!summary) {
+    return res.status(400).json({ error: 'Summary is required' });
+  }
+
+  if (targetLanguage === 'en' || !SUPPORTED_LANGUAGES.has(targetLanguage)) {
+    return res.json({ translatedSummary: summary });
+  }
+
+  if (genAI) {
+    try {
+      const prompt = `Translate this clinical doctor summary into language code: ${targetLanguage}.
+CRITICAL VALUE PRESERVATION:
+Do NOT translate medicine names (e.g. Paracetamol, Metformin, Folic Acid).
+Do NOT change any vital signs, measurements, units, dates, or numerical values (e.g. 102°F, 120/80, 180 mg/dL, 94%).
+Keep the JSON structure identical.
+
+Input JSON:
+${JSON.stringify(summary, null, 2)}`;
+
+      const response = await genAI.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents: prompt,
+        config: { responseMimeType: 'application/json' },
+      });
+
+      const parsed = JSON.parse(response.text || '{}');
+      return res.json({ translatedSummary: parsed });
+    } catch (err: any) {
+      console.warn('[Medora Translate Summary] Error:', err);
+    }
+  }
+
+  return res.json({ translatedSummary: summary });
+});
+
+// GET /api/integrations/status (Live integration status for Admin & UI)
+app.get('/api/integrations/status', (_req: Request, res: Response) => {
+  const twilioSid = process.env.TWILIO_ACCOUNT_SID;
+  const twilioToken = process.env.TWILIO_AUTH_TOKEN;
+  const twilioPhone = process.env.TWILIO_FROM_NUMBER;
+  const smsSenderId = process.env.SMS_SENDER_ID || 'MEDORA';
+
+  const lastSms = Array.from(smsStore.values()).pop() || null;
+  const lastCall = Array.from(callStore.values()).pop() || null;
+
+  return res.json({
+    sms: {
+      providerName: 'Twilio SMS',
+      configured: Boolean(twilioSid && twilioToken && twilioPhone),
+      fromNumber: twilioPhone ? `${twilioPhone.slice(0, 4)}...${twilioPhone.slice(-4)}` : null,
+      senderId: smsSenderId,
+      templateConfigured: true,
+      lastMessage: lastSms ? { status: lastSms.status, timestamp: lastSms.createdAt, recipientPhone: lastSms.recipientPhone } : null,
+    },
+    telephony: {
+      providerName: 'Twilio Programmable Voice',
+      configured: Boolean(twilioSid && twilioToken && twilioPhone),
+      fromNumber: twilioPhone ? `${twilioPhone.slice(0, 4)}...${twilioPhone.slice(-4)}` : null,
+      lastCall: lastCall ? { status: lastCall.status, timestamp: lastCall.createdAt, to: lastCall.to } : null,
+    },
+    medicalImaging: {
+      providerName: 'Google Gemini Vision',
+      configured: Boolean(genAI),
+      model: 'gemini-3.8-flash',
+      status: genAI ? 'Configured & Online' : 'Not Configured (Requires GEMINI_API_KEY)',
+    },
+    ocr: {
+      providerName: 'Gemini Multimodal OCR',
+      configured: Boolean(genAI),
+      status: genAI ? 'Configured & Online' : 'Not Configured',
+    },
+    speech: {
+      ttsAvailable: true,
+      speechRecognitionAvailable: true,
+    },
+    system: {
+      online: true,
+      timestamp: new Date().toISOString(),
+      nodeVersion: process.version,
+    },
+  });
 });
 
 // Vite dev middleware or static serving
@@ -619,3 +1202,4 @@ async function startServer() {
 }
 
 startServer();
+

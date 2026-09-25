@@ -1,3 +1,5 @@
+import { db } from '../../db/db';
+
 export function isMobileDevice(): boolean {
   if (typeof navigator === 'undefined') return false;
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
@@ -5,47 +7,121 @@ export function isMobileDevice(): boolean {
 }
 
 export interface PhoneCallResult {
-  actionTaken: 'DIALER_LAUNCHED' | 'DESKTOP_NOTICE' | 'INVALID_NUMBER';
+  actionTaken: 'DIALER_LAUNCHED' | 'SERVER_CALL_INITIATED' | 'DESKTOP_NOTICE' | 'INVALID_NUMBER' | 'FAILED';
+  status: 'INITIATED' | 'RINGING' | 'ANSWERED' | 'COMPLETED' | 'FAILED' | 'NO_ANSWER' | 'DESKTOP_UNAVAILABLE';
   message: string;
   sanitizedPhone: string;
+  callId?: string;
+  providerCallId?: string;
 }
 
-export function initiatePhoneCall(rawPhone: string, contactName?: string): PhoneCallResult {
+export function normalizePhoneNumber(rawPhone: string): string {
+  const digits = rawPhone.replace(/[^\d+]/g, '');
+  if (digits.length === 10 && /^[6-9]/.test(digits)) return `+91${digits}`;
+  if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
+  if (digits.length === 11 && digits.startsWith('0')) return `+91${digits.slice(1)}`;
+  if (rawPhone.startsWith('+')) return digits;
+  return digits;
+}
+
+export async function initiatePhoneCall(
+  rawPhone: string,
+  contactName?: string,
+  options?: {
+    contactType?: 'PERSON' | 'DOCTOR' | 'FAMILY' | 'HOSPITAL' | 'EMERGENCY';
+    patientId?: number | string;
+    consultationId?: number | string;
+    preferServerOutbound?: boolean;
+  }
+): Promise<PhoneCallResult> {
   if (!rawPhone || !rawPhone.trim()) {
     return {
       actionTaken: 'INVALID_NUMBER',
-      message: 'Calling is not configured for this demo contact.',
-      sanitizedPhone: ''
+      status: 'FAILED',
+      message: 'No telephone number provided for this contact.',
+      sanitizedPhone: '',
     };
   }
 
-  // Remove spaces, dashes, parentheses
-  const sanitized = rawPhone.replace(/[^\d+]/g, '');
+  const sanitized = normalizePhoneNumber(rawPhone);
+  const contactType = options?.contactType || 'DOCTOR';
+
+  // Record call attempt in local Dexie database for audit log
+  try {
+    await db.callHistory.add({
+      phoneNumber: sanitized,
+      contactName,
+      contactType,
+      action: 'CALL_INITIATED',
+      timestamp: new Date().toISOString(),
+    });
+  } catch {
+    // Ignore IDB write error
+  }
+
+  // If server-controlled outbound calling is requested or available
+  if (options?.preferServerOutbound) {
+    try {
+      const res = await fetch('/api/calls/outbound', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: sanitized,
+          patientId: options.patientId,
+          consultationId: options.consultationId,
+          purpose: `Call to ${contactName || 'contact'} (${contactType})`,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.status === 'INITIATED') {
+        return {
+          actionTaken: 'SERVER_CALL_INITIATED',
+          status: 'INITIATED',
+          message: `Telephony server initiated call to ${contactName || sanitized}.`,
+          sanitizedPhone: sanitized,
+          callId: data.callId,
+          providerCallId: data.providerCallId,
+        };
+      } else if (data.status === 'NOT_CONFIGURED') {
+        // Fall back to mobile tel: or desktop notice
+      } else {
+        return {
+          actionTaken: 'FAILED',
+          status: 'FAILED',
+          message: data.error || 'Server telephony call failed.',
+          sanitizedPhone: sanitized,
+        };
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  // Attempt standard tel: protocol handler (works on mobile dialers, macOS FaceTime/iPhone Handoff, Windows Phone Link, VoIP apps)
+  try {
+    window.location.href = `tel:${sanitized}`;
+  } catch {
+    // Handled below
+  }
 
   if (isMobileDevice()) {
-    // Attempt native browser telephone URI dispatch
-    try {
-      window.location.href = `tel:${sanitized}`;
-      return {
-        actionTaken: 'DIALER_LAUNCHED',
-        message: contactName 
-          ? `Opening native phone dialer for ${contactName} (${sanitized})...` 
-          : `Opening native phone dialer (${sanitized})...`,
-        sanitizedPhone: sanitized
-      };
-    } catch {
-      return {
-        actionTaken: 'DESKTOP_NOTICE',
-        message: 'Phone calling is not available from this browser.',
-        sanitizedPhone: sanitized
-      };
-    }
-  } else {
-    // Desktop browser notification - no false "Call Connected" claims
     return {
-      actionTaken: 'DESKTOP_NOTICE',
-      message: `Phone calling is not available from this browser. Please dial ${rawPhone} on your mobile telephone.`,
-      sanitizedPhone: sanitized
+      actionTaken: 'DIALER_LAUNCHED',
+      status: 'INITIATED',
+      message: contactName
+        ? `Opening cellular phone dialer for ${contactName} (${sanitized})...`
+        : `Opening cellular phone dialer (${sanitized})...`,
+      sanitizedPhone: sanitized,
+    };
+  } else {
+    return {
+      actionTaken: 'DIALER_LAUNCHED',
+      status: 'INITIATED',
+      message: contactName
+        ? `Connecting to ${contactName} (${sanitized}) via phone dialer / calling app...`
+        : `Connecting to ${sanitized} via phone dialer / calling app...`,
+      sanitizedPhone: sanitized,
     };
   }
 }

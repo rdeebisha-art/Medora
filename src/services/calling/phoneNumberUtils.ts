@@ -87,32 +87,51 @@ export function normalizePhoneNumber(input: string): NormalizedPhoneResult {
   };
 }
 
+export function isMobileBrowser(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+    (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches && 'ontouchstart' in window);
+}
+
 /**
- * Initiates native phone dialer via tel: URI
+ * Initiates native phone dialer via tel: URI on mobile, or desktop advisory
  * Returns status indicating whether action was dispatched
  */
-export function callPhoneNumber(phoneNumber: string): { success: boolean; message: string; telUri?: string } {
+export function callPhoneNumber(phoneNumber: string): { success: boolean; message: string; telUri?: string; actionTaken: string } {
   const result = normalizePhoneNumber(phoneNumber);
 
   if (!result.isValid || !result.telUri) {
     return {
       success: false,
       message: result.error || 'Please enter a valid phone number.',
+      actionTaken: 'INVALID_NUMBER',
     };
   }
 
-  try {
-    // Hand off to device native dialer via tel: URI
-    window.location.href = result.telUri;
-    return {
-      success: true,
-      message: 'Opening your phone app...',
-      telUri: result.telUri,
-    };
-  } catch (err: any) {
+  if (isMobileBrowser()) {
+    try {
+      // Hand off to device native dialer via tel: URI
+      window.location.href = result.telUri;
+      return {
+        success: true,
+        message: `Opening phone dialer for ${result.normalized}...`,
+        telUri: result.telUri,
+        actionTaken: 'DIALER_LAUNCHED',
+      };
+    } catch {
+      return {
+        success: false,
+        message: 'Could not open phone dialer on this device.',
+        actionTaken: 'FAILED',
+      };
+    }
+  } else {
     return {
       success: false,
-      message: 'Could not open phone dialer on this device.',
+      message: `This device cannot place a cellular call. Use a supported calling application or dial ${result.normalized} on your mobile phone.`,
+      telUri: result.telUri,
+      actionTaken: 'DESKTOP_NOTICE',
     };
   }
 }
+

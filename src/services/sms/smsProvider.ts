@@ -1,84 +1,73 @@
-import { SmsProvider, SmsMessageRecord, SmsDeliveryStatus } from './smsTypes';
+import { SmsSendPayload, SmsResponseData } from './smsStatus';
+import { smsQueue } from './smsQueue';
 import { db } from '../../db/db';
 
-export class LocalSmsProvider implements SmsProvider {
-  private memoryOutbox = new Map<string, SmsMessageRecord>();
+export interface ISmsProvider {
+  isOnline(): boolean;
+  send(payload: SmsSendPayload): Promise<SmsResponseData>;
+  getStatus(messageId: string): Promise<SmsResponseData | null>;
+  getHistory(): Promise<SmsResponseData[]>;
+}
 
+export class ConfiguredTwilioSmsProvider implements ISmsProvider {
   public isOnline(): boolean {
-    return navigator.onLine;
+    return typeof navigator !== 'undefined' ? navigator.onLine : true;
   }
 
-  public async sendSMS(
-    recipientPhone: string,
-    messageText: string,
-    patientId?: number,
-    language = 'en'
-  ): Promise<SmsMessageRecord> {
-    const messageId = `SMS-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    const isOnline = navigator.onLine;
+  public async send(payload: SmsSendPayload): Promise<SmsResponseData> {
+    if (!this.isOnline()) {
+      return smsQueue.enqueueOffline(payload);
+    }
 
-    const initialStatus: SmsDeliveryStatus = isOnline ? 'Queued' : 'Pending Sync';
-
-    const record: SmsMessageRecord = {
-      messageId,
-      recipientPhone,
-      messageText,
-      patientId,
-      language,
-      status: initialStatus,
-      isOfflineQueued: !isOnline,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    this.memoryOutbox.set(messageId, record);
-
-    // Save to Dexie smsOutbox
     try {
-      await db.smsOutbox.add({
-        toPhone: recipientPhone,
-        message: messageText,
-        type: 'HEALTH_UPDATE',
-        language,
-        status: isOnline ? 'pending' : 'PENDING_OFFLINE',
-        createdAt: new Date().toISOString()
+      const res = await fetch('/api/sms/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
+
+      const data: SmsResponseData = await res.json();
+
+      // Record in Dexie smsOutbox for persistent local records
+      try {
+        await db.smsOutbox.add({
+          toPhone: payload.recipientPhone,
+          message: payload.message,
+          type: payload.alertType || 'HEALTH_ALERT',
+          language: payload.language || 'en',
+          status: data.status === 'SENT' || data.status === 'DELIVERED' ? 'sent' : data.status === 'NOT_CONFIGURED' ? 'pending' : 'failed',
+          createdAt: new Date().toISOString(),
+        });
+      } catch {
+        // IDB fallback
+      }
+
+      return data;
+    } catch (err: any) {
+      // If network fails while online, enqueue offline
+      return smsQueue.enqueueOffline(payload);
+    }
+  }
+
+  public async getStatus(messageId: string): Promise<SmsResponseData | null> {
+    try {
+      const res = await fetch(`/api/sms/status/${messageId}`);
+      if (!res.ok) return null;
+      return await res.json();
     } catch {
-      // IndexedDB fallback
+      return null;
     }
-
-    if (isOnline) {
-      // Simulate asynchronous delivery transitions
-      setTimeout(() => {
-        const item = this.memoryOutbox.get(messageId);
-        if (item && item.status === 'Queued') {
-          item.status = 'Sending';
-          item.updatedAt = new Date().toISOString();
-          this.memoryOutbox.set(messageId, item);
-        }
-      }, 1200);
-
-      setTimeout(() => {
-        const item = this.memoryOutbox.get(messageId);
-        if (item && item.status === 'Sending') {
-          item.status = 'Delivered';
-          item.updatedAt = new Date().toISOString();
-          this.memoryOutbox.set(messageId, item);
-        }
-      }, 3500);
-    }
-
-    return record;
   }
 
-  public async getDeliveryStatus(messageId: string): Promise<SmsDeliveryStatus> {
-    const item = this.memoryOutbox.get(messageId);
-    return item ? item.status : 'Queued';
-  }
-
-  public async getOutbox(): Promise<SmsMessageRecord[]> {
-    return Array.from(this.memoryOutbox.values());
+  public async getHistory(): Promise<SmsResponseData[]> {
+    try {
+      const res = await fetch('/api/sms/logs');
+      if (!res.ok) return [];
+      return await res.json();
+    } catch {
+      return [];
+    }
   }
 }
 
-export const activeSmsProvider: SmsProvider = new LocalSmsProvider();
+export const activeSmsProvider: ISmsProvider = new ConfiguredTwilioSmsProvider();

@@ -341,6 +341,27 @@ export interface UssdMessageRecord {
   timestamp: string;
 }
 
+export interface UploadedDocument {
+  id?: number;
+  documentId: string;
+  patientId: number | string;
+  consultationId?: number | string;
+  documentType: 'xray' | 'report' | 'prescription' | 'scan' | 'dicom' | 'other';
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  uploadedAt: string;
+  source: 'PATIENT_UPLOAD' | 'CLINIC_SCAN' | 'LAB_IMPORT' | 'DOCTOR_ENTRY';
+  storageReference?: string;
+  fileData?: string;
+  extractedText?: string;
+  extractionConfidence?: 'HIGH' | 'MEDIUM' | 'LOW' | 'UNRELIABLE';
+  analysisStatus: 'PENDING' | 'AI_ASSISTED' | 'DOCTOR_CONFIRMED' | 'UNRELIABLE' | 'REJECTED';
+  structuredData?: Record<string, any>;
+  doctorNotes?: string;
+  doctorConfirmedDiagnosis?: string;
+}
+
 export class MedoraDB extends Dexie {
   patients!: Table<Patient, number>;
   families!: Table<Family, number>;
@@ -368,6 +389,7 @@ export class MedoraDB extends Dexie {
   callHistory!: Table<CallHistoryRecord, number>;
   ussdSessions!: Table<UssdSessionRecord, number>;
   ussdMessages!: Table<UssdMessageRecord, number>;
+  uploadedDocuments!: Table<UploadedDocument, number>;
 
   constructor() {
     super('MedoraDB');
@@ -402,6 +424,9 @@ export class MedoraDB extends Dexie {
       callHistory: '++id, phoneNumber, contactType, action, timestamp',
       ussdSessions: '++id, ussdSessionId, patientId, language, lastUpdated',
       ussdMessages: '++id, sessionId, timestamp, role',
+    });
+    this.version(4).stores({
+      uploadedDocuments: '++id, documentId, patientId, consultationId, documentType, analysisStatus, uploadedAt',
     });
   }
 }

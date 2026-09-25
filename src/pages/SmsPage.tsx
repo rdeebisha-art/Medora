@@ -4,8 +4,9 @@ import { useAppStore } from '../store/useAppStore';
 import { db, SmsOutbox } from '../db/db';
 import Layout from '../components/Layout';
 import DemoDataBadge from '../components/DemoDataBadge';
-import { activeSmsProvider } from '../services/sms/smsProvider';
-import { SmsDeliveryStatus } from '../services/sms/smsTypes';
+import { smsService } from '../services/sms/smsService';
+import { SmsPreviewModal } from '../components/SmsPreviewModal';
+import { SmsSendPayload } from '../services/sms/smsStatus';
 import { Send, Clock, CheckCircle2, AlertCircle, RefreshCw, MessageSquare } from 'lucide-react';
 
 const MSG_TYPES = ['doctor_summary', 'emergency_alert', 'appointment', 'medicine_reminder', 'vaccination', 'family_alert', 'hospital_info'];
@@ -23,39 +24,58 @@ export default function SmsPage() {
   const [form, setForm] = useState({ toPhone: '', type: 'family_alert', language: language, message: '' });
   const [refresh, setRefresh] = useState(0);
 
+  // SMS Preview Modal
+  const [previewPayload, setPreviewPayload] = useState<SmsSendPayload | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
   useEffect(() => {
     db.smsOutbox.orderBy('createdAt').reverse().toArray().then(setMessages);
   }, [refresh]);
 
-  const handleSend = async () => {
+  const handleOpenPreview = () => {
     if (!form.toPhone || !form.message) return;
-
-    await activeSmsProvider.sendSMS(form.toPhone, form.message, currentUser?.id, form.language);
-
-    setForm({ toPhone: '', type: 'family_alert', language: language, message: '' });
+    setPreviewPayload({
+      recipientPhone: form.toPhone,
+      message: form.message,
+      patientId: currentUser?.id,
+      alertType: form.type,
+      language: form.language,
+    });
     setShowCompose(false);
+    setIsPreviewOpen(true);
+  };
+
+  const handlePreviewSent = () => {
+    setForm({ toPhone: '', type: 'family_alert', language: language, message: '' });
     setRefresh((r) => r + 1);
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Delivered':
+      case 'DELIVERED':
         return <span className="bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle2 size={10} /> Delivered</span>;
       case 'Sent':
+      case 'SENT':
         return <span className="bg-blue-950/80 text-blue-300 border border-blue-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle2 size={10} /> Sent</span>;
-      case 'Sending':
-        return <span className="bg-teal-950/80 text-teal-300 border border-teal-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse"><RefreshCw size={10} /> Sending</span>;
       case 'Queued':
+      case 'QUEUED':
+      case 'pending':
         return <span className="bg-amber-950/80 text-amber-300 border border-amber-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><Clock size={10} /> Queued</span>;
       case 'Pending Sync':
       case 'PENDING_OFFLINE':
+      case 'PENDING_SYNC':
         return <span className="bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><Clock size={10} /> Pending Sync</span>;
       case 'Failed':
+      case 'FAILED':
         return <span className="bg-red-950/80 text-red-300 border border-red-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"><AlertCircle size={10} /> Failed</span>;
+      case 'NOT_CONFIGURED':
+        return <span className="bg-amber-900/60 text-amber-300 border border-amber-600/60 text-[10px] font-bold px-2 py-0.5 rounded-full">Not Configured</span>;
       default:
         return <span className="bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full">{status}</span>;
     }
   };
+
 
   return (
     <Layout>
@@ -186,17 +206,28 @@ export default function SmsPage() {
                 </div>
 
                 <button
-                  onClick={handleSend}
+                  onClick={handleOpenPreview}
                   className="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-teal-900/40 active:scale-95 transition-all"
                 >
                   <Send size={14} />
-                  <span>Queue in Outbox</span>
+                  <span>Preview & Send SMS</span>
                 </button>
               </div>
             </div>
           </div>
         )}
+
+        {previewPayload && (
+          <SmsPreviewModal
+            isOpen={isPreviewOpen}
+            onClose={() => setIsPreviewOpen(false)}
+            payload={previewPayload}
+            purpose={previewPayload.alertType?.replace('_', ' ') || 'Health Alert'}
+            onSentSuccess={handlePreviewSent}
+          />
+        )}
       </div>
     </Layout>
+
   );
 }

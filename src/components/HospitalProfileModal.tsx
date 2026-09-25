@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, Building2, Phone, ExternalLink, Navigation, CheckCircle, Stethoscope, HeartPulse, ShieldCheck, MapPin } from 'lucide-react';
 import { Hospital, Doctor, LanguageCode } from '../types';
 import { TRANSLATIONS } from '../i18n/translations';
+import { initiatePhoneCall } from '../services/telephony/phoneCallHelper';
 
 interface HospitalProfileModalProps {
   hospital: Hospital | null;
@@ -26,6 +27,14 @@ export const HospitalProfileModal: React.FC<HospitalProfileModalProps> = ({
 }) => {
   if (!hospital) return null;
   const t = TRANSLATIONS[currentLang];
+  const [callFeedback, setCallFeedback] = useState<string | null>(null);
+
+  const handleCall = async () => {
+    if (!hospital.phone) return;
+    const res = await initiatePhoneCall(hospital.phone, hospital.name, { contactType: 'HOSPITAL' });
+    setCallFeedback(res.message);
+    setTimeout(() => setCallFeedback(null), 4500);
+  };
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
@@ -184,17 +193,25 @@ export const HospitalProfileModal: React.FC<HospitalProfileModalProps> = ({
           </div>
         </div>
 
+        {/* Call Feedback Banner */}
+        {callFeedback && (
+          <div className="bg-emerald-900 text-emerald-100 px-4 py-2 text-xs font-semibold flex items-center justify-between border-b border-emerald-700 animate-in fade-in">
+            <span>{callFeedback}</span>
+            <button onClick={() => setCallFeedback(null)} className="text-emerald-300 hover:text-white text-xs font-bold ml-2">Dismiss</button>
+          </div>
+        )}
+
         {/* Footer Actions */}
         <div className="p-4 bg-slate-100 border-t border-slate-200 shrink-0">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
             {/* Call */}
-            <a
-              href={`tel:${hospital.phone.replace(/[^0-9]/g, '')}`}
-              className="py-2.5 px-3 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-colors"
+            <button
+              onClick={handleCall}
+              className="py-2.5 px-3 bg-emerald-100 hover:bg-emerald-200 text-emerald-950 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-colors shadow-xs active:scale-95"
             >
-              <Phone className="w-3.5 h-3.5 text-emerald-600" />
+              <Phone className="w-3.5 h-3.5 text-emerald-700" />
               <span>{t.callHospital}</span>
-            </a>
+            </button>
 
             {/* Official Website */}
             {hospital.website ? (

@@ -234,14 +234,14 @@ export const MedoraHealthcareTeam: React.FC<MedoraHealthcareTeamProps> = ({
     return val && val !== `doctorSection.${key}` ? val : fallback;
   };
 
-  const handleCallDoctor = (doc: FictionalDoctorProfile) => {
+  const handleCallDoctor = async (doc: FictionalDoctorProfile) => {
     const loc = getLocalizedDoctor(doc, currentLang);
     if (!doc.contactPhone) {
       setPhoneFeedback(L('callingNotConfigured', 'Calling is not configured for this demo doctor.'));
       setTimeout(() => setPhoneFeedback(null), 4000);
       return;
     }
-    const res = initiatePhoneCall(doc.contactPhone, loc.name);
+    const res = await initiatePhoneCall(doc.contactPhone, loc.name);
     setPhoneFeedback(res.message);
     setTimeout(() => setPhoneFeedback(null), 5000);
   };

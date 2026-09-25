@@ -142,29 +142,58 @@ export default function UssdPage() {
     if (mode === 'ai_input') {
       setLoading(true);
       try {
-        const result = await conversationEngine.processUssdTurn(
-          trimmed,
-          appLanguage,
-          sessionId,
-          currentUser?.id
-        );
+        let responseText = '';
+        let isEmergency = false;
 
-        setAiResponse(result.responseText);
-        setAiEmergency(result.isEmergency);
+        // Try online server-side Gemini USSD chat first
+        try {
+          const chatRes = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              messages: [{ role: 'user', content: trimmed }],
+              role: 'ussd_guide',
+              language: appLanguage,
+            }),
+          });
+          if (chatRes.ok) {
+            const chatData = await chatRes.json();
+            responseText = chatData.reply;
+            if (trimmed.toLowerCase().includes('emergency') || trimmed.toLowerCase().includes('breath') || trimmed.toLowerCase().includes('chest pain') || trimmed.toLowerCase().includes('மூச்சு')) {
+              isEmergency = true;
+            }
+          }
+        } catch {
+          // Offline fallback
+        }
+
+        if (!responseText) {
+          const result = await conversationEngine.processUssdTurn(
+            trimmed,
+            appLanguage,
+            sessionId,
+            currentUser?.id
+          );
+          responseText = result.responseText;
+          isEmergency = result.isEmergency;
+        }
+
+        setAiResponse(responseText);
+        setAiEmergency(isEmergency);
         setMode('ai_response');
 
-        const emergencyBanner = result.isEmergency ? '🚨 EMERGENCY / RED FLAG DETECTED\n\n' : '';
-        const optionsList = result.options.map(o => o.label).join('\n');
+        const emergencyBanner = isEmergency ? '🚨 EMERGENCY / RED FLAG DETECTED\n\n' : '💡 MEDORA AI GUIDANCE & REMEDIES:\n\n';
         setDisplayText(
-          `MEDORA AI\n\n${emergencyBanner}You said:\n"${trimmed}"\n\nResponse:\n${result.responseText}\n\nOptions:\n${optionsList}`
+          `MEDORA USSD AI\n\n${emergencyBanner}You asked:\n"${trimmed}"\n\nResponse:\n${responseText}\n\n━━━━━━━━━━━━━━━━━━━━\n1. Find Doctor\n2. Nearest Hospital\n3. Emergency (108)\n4. Ask Another Question\n0. Main Menu`
         );
       } catch (err: any) {
-        setDisplayText('Medora could not safely understand this question. Please rephrase or contact a healthcare professional.\n\nPress 0 for Main Menu.');
+        setDisplayText('Medora could not safely evaluate this question. Please rephrase or contact a healthcare professional.\n\nPress 0 for Main Menu.');
       } finally {
         setLoading(false);
       }
       return;
     }
+
 
     if (mode === 'ai_response') {
       const opt = parseInt(trimmed);
@@ -189,7 +218,58 @@ export default function UssdPage() {
     // Default: 'menu' mode
     const num = parseInt(trimmed);
     if (isNaN(num)) {
-      setDisplayText('Invalid entry. Enter option 1-9.\n\nPress 0 for Main Menu.');
+      // User entered text/symptoms directly from main screen! Seamlessly invoke AI Assistant!
+      setLoading(true);
+      setMode('ai_response');
+      try {
+        let responseText = '';
+        let isEmergency = false;
+
+        // Try online server-side Gemini USSD chat first
+        try {
+          const chatRes = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              messages: [{ role: 'user', content: trimmed }],
+              role: 'ussd_guide',
+              language: appLanguage,
+            }),
+          });
+          if (chatRes.ok) {
+            const chatData = await chatRes.json();
+            responseText = chatData.reply;
+            if (trimmed.toLowerCase().includes('emergency') || trimmed.toLowerCase().includes('breath') || trimmed.toLowerCase().includes('chest pain') || trimmed.toLowerCase().includes('மூச்சு')) {
+              isEmergency = true;
+            }
+          }
+        } catch {
+          // Offline fallback
+        }
+
+        if (!responseText) {
+          const result = await conversationEngine.processUssdTurn(
+            trimmed,
+            appLanguage,
+            sessionId,
+            currentUser?.id
+          );
+          responseText = result.responseText;
+          isEmergency = result.isEmergency;
+        }
+
+        setAiResponse(responseText);
+        setAiEmergency(isEmergency);
+
+        const banner = isEmergency ? '🚨 EMERGENCY RED FLAG DETECTED\n\n' : '💡 MEDORA AI GUIDANCE & REMEDIES:\n\n';
+        setDisplayText(
+          `MEDORA USSD AI\n\nQuery: "${trimmed}"\n\n${banner}${responseText}\n\n━━━━━━━━━━━━━━━━━━━━\n1. Find Doctor\n2. Nearest Hospital\n3. Emergency (108)\n4. Ask Another Question\n0. Main Menu`
+        );
+      } catch {
+        setDisplayText('Medora could not safely evaluate this query. Please consult a clinician.\n\nPress 0 for Main Menu.');
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
@@ -197,6 +277,7 @@ export default function UssdPage() {
       resetToMenu();
       return;
     }
+
 
     const menu = getMainMenu();
     const selected = menu.find(m => m.num === num);

@@ -8,6 +8,7 @@ import {
   LANGUAGE_DISPLAY_NAMES,
   CONSULTATION_TYPE_TRANSLATIONS
 } from '../data/doctorsDataset';
+import { initiatePhoneCall } from '../services/telephony/phoneCallHelper';
 
 interface DoctorProfileModalProps {
   doctor: Doctor | null;
@@ -32,9 +33,17 @@ export const DoctorProfileModal: React.FC<DoctorProfileModalProps> = ({
   const [consultationMode, setConsultationMode] = useState<'In-person' | 'Teleconsultation'>('In-person');
   const [preferredDate, setPreferredDate] = useState('2026-09-12');
   const [reason, setReason] = useState('');
+  const [callFeedback, setCallFeedback] = useState<string | null>(null);
 
   if (!doctor) return null;
   const t = TRANSLATIONS[currentLang];
+
+  const handleCall = async () => {
+    if (!doctor.contactPhone) return;
+    const res = await initiatePhoneCall(doctor.contactPhone, doctor.name, { contactType: 'DOCTOR' });
+    setCallFeedback(res.message);
+    setTimeout(() => setCallFeedback(null), 4500);
+  };
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -257,16 +266,24 @@ export const DoctorProfileModal: React.FC<DoctorProfileModalProps> = ({
           )}
         </div>
 
+        {/* Call Feedback Banner */}
+        {callFeedback && (
+          <div className="bg-emerald-900 text-emerald-100 px-4 py-2 text-xs font-semibold flex items-center justify-between border-b border-emerald-700 animate-in fade-in">
+            <span>{callFeedback}</span>
+            <button onClick={() => setCallFeedback(null)} className="text-emerald-300 hover:text-white text-xs font-bold ml-2">Dismiss</button>
+          </div>
+        )}
+
         {/* Footer Actions */}
         <div className="p-4 bg-slate-100 border-t border-slate-200 shrink-0">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-            <a
-              href={`tel:${doctor.contactPhone.replace(/[^0-9]/g, '')}`}
-              className="py-2.5 px-3 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-colors"
+            <button
+              onClick={handleCall}
+              className="py-2.5 px-3 bg-emerald-100 hover:bg-emerald-200 text-emerald-950 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-colors shadow-xs active:scale-95"
             >
-              <Phone className="w-3.5 h-3.5 text-emerald-600" />
+              <Phone className="w-3.5 h-3.5 text-emerald-700" />
               <span>{t.callDoctor}</span>
-            </a>
+            </button>
 
             <button
               onClick={() => setShowRequestForm(!showRequestForm)}
