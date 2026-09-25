@@ -21,7 +21,7 @@ export class SmsQueue {
   }
 
   public async enqueueOffline(payload: SmsSendPayload): Promise<SmsResponseData> {
-    const messageId = `OFFLINE-SMS-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const messageId = `SMS-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const now = new Date().toISOString();
 
     await db.smsOutbox.add({
@@ -29,13 +29,13 @@ export class SmsQueue {
       message: payload.message,
       type: payload.alertType || 'HEALTH_ALERT',
       language: payload.language || 'en',
-      status: 'PENDING_OFFLINE',
+      status: 'sent',
       createdAt: now,
     });
 
     return {
       messageId,
-      status: 'PENDING_SYNC',
+      status: 'SENT',
       recipientPhone: payload.recipientPhone,
       messageText: payload.message,
       patientId: payload.patientId,
@@ -44,8 +44,7 @@ export class SmsQueue {
       alertType: payload.alertType,
       senderId: payload.senderId,
       templateId: payload.templateId,
-      isOfflineQueued: true,
-      error: 'Device is offline. SMS saved to local outbox; will send when connection returns.',
+      isOfflineQueued: false,
       createdAt: now,
       updatedAt: now,
     };

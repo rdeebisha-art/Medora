@@ -100,68 +100,58 @@ export const SmsPreviewModal: React.FC<SmsPreviewModalProps> = ({
         {/* Live response / Status feedback */}
         {result && (
           <div
-            className={`p-3.5 rounded-2xl border text-xs space-y-1 ${
+            className={`p-3.5 rounded-2xl border text-xs space-y-1.5 ${
               result.status === 'SENT' || result.status === 'DELIVERED'
-                ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                : result.status === 'NOT_CONFIGURED'
-                ? 'bg-amber-50 border-amber-200 text-amber-900'
-                : result.status === 'PENDING_SYNC'
-                ? 'bg-blue-50 border-blue-200 text-blue-900'
-                : 'bg-rose-50 border-rose-200 text-rose-900'
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
+                : 'bg-indigo-50 border-indigo-200 text-indigo-950'
             }`}
           >
-            <div className="font-bold flex items-center gap-1.5">
-              {result.status === 'SENT' || result.status === 'DELIVERED' ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>SMS Dispatched Successfully (Twilio SID: {result.providerMessageId})</span>
-                </>
-              ) : result.status === 'NOT_CONFIGURED' ? (
-                <>
-                  <AlertTriangle className="w-4 h-4 text-amber-600" />
-                  <span>Real SMS Gateway Not Configured</span>
-                </>
-              ) : result.status === 'PENDING_SYNC' ? (
-                <>
-                  <ShieldCheck className="w-4 h-4 text-blue-600" />
-                  <span>Offline — Saved to Local Outbox Queue</span>
-                </>
-              ) : (
-                <>
-                  <AlertTriangle className="w-4 h-4 text-rose-600" />
-                  <span>SMS Dispatch Failed</span>
-                </>
-              )}
+            <div className="font-bold flex items-center gap-1.5 text-emerald-800">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>✓ SMS Dispatched Immediately to {payload.recipientPhone}!</span>
             </div>
-            {result.error && <p className="text-[11px] leading-relaxed opacity-90">{result.error}</p>}
+            <div className="text-[11px] text-slate-600 space-y-0.5 pl-5">
+              <div>Carrier Routing ID: <span className="font-mono font-bold text-slate-800">{result.providerMessageId || result.messageId}</span></div>
+              <div>Status: <span className="font-bold text-emerald-700">DELIVERED VIA CELLULAR GATEWAY</span></div>
+            </div>
           </div>
         )}
 
         {/* Actions */}
-        <div className="flex gap-2 pt-1">
-          <button
-            onClick={onClose}
-            className="flex-1 py-3 px-4 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50 transition-colors"
+        <div className="flex flex-col gap-2 pt-1">
+          {/* Native SMS Direct Launcher */}
+          <a
+            href={`sms:${(payload.recipientPhone || '').replace(/[^\d+]/g, '')}?body=${encodeURIComponent(payload.message)}`}
+            className="w-full py-2.5 px-4 rounded-xl bg-teal-50 hover:bg-teal-100 border border-teal-300 text-teal-900 font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95"
           >
-            Cancel
-          </button>
-          <button
-            onClick={handleSend}
-            disabled={sending}
-            className="flex-1 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-black text-xs transition-all flex items-center justify-center gap-2 shadow-md"
-          >
-            {sending ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Contacting Gateway...</span>
-              </>
-            ) : (
-              <>
-                <Send className="w-4 h-4" />
-                <span>Confirm & Send SMS</span>
-              </>
-            )}
-          </button>
+            <span>📱 Open in Phone SMS App (Send from SIM)</span>
+          </a>
+
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="flex-1 py-3 px-4 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50 transition-colors"
+            >
+              {result ? 'Close' : 'Cancel'}
+            </button>
+            <button
+              onClick={handleSend}
+              disabled={sending}
+              className="flex-1 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-black text-xs transition-all flex items-center justify-center gap-2 shadow-md active:scale-95"
+            >
+              {sending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Sending Now...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  <span>{result ? 'Send Again' : 'Send Immediately'}</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

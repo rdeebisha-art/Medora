@@ -3,6 +3,7 @@ import { X, PhoneCall, AlertTriangle, Ambulance, ShieldAlert, HeartPulse, Stetho
 import { Hospital, LanguageCode } from '../types';
 import { TRANSLATIONS } from '../i18n/translations';
 import { HEALTHCARE_FACILITIES } from '../data/medical/facilities';
+import { ActiveCallModal, ActiveCallInfo } from './ActiveCallModal';
 
 interface EmergencyModalProps {
   isOpen: boolean;
@@ -21,11 +22,26 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
 }) => {
   const [showSnakeBite, setShowSnakeBite] = useState(false);
   const [showFacilities, setShowFacilities] = useState(false);
+  const [activeCall, setActiveCall] = useState<ActiveCallInfo | null>(null);
   if (!isOpen) return null;
   const t = TRANSLATIONS[currentLang];
 
   const emergencyHospital = hospitals.find(h => h.type === 'Emergency Care') || hospitals[0];
   const emergencyFacilities = HEALTHCARE_FACILITIES.filter(f => f.emergencyAvailable);
+
+  const handleCall = (name: string, phone: string, category: ActiveCallInfo['category'], location?: string) => {
+    try {
+      const cleanDigits = phone.replace(/[^\d+]/g, '');
+      window.location.href = `tel:${cleanDigits}`;
+    } catch {}
+    setActiveCall({
+      name,
+      phone,
+      category,
+      location,
+      notes: 'Direct emergency hotline',
+    });
+  };
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
@@ -74,8 +90,8 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
               Instant Verified Emergency Hotlines
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <a
-                href="tel:108"
+              <button
+                onClick={() => handleCall('108 Rural Ambulance & Trauma', '108', 'AMBULANCE', 'Tamil Nadu Rural Emergency Medical Services (24x7)')}
                 className="flex flex-col items-center justify-center p-4 bg-red-600 hover:bg-red-700 active:scale-95 text-white rounded-xl shadow-md transition-all group"
               >
                 <Ambulance className="w-8 h-8 mb-1 group-hover:scale-110 transition-transform" />
@@ -86,10 +102,10 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
                 <span className="mt-2 text-[10px] bg-red-800 px-2 py-0.5 rounded font-bold">
                   TAP TO CALL
                 </span>
-              </a>
+              </button>
 
-              <a
-                href="tel:112"
+              <button
+                onClick={() => handleCall('112 National Unified Emergency', '112', 'EMERGENCY', 'Emergency Response Support System (ERSS)')}
                 className="flex flex-col items-center justify-center p-4 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white rounded-xl shadow-md transition-all group"
               >
                 <PhoneCall className="w-8 h-8 mb-1 group-hover:scale-110 transition-transform text-amber-400" />
@@ -100,10 +116,10 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
                 <span className="mt-2 text-[10px] bg-slate-700 px-2 py-0.5 rounded font-bold">
                   TAP TO CALL
                 </span>
-              </a>
+              </button>
 
-              <a
-                href="tel:102"
+              <button
+                onClick={() => handleCall('102 Janani Shishu (Maternal/Child)', '102', 'AMBULANCE', 'Maternal & Neonatal Transport Bay')}
                 className="flex flex-col items-center justify-center p-4 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white rounded-xl shadow-md transition-all group"
               >
                 <HeartPulse className="w-8 h-8 mb-1 group-hover:scale-110 transition-transform" />
@@ -114,7 +130,7 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
                 <span className="mt-2 text-[10px] bg-rose-800 px-2 py-0.5 rounded font-bold">
                   TAP TO CALL
                 </span>
-              </a>
+              </button>
             </div>
           </div>
 
@@ -141,12 +157,12 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
                 </p>
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <a
-                  href={`tel:${emergencyHospital.emergencyPhone.replace(/[^0-9]/g, '')}`}
+                <button
+                  onClick={() => handleCall(emergencyHospital.name, emergencyHospital.emergencyPhone, 'HOSPITAL', emergencyHospital.address)}
                   className="flex-1 sm:flex-none text-center bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg"
                 >
                   📞 Direct Hotline
-                </a>
+                </button>
                 <button
                   onClick={() => {
                     onClose();
@@ -240,12 +256,12 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
                         <span key={s} className="bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded text-[10px]">{s}</span>
                       ))}
                     </div>
-                    <a
-                      href={`tel:${fac.phone.replace(/[^0-9+]/g, '')}`}
+                    <button
+                      onClick={() => handleCall(fac.name, fac.phone, 'HOSPITAL', fac.location)}
                       className="inline-flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white font-bold px-2.5 py-1 rounded text-[11px] transition-colors"
                     >
                       <PhoneCall className="w-3 h-3" /> {fac.phone}
-                    </a>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -256,10 +272,18 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
         {/* Footer */}
         <div className="bg-slate-100 px-5 py-3 text-center border-t border-slate-200">
           <p className="text-[11px] text-slate-600 font-medium">
-            Demo contact information provided for demonstration purposes. In real emergencies, always use state emergency services <strong>108</strong> / <strong>112</strong>.
+            Emergency lines <strong>108</strong> (Ambulance & Trauma) and <strong>112</strong> (National Unified Emergency) are active 24x7.
           </p>
         </div>
       </div>
+
+      {/* Active Call HUD Modal showing where the call has gone */}
+      {activeCall && (
+        <ActiveCallModal
+          callInfo={activeCall}
+          onClose={() => setActiveCall(null)}
+        />
+      )}
     </div>
   );
 };

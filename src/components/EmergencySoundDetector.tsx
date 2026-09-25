@@ -40,6 +40,7 @@ export const EmergencySoundDetector: React.FC<Props> = ({ onTriggerEmergencyModa
   const [testResultNotice, setTestResultNotice] = useState<string | null>(null);
 
   const recognitionRef = useRef<any>(null);
+  const evaluatorRef = useRef<(rawText: string) => Promise<void>>(async () => {});
 
   // Initialize Speech Recognition for ambient emergency sound/phrase monitoring
   useEffect(() => {
@@ -59,7 +60,7 @@ export const EmergencySoundDetector: React.FC<Props> = ({ onTriggerEmergencyModa
       const results = event.results;
       const latest = results[results.length - 1][0].transcript;
       setLastTranscript(latest);
-      evaluateAcousticEmergencySignal(latest);
+      evaluatorRef.current(latest);
     };
 
     recognition.onerror = () => {
@@ -245,6 +246,7 @@ export const EmergencySoundDetector: React.FC<Props> = ({ onTriggerEmergencyModa
       onTriggerEmergencyModal();
     }
   };
+  evaluatorRef.current = evaluateAcousticEmergencySignal;
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">

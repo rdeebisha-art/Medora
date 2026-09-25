@@ -5,6 +5,8 @@ import { db, Medicine } from '../db/db';
 import Layout from '../components/Layout';
 import MedicineCard from '../components/MedicineCard';
 import DemoDataBadge from '../components/DemoDataBadge';
+import PrintableMedicineLabelsModal from '../components/PrintableMedicineLabelsModal';
+import { Printer, Tag } from 'lucide-react';
 
 type FilterType = 'all' | 'active' | 'completed';
 
@@ -15,6 +17,8 @@ export default function MedicinesPage() {
   const [filter, setFilter] = useState<FilterType>('active');
   const [refresh, setRefresh] = useState(0);
   const [showAdd, setShowAdd] = useState(false);
+  const [isLabelsModalOpen, setIsLabelsModalOpen] = useState(false);
+  const [selectedMedIdForLabel, setSelectedMedIdForLabel] = useState<number | undefined>(undefined);
   const [newMed, setNewMed] = useState({ name: '', dose: '', frequency: 'Once daily', times: '8:00 AM', instructions: '', doctor: '' });
 
   useEffect(() => {
@@ -54,10 +58,53 @@ export default function MedicinesPage() {
           <h1 className="text-xl font-black text-[#16A34A]">💊 {t('medicines.title')}</h1>
           <div className="flex items-center gap-2">
             <DemoDataBadge />
+            <button
+              onClick={() => {
+                setSelectedMedIdForLabel(undefined);
+                setIsLabelsModalOpen(true);
+              }}
+              className="bg-teal-700 hover:bg-teal-600 text-white text-xs px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 shadow-2xs transition-all active:scale-95"
+              title="Generate printable, simplified image-based labels for low-literacy users"
+            >
+              <Printer size={13} />
+              <span>Print Visual Labels</span>
+            </button>
             <button onClick={() => setShowAdd(true)} className="bg-[#16A34A] text-white text-xs px-3.5 py-2 rounded-xl font-bold hover:bg-green-700 shadow-2xs transition-colors">
               + {t('medicines.addMedicine')}
             </button>
           </div>
+        </div>
+
+        {/* Low-Literacy Visual Prescription Banner */}
+        <div className="bg-gradient-to-r from-teal-900/90 to-emerald-950/90 border border-teal-500/40 rounded-2xl p-3.5 text-white mb-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-teal-500/20 border border-teal-400/40 flex items-center justify-center shrink-0 text-base">
+              🏷️
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-teal-300 uppercase tracking-wide">
+                  Low-Literacy Accessible Labels
+                </span>
+                <span className="text-[10px] bg-teal-400/20 text-teal-200 px-2 py-0.2 rounded-full font-bold">
+                  Print Ready
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 mt-0.5 leading-relaxed">
+                Generate simplified stickers & daily wall posters with sun/moon symbols, meal icons, and pill counts for patients who cannot read prescription text.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setSelectedMedIdForLabel(undefined);
+              setIsLabelsModalOpen(true);
+            }}
+            className="shrink-0 bg-teal-500 hover:bg-teal-400 text-teal-950 font-black text-xs px-3.5 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-md transition-all active:scale-95"
+          >
+            <Tag size={13} />
+            <span>Generate Labels</span>
+          </button>
         </div>
 
         {/* Filter Tabs */}
@@ -120,12 +167,28 @@ export default function MedicinesPage() {
         ) : (
           <div className="space-y-3">
             {medicines.map(m => (
-              <MedicineCard key={m.id} medicine={m} onUpdate={() => setRefresh(r => r + 1)} />
+              <MedicineCard
+                key={m.id}
+                medicine={m}
+                onUpdate={() => setRefresh(r => r + 1)}
+                onOpenLabel={(med) => {
+                  setSelectedMedIdForLabel(med.id);
+                  setIsLabelsModalOpen(true);
+                }}
+              />
             ))}
           </div>
         )}
 
         <p className="text-xs text-gray-400 text-center mt-4">{t('common.demoData')} · {t('common.disclaimer')}</p>
+
+        {/* Printable Low-Literacy Medicine Labels Modal */}
+        <PrintableMedicineLabelsModal
+          isOpen={isLabelsModalOpen}
+          onClose={() => setIsLabelsModalOpen(false)}
+          medicines={medicines}
+          initialSelectedMedicineId={selectedMedIdForLabel}
+        />
       </div>
     </Layout>
   );

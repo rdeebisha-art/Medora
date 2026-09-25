@@ -53,8 +53,8 @@ export default function App() {
     <MedicalHospitalBackground>
       <Routes>
       {/* Public routes */}
-      <Route path="/" element={<Navigate to="/welcome" replace />} />
-      <Route path="/welcome" element={<WelcomePage />} />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/welcome" element={<Navigate to="/dashboard" replace />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/emergency" element={<EmergencyPage />} />
       <Route path="/faq" element={<FaqPage />} />

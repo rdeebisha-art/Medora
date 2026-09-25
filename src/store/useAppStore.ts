@@ -57,12 +57,34 @@ if (typeof document !== 'undefined') {
   document.documentElement.lang = bcpMap[initialLanguage] || 'en-IN';
 }
 
+const getStoredUser = (): CurrentUser | null => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const saved = localStorage.getItem('medora-current-user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {}
+    }
+  }
+  return {
+    id: 1,
+    name: 'Anitha Devi',
+    role: 'patient',
+    phone: '9876543210',
+    village: 'Rampur',
+    language: 'en',
+    familyId: 1,
+  };
+};
+
+const initialUser = getStoredUser();
+
 export const useAppStore = create<AppState>((set) => ({
   isOffline: typeof navigator !== 'undefined' ? !navigator.onLine : false,
   is2GMode: false,
   isSimpleMode: false,
-  currentUser: null,
-  currentRole: null,
+  currentUser: initialUser,
+  currentRole: initialUser?.role || 'patient',
   appLanguage: initialLanguage,
   language: initialLanguage,
 
@@ -73,14 +95,21 @@ export const useAppStore = create<AppState>((set) => ({
   toggleSimpleMode: () => set((state) => ({ isSimpleMode: !state.isSimpleMode })),
 
   login: (user) => {
-    // Keep the authoritative appLanguage as chosen by user. Do NOT overwrite appLanguage with user's record language.
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('medora-current-user', JSON.stringify(user));
+    }
     set({
       currentUser: user,
       currentRole: user.role,
     });
   },
 
-  logout: () => set({ currentUser: null, currentRole: null }),
+  logout: () => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('medora-current-user');
+    }
+    set({ currentUser: null, currentRole: null });
+  },
 
   setLanguage: (lang) => {
     const validLang = ['en', 'ta', 'te', 'ml', 'kn', 'hi'].includes(lang) ? lang : 'en';

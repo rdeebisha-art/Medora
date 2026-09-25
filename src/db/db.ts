@@ -287,7 +287,7 @@ export interface FamilyAlertOutbox {
   message: string;
   language: string;
   timestamp: string;
-  status: 'PENDING' | 'READY_TO_SEND' | 'SENT_DEMO' | 'FAILED' | 'PENDING_OFFLINE';
+  status: 'PENDING' | 'READY_TO_SEND' | 'SENT_DEMO' | 'FAILED' | 'PENDING_OFFLINE' | 'SENT' | 'DELIVERED';
 }
 
 export interface EmergencyIncident {
@@ -315,7 +315,7 @@ export interface CallHistoryRecord {
   phoneNumber: string;
   contactName?: string;
   contactType: 'PERSON' | 'DOCTOR' | 'FAMILY' | 'HOSPITAL' | 'EMERGENCY';
-  action: 'CALL_INITIATED';
+  action: 'CALL_INITIATED' | 'CALL_COMPLETED';
   timestamp: string;
 }
 

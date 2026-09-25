@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pill, Check, X, Clock } from 'lucide-react';
+import { Pill, Check, X, Clock, Tag, Printer } from 'lucide-react';
 import { db, Medicine } from '../db/db';
 
 interface Props {
   medicine: Medicine;
   onUpdate?: () => void;
+  onOpenLabel?: (medicine: Medicine) => void;
 }
 
-export default function MedicineCard({ medicine, onUpdate }: Props) {
+export default function MedicineCard({ medicine, onUpdate, onOpenLabel }: Props) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState<string | null>(null);
 
@@ -35,7 +36,20 @@ export default function MedicineCard({ medicine, onUpdate }: Props) {
           <Pill className="text-[#16A34A]" size={20} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-extrabold text-[#0F172A] truncate text-base">{medicine.name}</div>
+          <div className="flex items-start justify-between gap-1">
+            <div className="font-extrabold text-[#0F172A] truncate text-base">{medicine.name}</div>
+            {onOpenLabel && (
+              <button
+                type="button"
+                onClick={() => onOpenLabel(medicine)}
+                className="text-[11px] font-bold text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2 py-0.5 rounded-lg flex items-center gap-1 transition-colors shrink-0"
+                title="Generate printable simplified image label"
+              >
+                <Tag size={12} />
+                <span>Visual Label</span>
+              </button>
+            )}
+          </div>
           <div className="text-xs text-[#475569]">{medicine.dose} · {medicine.frequency}</div>
           {medicine.times?.length > 0 && (
             <div className="text-xs text-[#16A34A] font-bold mt-1">

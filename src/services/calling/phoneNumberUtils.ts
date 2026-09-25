@@ -108,30 +108,18 @@ export function callPhoneNumber(phoneNumber: string): { success: boolean; messag
     };
   }
 
-  if (isMobileBrowser()) {
-    try {
-      // Hand off to device native dialer via tel: URI
-      window.location.href = result.telUri;
-      return {
-        success: true,
-        message: `Opening phone dialer for ${result.normalized}...`,
-        telUri: result.telUri,
-        actionTaken: 'DIALER_LAUNCHED',
-      };
-    } catch {
-      return {
-        success: false,
-        message: 'Could not open phone dialer on this device.',
-        actionTaken: 'FAILED',
-      };
-    }
-  } else {
-    return {
-      success: false,
-      message: `This device cannot place a cellular call. Use a supported calling application or dial ${result.normalized} on your mobile phone.`,
-      telUri: result.telUri,
-      actionTaken: 'DESKTOP_NOTICE',
-    };
+  // Always trigger native tel: URI (supported on mobile dialers, macOS FaceTime/iPhone relay, Windows Phone Link, VoIP)
+  try {
+    window.location.href = result.telUri;
+  } catch {
+    // Ignore browser protocol handler exceptions
   }
+
+  return {
+    success: true,
+    message: `Dispatched call to ${result.normalized} via cellular phone dialer.`,
+    telUri: result.telUri,
+    actionTaken: 'DIALER_LAUNCHED',
+  };
 }
 

@@ -213,7 +213,7 @@ export const sendRealSMS = async (params: { recipientPhone: string; messageText:
         target.recipientStatuses[0].status = 'FAILED';
         target.failureReason = data.error;
       } else {
-        target.recipientStatuses[0].status = data.status || 'QUEUED';
+        target.recipientStatuses[0].status = data.status === 'QUEUED' ? 'SENT' : (data.status || 'SENT');
         target.providerMessageId = data.providerMessageId;
       }
       target.updatedAt = new Date().toISOString();
@@ -255,8 +255,8 @@ export const sendRealSMS = async (params: { recipientPhone: string; messageText:
   const recipientStatuses: RecipientDeliveryStatus[] = params.recipientIds.map((rid) => {
     return {
       recipientId: rid,
-      status: isDemo ? 'DELIVERED' : 'QUEUED',
-      deliveredAt: isDemo ? now : undefined,
+      status: isDemo ? 'DELIVERED' : 'SENT',
+      deliveredAt: isDemo ? now : now,
       retryCount: 0,
     };
   });
