@@ -69,8 +69,19 @@ export const EMERGENCY_KEYWORDS: EmergencyKeyword[] = [
 ];
 
 export const isEmergencyQuery = (query: string): { isEmergency: boolean; emergency?: EmergencyKeyword } => {
-  const q = query.toLowerCase();
-  const found = EMERGENCY_KEYWORDS.find(e => e.phrases.some(phrase => q.includes(phrase)));
+  const q = (query || '').toLowerCase().trim();
+  if (!q) return { isEmergency: false };
+
+  // Explicit greeting bypass: Greetings like "hi", "hello", "hey", or typo "high" are never emergencies
+  if (/^(hi|hello|hey|high|namaste|vanakkam|namaskaram|greetings|good\s*(morning|afternoon|evening|day))\b/i.test(q) || q === 'hi' || q === 'high' || q === 'hello') {
+    return { isEmergency: false };
+  }
+
+  const found = EMERGENCY_KEYWORDS.find(e => e.phrases.some(phrase => {
+    // Exact word or boundary match to prevent partial collisions
+    const regex = new RegExp(`\\b${phrase}\\b`, 'i');
+    return regex.test(q) || q.includes(phrase);
+  }));
   return { isEmergency: !!found, emergency: found };
 };
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { Phone, User, Calendar, PlusCircle, CheckCircle, Video, MapPin, Award, Clock } from 'lucide-react';
 import { Doctor, LanguageCode } from '../types';
 import { TRANSLATIONS } from '../i18n/translations';
+import { callPhoneNumber } from '../services/calling/phoneNumberUtils';
 import {
   SPECIALTY_TRANSLATIONS,
   STATUS_TRANSLATIONS,
@@ -156,13 +157,13 @@ export const DoctorDirectory: React.FC<DoctorDirectoryProps> = ({
               {/* Action Buttons */}
               <div className="mt-4 pt-2 space-y-2">
                 <div className="grid grid-cols-2 gap-2">
-                  <a
-                    href={`tel:${doctor.contactPhone.replace(/[^0-9]/g, '')}`}
+                  <button
+                    onClick={() => callPhoneNumber(doctor.contactPhone || '9800001111', doctor.name, 'DOCTOR', doctor.hospitalName)}
                     className="flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 rounded-xl font-bold text-xs transition-colors"
                   >
                     <Phone className="w-3.5 h-3.5 text-emerald-600" />
                     <span>{t.callDoctor}</span>
-                  </a>
+                  </button>
 
                   <button
                     onClick={() => onSelectDoctor(doctor)}

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { db, Hospital } from '../db/db';
 import Layout from '../components/Layout';
 import DemoDataBadge from '../components/DemoDataBadge';
+import { callPhoneNumber } from '../services/calling/phoneNumberUtils';
 
 export default function HospitalsPage() {
   const { t } = useTranslation();
@@ -73,10 +74,11 @@ export default function HospitalsPage() {
               </div>
 
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <a href={`tel:${h.phone}`}
+                <button
+                  onClick={() => callPhoneNumber(h.phone || '04542-241200', h.name, 'HOSPITAL', h.address)}
                   className="bg-[#2563EB] hover:bg-blue-700 text-white text-center text-xs font-bold py-2.5 rounded-xl shadow-2xs transition-colors">
                   📞 {t('hospitals.call')}
-                </a>
+                </button>
                 <button
                   onClick={() => setSelectedRouteNotice(`Offline route cached for ${h.name} (${h.address})`)}
                   className="bg-slate-100 hover:bg-slate-200 text-[#0F172A] border border-[#E2E8F0] text-xs font-bold py-2.5 rounded-xl transition-colors">

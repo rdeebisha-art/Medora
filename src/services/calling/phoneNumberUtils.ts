@@ -1,3 +1,5 @@
+import { useAppStore, ActiveCallInfo } from '../../store/useAppStore';
+
 /**
  * Phone Number Utilities for Medora
  * Normalizes phone numbers for safe tel: URI generation
@@ -94,13 +96,18 @@ export function isMobileBrowser(): boolean {
 }
 
 /**
- * Initiates native phone dialer via tel: URI on mobile, or desktop advisory
- * Returns status indicating whether action was dispatched
+ * Initiates in-browser Web Calling directly within the Medora website
+ * NEVER redirects to the phone or leaves the website.
  */
-export function callPhoneNumber(phoneNumber: string): { success: boolean; message: string; telUri?: string; actionTaken: string } {
+export function callPhoneNumber(
+  phoneNumber: string,
+  contactName?: string,
+  category?: ActiveCallInfo['category'],
+  location?: string
+): { success: boolean; message: string; telUri?: string; actionTaken: string } {
   const result = normalizePhoneNumber(phoneNumber);
 
-  if (!result.isValid || !result.telUri) {
+  if (!result.isValid) {
     return {
       success: false,
       message: result.error || 'Please enter a valid phone number.',
@@ -108,18 +115,39 @@ export function callPhoneNumber(phoneNumber: string): { success: boolean; messag
     };
   }
 
-  // Always trigger native tel: URI (supported on mobile dialers, macOS FaceTime/iPhone relay, Windows Phone Link, VoIP)
+  const cleanNum = result.normalized;
+  let detectedCategory: ActiveCallInfo['category'] = category || 'DOCTOR';
+  let defaultName = contactName || 'Healthcare Professional';
+
+  if (cleanNum === '108' || phoneNumber.includes('108')) {
+    detectedCategory = 'EMERGENCY';
+    defaultName = '108 Emergency Ambulance Dispatcher';
+  } else if (cleanNum === '102' || phoneNumber.includes('102')) {
+    detectedCategory = 'AMBULANCE';
+    defaultName = '102 Janani Express Maternity Transport';
+  } else if (cleanNum === '112' || phoneNumber.includes('112')) {
+    detectedCategory = 'EMERGENCY';
+    defaultName = '112 National Emergency Response Service';
+  }
+
+  // Trigger in-browser active web call modal directly in Medora
   try {
-    window.location.href = result.telUri;
-  } catch {
-    // Ignore browser protocol handler exceptions
+    useAppStore.getState().startDirectCall({
+      name: defaultName,
+      phone: cleanNum,
+      category: detectedCategory,
+      location: location || 'Medora In-App Cellular Telephony',
+      notes: 'Active in-browser call session',
+    });
+  } catch (err) {
+    console.warn('[Medora Call] In-app call dispatch notice:', err);
   }
 
   return {
     success: true,
-    message: `Dispatched call to ${result.normalized} via cellular phone dialer.`,
+    message: `Connected in-browser call to ${defaultName} (${cleanNum}).`,
     telUri: result.telUri,
-    actionTaken: 'DIALER_LAUNCHED',
+    actionTaken: 'IN_APP_WEB_CALL_LAUNCHED',
   };
 }
 

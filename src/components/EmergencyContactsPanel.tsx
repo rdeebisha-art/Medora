@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Phone, Plus, Edit2, Trash2, Star, User, Shield } from 'lucide-react';
 import { EmergencyContact, LanguageCode } from '../types';
 import { useMedora } from '../context/MedoraContext';
+import { callPhoneNumber } from '../services/calling/phoneNumberUtils';
 
 interface EmergencyContactsPanelProps {
   currentLang?: LanguageCode;
@@ -26,8 +27,8 @@ export const EmergencyContactsPanel: React.FC<EmergencyContactsPanelProps> = ({
     return phone;
   };
 
-  const handleCall = (phone: string) => {
-    window.location.href = `tel:${phone}`;
+  const handleCall = (phone: string, name?: string) => {
+    callPhoneNumber(phone, name || 'Emergency Family Contact', 'FAMILY');
   };
 
   if (contacts.length === 0) {

@@ -93,6 +93,37 @@ export class MedicalSafetyEngine {
     patientContext?: any
   ): StructuredClinicalResponse {
     const langKey = targetLanguage.split('-')[0] as 'en' | 'hi' | 'ta' | 'te' | 'ml' | 'kn';
+    const trimmed = (userText || '').trim().toLowerCase();
+
+    // 0. GREETING CHECK: Standard chatbot greeting response (like ChatGPT & Gemini)
+    const isGreeting = /^(hi|hello|hey|high|namaste|vanakkam|namaskaram|greetings|good\s*(morning|afternoon|evening|day)|howdy)\b/i.test(trimmed) || trimmed === 'hi' || trimmed === 'high' || trimmed === 'hello' || trimmed === 'hey';
+    if (isGreeting) {
+      const greetingsByLang: Record<string, string> = {
+        en: 'Hello! I am Medora AI, your healthcare companion. How are you feeling today? You can ask me about your symptoms, daily medicine schedule, checkups, or emergency guidance.',
+        hi: 'नमस्ते! मैं मेडोरा AI हूँ, आपका स्वास्थ्य साथी। आज आप कैसा महसूस कर रहे हैं? आप मुझसे लक्षणों, दवाइयों, या जांच के बारे में पूछ सकते हैं।',
+        ta: 'வணக்கம்! நான் மெடோரா AI, உங்கள் மருத்துவ உதவியாளர். இன்று உங்கள் உடல்நலம் எப்படி உள்ளது? உங்கள் அறிகுறிகள் அல்லது மருந்துகள் பற்றி கேட்கலாம்.',
+        te: 'నమస్కారం! నేను మెడోరా AI, మీ ఆరోగ్య సహచరిని. ఈ రోజు మీ ఆరోగ్యం ఎలా ఉంది? మీ లక్షణాలు లేదా మందుల గురించి అడగవచ్చు.',
+        ml: 'നമസ്കാരം! ഞാൻ മെഡോറ AI, നിങ്ങളുടെ ആരോഗ്യ സഹായി. ഇന്ന് സുഖമാണോ? നിങ്ങളുടെ ലക്ഷണങ്ങളെക്കുറിച്ചോ മരുന്നുകളെക്കുറിച്ചോ ചോദിക്കാം.',
+        kn: 'ನಮಸ್ಕಾರ! ನಾನು ಮೆಡೋರಾ AI, ನಿಮ್ಮ ಆರೋಗ್ಯ ಸಹಾಯಕ. ನಿಮ್ಮ ಆರೋಗ್ಯ ಹೇಗಿದೆ? ನಿಮ್ಮ ರೋಗಲಕ್ಷಣಗಳು ಅಥವಾ ಔಷಧಿಗಳ ಬಗ್ಗೆ ಕೇಳಬಹುದು.',
+      };
+      const welcome = greetingsByLang[langKey] || greetingsByLang.en;
+      return {
+        detectedLanguage: targetLanguage,
+        symptomsIdentified: [],
+        isEmergency: false,
+        possibleConditions: [],
+        whatIUnderstood: welcome,
+        whatYouCanDoNow: ['Type or speak your health questions or current symptoms.'],
+        whatShouldBeChecked: ['Routine vitals (Blood pressure, blood sugar)'],
+        warningSignsToWatch: ['Any sudden chest pain, breathing difficulty, or high fever'],
+        whenToSeekDoctor: ['Whenever symptoms persist or worsen'],
+        sourceReference: 'Medora Clinical Knowledge Base',
+        isSafe: true,
+        disclaimer: this.getLocalizedDisclaimer(langKey),
+        fullFormattedResponse: welcome,
+      };
+    }
+
     const symptoms = extractSymptomsFromText(userText);
 
     // 1. EMERGENCY / RED-FLAG CHECK FIRST

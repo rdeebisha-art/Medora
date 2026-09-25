@@ -2,6 +2,7 @@ import React from 'react';
 import { Building2, Phone, ExternalLink, Navigation, Users, ArrowRight, ShieldCheck, HeartPulse, MapPin } from 'lucide-react';
 import { Hospital, LanguageCode } from '../types';
 import { TRANSLATIONS } from '../i18n/translations';
+import { callPhoneNumber } from '../services/calling/phoneNumberUtils';
 
 interface HospitalDirectoryProps {
   hospitals: Hospital[];
@@ -170,13 +171,13 @@ export const HospitalDirectory: React.FC<HospitalDirectoryProps> = ({
               <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
                 <div className="grid grid-cols-3 gap-2 text-xs">
                   {/* Call Hospital */}
-                  <a
-                    href={`tel:${hospital.phone.replace(/[^0-9]/g, '')}`}
+                  <button
+                    onClick={() => callPhoneNumber(hospital.phone || '04542-241200', hospital.name, 'HOSPITAL', hospital.address)}
                     className="flex items-center justify-center gap-1 py-2 px-2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 rounded-xl font-bold transition-colors text-center"
                   >
                     <Phone className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Call</span>
-                  </a>
+                  </button>
 
                   {/* Official Website */}
                   {hospital.website ? (

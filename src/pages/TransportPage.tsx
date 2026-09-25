@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { db, Transport } from '../db/db';
 import Layout from '../components/Layout';
 import DemoDataBadge from '../components/DemoDataBadge';
+import { callPhoneNumber } from '../services/calling/phoneNumberUtils';
 
 export default function TransportPage() {
   const { t } = useTranslation();
@@ -69,9 +70,12 @@ export default function TransportPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-2 mt-3">
-                <a href={`tel:${tr.phone}`} className="bg-sky-600 text-white text-center text-sm font-medium py-2.5 rounded-xl hover:bg-sky-700">
+                <button
+                  onClick={() => callPhoneNumber(tr.phone || '108', tr.name, tr.type === 'ambulance' ? 'AMBULANCE' : 'SUPPORT')}
+                  className="bg-sky-600 text-white text-center text-sm font-medium py-2.5 rounded-xl hover:bg-sky-700"
+                >
                   📞 Call
-                </a>
+                </button>
                 <button
                   onClick={() => handleRequest(tr)}
                   disabled={!tr.available || requested.includes(tr.id!)}

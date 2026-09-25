@@ -41,6 +41,7 @@ import LanguageBridgePage from './pages/LanguageBridgePage';
 import AppointmentsPage from './pages/AppointmentsPage';
 
 import MedicalHospitalBackground from './components/layout/MedicalHospitalBackground';
+import { ActiveCallModal } from './components/ActiveCallModal';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAppStore();
@@ -49,8 +50,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const { activeDirectCall, endDirectCall } = useAppStore();
+
   return (
     <MedicalHospitalBackground>
+      {activeDirectCall && (
+        <ActiveCallModal callInfo={activeDirectCall} onClose={endDirectCall} />
+      )}
       <Routes>
       {/* Public routes */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />

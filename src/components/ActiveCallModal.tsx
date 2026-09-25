@@ -6,6 +6,8 @@ import {
 import { db } from '../db/db';
 import { ActiveCallInfo } from '../store/useAppStore';
 
+export type { ActiveCallInfo };
+
 interface ActiveCallModalProps {
   callInfo: ActiveCallInfo | null;
   onClose: () => void;

@@ -30,10 +30,6 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
   const emergencyFacilities = HEALTHCARE_FACILITIES.filter(f => f.emergencyAvailable);
 
   const handleCall = (name: string, phone: string, category: ActiveCallInfo['category'], location?: string) => {
-    try {
-      const cleanDigits = phone.replace(/[^\d+]/g, '');
-      window.location.href = `tel:${cleanDigits}`;
-    } catch {}
     setActiveCall({
       name,
       phone,

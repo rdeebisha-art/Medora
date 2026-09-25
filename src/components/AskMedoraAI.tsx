@@ -179,12 +179,18 @@ const getQuickActions = (question: string): QuickAction[] => {
 };
 
 const decideResponseText = (question: string, patient: ReturnType<typeof buildPatientContextFromProfile>) => {
-  const q = normalizeQuestion(question);
+  const q = normalizeQuestion(question).trim();
   const appointment = patient.currentReferral;
   const tests = patient.labTests;
   const tasks = patient.preventiveTasks;
   const medicines = patient.medicines;
   const vitals = patient.recentMeasurements;
+
+  // 0. Conversational Greetings (Natural conversational chatbot like ChatGPT & Gemini)
+  const isGreeting = /^(hi|hello|hey|namaste|vanakkam|namaskaram|greetings|good\s*(morning|afternoon|evening|day)|howdy|how are you|who are you)\b/i.test(q) || q === 'hi' || q === 'hello' || q === 'hey';
+  if (isGreeting) {
+    return `Hello ${patient.name}! I am Medora AI, your healthcare companion. How are you feeling today? I have access to your health records. You can ask me about your daily medicines, upcoming checkups, lab test reports, or any health concerns.${DISCLAIMER_SUFFIX}`;
+  }
 
   // 1. Critical Emergency Red Flags
   if (q.includes('emergency') || q.includes('chest pain') || q.includes('severe bleeding') || q.includes('difficulty breathing') || q.includes('unconscious')) {
@@ -489,6 +495,24 @@ export const AskMedoraAI: React.FC<AskMedoraAIProps> = ({
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsThinking(true);
+
+    const isGreeting = /^(hi|hello|hey|namaste|vanakkam|namaskaram|greetings|good\s*(morning|afternoon|evening|day)|howdy|how are you|who are you)\b/i.test(trimmed.toLowerCase().trim()) || trimmed.toLowerCase().trim() === 'hi' || trimmed.toLowerCase().trim() === 'hello' || trimmed.toLowerCase().trim() === 'hey';
+    if (isGreeting) {
+      const greetingReply = `Hello ${patientContext.name}! I am Medora AI, your healthcare companion. How are you feeling today? You can ask me about your symptoms, daily medication reminders, upcoming appointments, lab test reports, or emergency first aid.${DISCLAIMER_SUFFIX}`;
+      const translatedGreeting = translateString(greetingReply, currentLang);
+      const aiMessage: Message = {
+        id: nextMessageId('ai'),
+        role: 'ai',
+        text: translatedGreeting,
+        workflow: ['Conversational Agent', 'Medora AI'],
+        quickActions: getQuickActions('general'),
+        mode: 'AI',
+      };
+      setMessages(prev => [...prev, aiMessage]);
+      speakReply(translatedGreeting);
+      setIsThinking(false);
+      return;
+    }
 
     try {
       const a2aResult = processA2ARequest(trimmed, patientContext, {

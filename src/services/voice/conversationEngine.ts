@@ -86,6 +86,20 @@ export class ConversationEngine {
     let customContextResponse: string | null = null;
     const lowerText = text.toLowerCase();
 
+    // 4a. Conversational Greeting check
+    const isGreeting = /^(hi|hello|hey|namaste|vanakkam|namaskaram|greetings|good\s*(morning|afternoon|evening|day)|howdy|how are you|who are you)\b/i.test(lowerText) || lowerText === 'hi' || lowerText === 'hello' || lowerText === 'hey';
+    if (isGreeting) {
+      customContextResponse = this.formatContextMessage(
+        'Hello! I am Medora AI, your healthcare companion. How are you feeling today? You can ask me about symptoms, your daily medicine schedule, checkups, or emergency first aid.',
+        'வணக்கம்! நான் மெடோரா AI, உங்கள் சுகாதார உதவியாளர். இன்று உங்கள் உடல்நலம் எப்படி உள்ளது? உங்கள் அறிகுறிகள், மருந்து அட்டவணை, மருத்துவ சந்திப்புகள் பற்றி என்னிடம் கேட்கலாம்.',
+        'నమస్కారం! నేను మెడోరా AI, మీ ఆరోగ్య సహాయకుడిని. ఈ రోజు మీ ఆరోగ్యం ఎలా ఉంది? మీ లక్షణాలు, మందుల సమయాలు లేదా ఆరోగ్య పరీక్షల గురించి నన్ను అడగవచ్చు.',
+        'നമസ്കാരം! ഞാൻ മെഡോറ AI, നിങ്ങളുടെ ആരോഗ്യ സഹായി. ഇന്ന് സുഖമാണോ? നിങ്ങളുടെ ലക്ഷണങ്ങൾ, മരുന്നുകളുടെ സമയം, ഡോക്ടറുടെ അപ്പോയിന്റ്മെന്റുകൾ എന്നിവയെക്കുറിച്ച് ചോദിക്കാം.',
+        'ನಮಸ್ಕಾರ! ನಾನು ಮೆಡೋರಾ AI, ನಿಮ್ಮ ಆರೋಗ್ಯ ಸಹಾಯಕ. ನಿಮ್ಮ ಆರೋಗ್ಯ ಹೇಗಿದೆ? ನಿಮ್ಮ ರೋಗಲಕ್ಷಣಗಳು, ಔಷಧಿಗಳ ವೇಳಾಪಟ್ಟಿ ಅಥವಾ ತಪಾಸಣೆ ಬಗ್ಗೆ ಕೇಳಬಹುದು.',
+        'नमस्ते! मैं मेडोरा AI हूँ, आपका स्वास्थ्य साथी। आज आपकी तबियत कैसी है? आप मुझसे लक्षणों, दवा के समय, डॉक्टर अपॉइंटमेंट या प्राथमिक उपचार के बारे में पूछ सकते हैं।',
+        currentLang
+      );
+    }
+
     // Context follow-up check: If user typed just a duration ("3 days") and previous symptom exists
     const isJustDuration = /^\d+\s*(days?|weeks?|months?|hours?|நாட்கள்|நாட்களாக|రోజులు|दिन|ദിവസം|ದಿನ)\b/i.test(lowerText) ||
       /^(three|two|four|five|six|seven|3|2|4|5)\s*(days?|weeks?|दिन|நாட்கள்)/i.test(lowerText);

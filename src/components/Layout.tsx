@@ -343,6 +343,11 @@ export default function Layout({ children }: LayoutProps) {
 
       {emergencyOpen && <EmergencyOverlay onClose={() => setEmergencyOpen(false)} />}
 
+      {/* In-Browser Direct Web Call Modal (No external phone dialer redirect) */}
+      {activeDirectCall && (
+        <ActiveCallModal callInfo={activeDirectCall} onClose={endDirectCall} />
+      )}
+
       <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-[#E2E8F0] z-40 shadow-lg py-1 no-print">
         <div className="max-w-7xl mx-auto flex items-center justify-around px-1">
           {navItems.map((item, i) => {
