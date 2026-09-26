@@ -11,6 +11,7 @@ export class SpeechRecognitionService {
   private recognition: any = null;
   private isListening: boolean = false;
   private currentLanguage: SupportedLanguageCode = 'en-IN';
+  private listeningTimeout: any = null;
 
   constructor() {
     this.initRecognition();
@@ -25,16 +26,40 @@ export class SpeechRecognitionService {
         (window as any).msSpeechRecognition;
 
       if (SpeechRecognitionClass) {
-        this.recognition = new SpeechRecognitionClass();
-        this.recognition.continuous = false;
-        this.recognition.interimResults = true;
-        this.recognition.maxAlternatives = 1;
+        try {
+          this.recognition = new SpeechRecognitionClass();
+          this.recognition.continuous = false;
+          this.recognition.interimResults = true;
+          this.recognition.maxAlternatives = 1;
+        } catch (e) {
+          console.warn('[SpeechRecognition] Init error:', e);
+          this.recognition = null;
+        }
       }
     }
   }
 
   public isSupported(): boolean {
+    if (!this.recognition) {
+      this.initRecognition();
+    }
     return !!this.recognition;
+  }
+
+  /**
+   * Queries microphone permission state using browser Permissions API where supported.
+   */
+  public async getMicrophonePermissionStatus(): Promise<'granted' | 'denied' | 'prompt' | 'unsupported'> {
+    if (typeof navigator === 'undefined' || !navigator.permissions) {
+      return 'unsupported';
+    }
+    try {
+      // TypeScript lib sometimes does not have 'microphone' in PermissionName enum
+      const status = await (navigator.permissions as any).query({ name: 'microphone' });
+      return (status.state as 'granted' | 'denied' | 'prompt') || 'prompt';
+    } catch {
+      return 'unsupported';
+    }
   }
 
   public getLocalizedError(errorCode: string, lang: SupportedLanguageCode): string {
@@ -169,6 +194,14 @@ export class SpeechRecognitionService {
 
       this.recognition.onstart = () => {
         this.isListening = true;
+        // Safety timeout to prevent infinite listening lock if browser hangs
+        if (this.listeningTimeout) clearTimeout(this.listeningTimeout);
+        this.listeningTimeout = setTimeout(() => {
+          if (this.isListening) {
+            this.stopListening();
+            callbacks.onEnd();
+          }
+        }, 25000);
         callbacks.onStart();
       };
 
@@ -189,12 +222,13 @@ export class SpeechRecognitionService {
       };
 
       this.recognition.onerror = (event: any) => {
+        if (this.listeningTimeout) clearTimeout(this.listeningTimeout);
         this.isListening = false;
         const errCode = event.error || 'unknown';
 
         // 'aborted' is a benign cancellation event when user stops speaking or taps mic again
         if (errCode === 'aborted') {
-          // Do NOT show scary toast or permanent error! Treat as benign interruption.
+          callbacks.onEnd();
           return;
         }
 
@@ -203,6 +237,7 @@ export class SpeechRecognitionService {
       };
 
       this.recognition.onend = () => {
+        if (this.listeningTimeout) clearTimeout(this.listeningTimeout);
         this.isListening = false;
         callbacks.onEnd();
       };
@@ -210,14 +245,20 @@ export class SpeechRecognitionService {
       this.recognition.start();
       return true;
     } catch (e: any) {
+      if (this.listeningTimeout) clearTimeout(this.listeningTimeout);
       this.isListening = false;
       const msg = this.getLocalizedError('unknown', this.currentLanguage);
       callbacks.onError(msg, 'unknown');
+      callbacks.onEnd();
       return false;
     }
   }
 
   public stopListening(): void {
+    if (this.listeningTimeout) {
+      clearTimeout(this.listeningTimeout);
+      this.listeningTimeout = null;
+    }
     if (this.recognition && this.isListening) {
       try {
         this.recognition.stop();
