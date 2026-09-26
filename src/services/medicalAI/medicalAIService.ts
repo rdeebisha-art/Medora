@@ -343,26 +343,30 @@ export class MedicalAIService {
 
   /**
    * Medical Image / X-Ray analysis.
-   * STRICT SEPARATION: Image observation vs. Diagnostic assessment.
+   * STRICT SAFETY: In accordance with medical AI safety guidelines,
+   * accurately reports UNAVAILABLE when a certified clinical diagnostic vision model is not present.
+   * NEVER invents or fabricates X-ray observations.
    */
   public analyzeMedicalImage(imageMetadata: { modality: string; anatomicalRegion: string; notes?: string }): MedicalImageAnalysisResponse {
     return {
       source: 'MEDICAL_AI',
       label: 'AI-assisted medical image observation',
-      imageQuality: 'SUFFICIENT',
+      imageQuality: 'INSUFFICIENT',
       observations: [
-        `Image anatomical orientation: ${imageMetadata.anatomicalRegion || 'Chest'}`,
-        `Modality: ${imageMetadata.modality || 'Radiograph / X-Ray'}`,
-        'Bony landmarks and soft-tissue silhouettes visualized',
+        'Certified diagnostic radiology vision model is UNAVAILABLE.',
+        'No radiographic interpretation fabricated.',
       ],
       possibleClinicalConsiderations: [
-        'Observation only; radiographic density variations require certified radiologist confirmation',
+        'X-rays and radiological studies must be evaluated by a certified radiologist or treating physician.',
       ],
-      missingInformation: ['Prior comparative radiographs', 'Clinical physical examination findings'],
+      missingInformation: [
+        'Certified PACS gateway connection',
+        'Official radiologist report',
+      ],
       requiresDoctorReview: true,
-      summaryText: 'AI-assisted medical image observation completed. Certified radiologist review required.',
+      summaryText: 'X-ray AI vision model is UNAVAILABLE in this environment. Radiographs must be interpreted directly by a qualified clinician.',
       confidence: null,
-      confidenceStatus: 'AI_ASSESSMENT_REQUIRES_CLINICAL_VERIFICATION',
+      confidenceStatus: 'NOT_CLINICALLY_VALIDATED',
     };
   }
 }

@@ -15,6 +15,38 @@ export type WebRtcCallState =
   | 'BUSY'
   | 'OFFLINE';
 
+/**
+ * Formal WebRTC Calling State Machine
+ * Primary formal states: IDLE, CALLING, CONNECTING, CONNECTED, RECONNECTING, ENDED, REJECTED, FAILED
+ */
+export const FORMAL_CALL_STATES = [
+  'IDLE',
+  'CALLING',
+  'CONNECTING',
+  'CONNECTED',
+  'RECONNECTING',
+  'ENDED',
+  'REJECTED',
+  'FAILED',
+] as const;
+
+export type FormalWebRtcCallState = (typeof FORMAL_CALL_STATES)[number];
+
+export const VALID_CALL_STATE_TRANSITIONS: Record<WebRtcCallState, WebRtcCallState[]> = {
+  IDLE: ['REQUESTING_PERMISSION', 'CALLING', 'CONNECTING', 'RINGING'],
+  REQUESTING_PERMISSION: ['CALLING', 'CONNECTING', 'FAILED', 'ENDED', 'IDLE'],
+  CALLING: ['RINGING', 'CONNECTING', 'CONNECTED', 'REJECTED', 'BUSY', 'OFFLINE', 'FAILED', 'ENDED', 'IDLE'],
+  RINGING: ['CONNECTING', 'CONNECTED', 'REJECTED', 'BUSY', 'FAILED', 'ENDED', 'IDLE'],
+  CONNECTING: ['CONNECTED', 'RECONNECTING', 'FAILED', 'ENDED', 'REJECTED', 'IDLE'],
+  CONNECTED: ['RECONNECTING', 'ENDED', 'FAILED', 'IDLE'],
+  RECONNECTING: ['CONNECTED', 'FAILED', 'ENDED', 'IDLE'],
+  ENDED: ['IDLE'],
+  REJECTED: ['IDLE'],
+  FAILED: ['IDLE'],
+  BUSY: ['IDLE'],
+  OFFLINE: ['IDLE'],
+};
+
 export interface ActiveSession {
   callId: string;
   targetUserId: string;
@@ -51,6 +83,8 @@ class WebRtcCallingService {
   private presenceListeners: Set<(presence: Map<string, 'AVAILABLE' | 'BUSY' | 'OFFLINE'>) => void> = new Set();
   private pendingIceCandidates: RTCIceCandidateInit[] = [];
   private restPollingTimer: ReturnType<typeof setInterval> | null = null;
+  private connectionTimeoutTimer: ReturnType<typeof setTimeout> | null = null;
+  private idleResetTimer: ReturnType<typeof setTimeout> | null = null;
   private isConnectedToSignaling = false;
   private currentUserId = '';
   private currentUserName = '';
@@ -92,6 +126,73 @@ class WebRtcCallingService {
     return () => this.presenceListeners.delete(listener);
   }
 
+  /**
+   * Validates whether a state transition is permitted by the formal state machine.
+   */
+  public isValidTransition(from: WebRtcCallState, to: WebRtcCallState): boolean {
+    if (from === to) return true;
+    const allowed = VALID_CALL_STATE_TRANSITIONS[from];
+    return Boolean(allowed && allowed.includes(to));
+  }
+
+  /**
+   * Returns true only when ICE negotiation is successfully established ('connected' or 'completed').
+   */
+  public isIceComplete(): boolean {
+    if (!this.pc) return false;
+    const ice = this.pc.iceConnectionState;
+    return ice === 'connected' || ice === 'completed';
+  }
+
+  public getIceConnectionState(): RTCIceConnectionState | null {
+    return this.pc ? this.pc.iceConnectionState : null;
+  }
+
+  /**
+   * Checks if transition to target state is allowed by current state and preconditions.
+   */
+  public canTransitionTo(targetState: WebRtcCallState): boolean {
+    if (this.callState === targetState) return true;
+    if (!this.isValidTransition(this.callState, targetState)) return false;
+
+    // Invariant: CONNECTED requires successful ICE completion
+    if (targetState === 'CONNECTED') {
+      if (this.pc && !this.isIceComplete()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Formal state machine transition method.
+   * Enforces valid state graph and ensures CONNECTED is only emitted upon successful ICE completion.
+   */
+  public transitionTo(targetState: WebRtcCallState, error?: string): boolean {
+    if (this.callState === targetState) return true;
+
+    if (!this.isValidTransition(this.callState, targetState)) {
+      console.warn(`[WebRTC State Machine] Blocked invalid transition: ${this.callState} -> ${targetState}`);
+      return false;
+    }
+
+    // STRICT INVARIANT: CONNECTED is only emitted upon successful ICE completion
+    if (targetState === 'CONNECTED') {
+      if (this.pc && !this.isIceComplete()) {
+        console.warn(
+          `[WebRTC State Machine] Blocked transition to CONNECTED: ICE connection state is "${this.pc.iceConnectionState}". Remaining in CONNECTING until ICE completes.`
+        );
+        if (this.callState !== 'CONNECTING') {
+          this.transitionTo('CONNECTING');
+        }
+        return false;
+      }
+    }
+
+    this.notifyState(targetState, error);
+    return true;
+  }
+
   private notifyState(state: WebRtcCallState, error?: string) {
     this.callState = state;
     for (const listener of this.listeners) {
@@ -127,6 +228,41 @@ class WebRtcCallingService {
 
   public getCallState(): WebRtcCallState {
     return this.callState;
+  }
+
+  public getConnectionState(): WebRtcCallState {
+    return this.callState;
+  }
+
+  public isCallActive(): boolean {
+    return this.callState === 'CONNECTED' || this.callState === 'CONNECTING' || this.callState === 'CALLING';
+  }
+
+  public hasActiveMediaStreams(): boolean {
+    const hasLocal = Boolean(this.localStream && this.localStream.getTracks().some((t) => t.readyState === 'live'));
+    const hasRemote = Boolean(this.remoteStream && this.remoteStream.getTracks().some((t) => t.readyState === 'live'));
+    return hasLocal || hasRemote;
+  }
+
+  public isPeerConnectionActive(): boolean {
+    return Boolean(this.pc && this.pc.signalingState !== 'closed');
+  }
+
+  private startConnectionTimeout(timeoutMs: number = 30000) {
+    this.clearConnectionTimeout();
+    this.connectionTimeoutTimer = setTimeout(() => {
+      if (this.callState === 'CALLING' || this.callState === 'CONNECTING' || this.callState === 'REQUESTING_PERMISSION') {
+        console.warn('[WebRTC] Connection timeout reached without establishing peer connection.');
+        this.cleanupCall('FAILED', 'Call timed out. Remote user did not connect.');
+      }
+    }, timeoutMs);
+  }
+
+  private clearConnectionTimeout() {
+    if (this.connectionTimeoutTimer) {
+      clearTimeout(this.connectionTimeoutTimer);
+      this.connectionTimeoutTimer = null;
+    }
   }
 
   public getActiveSession(): ActiveSession | null {
@@ -375,6 +511,12 @@ class WebRtcCallingService {
       return;
     }
 
+    // Strictly enforce IDLE state before starting a call
+    if (this.callState !== 'IDLE') {
+      console.warn(`[WebRTC] Cannot start call from non-IDLE state: ${this.callState}. Performing cleanup first.`);
+      this.cleanupCall('IDLE');
+    }
+
     this.ensureAudioElement();
     const callId = `CALL-WEBRTC-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
@@ -393,8 +535,9 @@ class WebRtcCallingService {
       startTime: Date.now(),
     };
 
-    // Step 1: Request Microphone Permission
-    this.notifyState('REQUESTING_PERMISSION');
+    // Step 1: Request Microphone Permission and start connection timeout
+    this.startConnectionTimeout(30000);
+    this.transitionTo('REQUESTING_PERMISSION');
 
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -453,19 +596,17 @@ class WebRtcCallingService {
         }
       };
 
-      // Real Connection State Tracking
+      // Real Connection State & ICE Tracking
       pc.onconnectionstatechange = () => {
         this.handleConnectionStateChange();
       };
 
       pc.oniceconnectionstatechange = () => {
-        if (pc.iceConnectionState === 'failed') {
-          pc.restartIce();
-        }
+        this.handleIceConnectionStateChange();
       };
 
       // Step 3: Create SDP Offer
-      this.notifyState('CALLING');
+      this.transitionTo('CALLING');
 
       const offer = await pc.createOffer({
         offerToReceiveAudio: true,
@@ -505,6 +646,11 @@ class WebRtcCallingService {
     emergencyType?: string;
     symptoms?: string;
   }): Promise<void> {
+    if (this.callState !== 'IDLE' && this.callState !== 'RINGING') {
+      console.warn(`[WebRTC] Cannot accept call while in state: ${this.callState}`);
+      return;
+    }
+
     this.ensureAudioElement();
 
     this.activeSession = {
@@ -522,7 +668,8 @@ class WebRtcCallingService {
       startTime: Date.now(),
     };
 
-    // Step 1: Request Microphone
+    // Step 1: Request Microphone and start connection timeout
+    this.startConnectionTimeout(30000);
     this.notifyState('REQUESTING_PERMISSION');
 
     try {
@@ -552,7 +699,7 @@ class WebRtcCallingService {
     }
 
     // Step 2: Initialize RTCPeerConnection & Accept Offer
-    this.notifyState('CONNECTING');
+    this.transitionTo('CONNECTING');
 
     try {
       const iceServers = await this.getIceServers();
@@ -586,6 +733,10 @@ class WebRtcCallingService {
 
       pc.onconnectionstatechange = () => {
         this.handleConnectionStateChange();
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        this.handleIceConnectionStateChange();
       };
 
       // Set Remote Description (SDP Offer)
@@ -629,7 +780,7 @@ class WebRtcCallingService {
   private async handleCallAccepted(sdpAnswer: RTCSessionDescriptionInit) {
     if (!this.pc) return;
     try {
-      this.notifyState('CONNECTING');
+      this.transitionTo('CONNECTING');
       await this.pc.setRemoteDescription(new RTCSessionDescription(sdpAnswer));
 
       // Flush any queued candidates
@@ -654,24 +805,67 @@ class WebRtcCallingService {
     }
   }
 
+  private handleIceConnectionStateChange() {
+    if (!this.pc) return;
+    const iceState = this.pc.iceConnectionState;
+    console.log('[WebRTC State Machine] ICE state changed:', iceState);
+
+    if (iceState === 'connected' || iceState === 'completed') {
+      this.handleIceCompletion();
+    } else if (iceState === 'disconnected') {
+      this.transitionTo('RECONNECTING');
+    } else if (iceState === 'failed') {
+      console.warn('[WebRTC State Machine] ICE connection failed, attempting ICE restart...');
+      this.transitionTo('RECONNECTING');
+      try {
+        this.pc.restartIce();
+      } catch {
+        this.cleanupCall('FAILED', 'ICE connection failed and could not be restarted.');
+      }
+    } else if (iceState === 'closed') {
+      this.cleanupCall('ENDED');
+    }
+  }
+
+  private handleIceCompletion() {
+    if (!this.pc) return;
+    const ice = this.pc.iceConnectionState;
+    // STRICT INVARIANT: Only emit CONNECTED upon successful ICE completion
+    if (ice !== 'connected' && ice !== 'completed') {
+      return;
+    }
+
+    this.clearConnectionTimeout();
+    if (this.callState !== 'CONNECTED') {
+      if (this.activeSession) {
+        this.activeSession.connectedTime = Date.now();
+      }
+      this.startDurationTimer();
+      this.transitionTo('CONNECTED');
+    }
+  }
+
   private handleConnectionStateChange() {
     if (!this.pc) return;
     const state = this.pc.connectionState;
+    console.log('[WebRTC State Machine] Peer connection state changed:', state);
 
     if (state === 'connected') {
-      if (this.callState !== 'CONNECTED') {
-        if (this.activeSession) {
-          this.activeSession.connectedTime = Date.now();
+      // Only emit CONNECTED if ICE completion has also succeeded
+      if (this.isIceComplete()) {
+        this.handleIceCompletion();
+      } else {
+        // Still waiting for ICE negotiation to reach connected/completed
+        if (this.callState !== 'CONNECTING') {
+          this.transitionTo('CONNECTING');
         }
-        this.startDurationTimer();
-        this.notifyState('CONNECTED');
       }
     } else if (state === 'connecting') {
       if (this.callState !== 'CONNECTED') {
-        this.notifyState('CONNECTING');
+        this.transitionTo('CONNECTING');
       }
     } else if (state === 'disconnected') {
-      this.notifyState('RECONNECTING');
+      this.transitionTo('RECONNECTING');
     } else if (state === 'failed') {
       this.cleanupCall('FAILED', 'Call could not be connected.');
     } else if (state === 'closed') {
@@ -767,32 +961,119 @@ class WebRtcCallingService {
     this.cleanupCall('ENDED', reason);
   }
 
+  /**
+   * Public robust cleanup method to terminate RTCPeerConnection and release all media streams,
+   * clearing timers and freeing resources to strictly prevent memory leaks.
+   */
+  public cleanup(finalState: WebRtcCallState = 'IDLE', reason?: string): void {
+    this.cleanupCall(finalState, reason);
+  }
+
   private cleanupCall(finalState: WebRtcCallState, error?: string) {
     this.stopDurationTimer();
+    this.clearConnectionTimeout();
 
-    // Close and stop media tracks
+    if (this.idleResetTimer) {
+      clearTimeout(this.idleResetTimer);
+      this.idleResetTimer = null;
+    }
+
+    // 1. Release Local Media Stream Tracks
     if (this.localStream) {
-      this.localStream.getTracks().forEach((track) => track.stop());
+      try {
+        this.localStream.getTracks().forEach((track) => {
+          try {
+            track.enabled = false;
+            track.stop();
+          } catch {}
+          try {
+            this.localStream?.removeTrack(track);
+          } catch {}
+        });
+      } catch (err) {
+        console.warn('[WebRTC] Error releasing local stream tracks:', err);
+      }
       this.localStream = null;
     }
+
+    // 2. Release Remote Media Stream Tracks
     if (this.remoteStream) {
-      this.remoteStream.getTracks().forEach((track) => track.stop());
+      try {
+        this.remoteStream.getTracks().forEach((track) => {
+          try {
+            track.enabled = false;
+            track.stop();
+          } catch {}
+          try {
+            this.remoteStream?.removeTrack(track);
+          } catch {}
+        });
+      } catch (err) {
+        console.warn('[WebRTC] Error releasing remote stream tracks:', err);
+      }
       this.remoteStream = null;
     }
+
+    // 3. Reset Remote Audio Element Playback
     if (this.remoteAudio) {
-      this.remoteAudio.srcObject = null;
+      try {
+        this.remoteAudio.pause();
+        this.remoteAudio.srcObject = null;
+        this.remoteAudio.removeAttribute('src');
+        this.remoteAudio.load();
+      } catch (err) {
+        console.warn('[WebRTC] Error releasing remote audio element:', err);
+      }
     }
 
+    // 4. Terminate RTCPeerConnection and detach all event listeners
     if (this.pc) {
       try {
-        this.pc.close();
-      } catch {}
+        // Detach all listener handlers to prevent memory leaks and dangling closures
+        this.pc.ontrack = null;
+        this.pc.onicecandidate = null;
+        this.pc.onconnectionstatechange = null;
+        this.pc.oniceconnectionstatechange = null;
+        this.pc.onsignalingstatechange = null;
+
+        // Stop all transceiver senders
+        if (typeof this.pc.getSenders === 'function') {
+          this.pc.getSenders().forEach((sender) => {
+            if (sender.track) {
+              try {
+                sender.track.stop();
+              } catch {}
+            }
+            try {
+              this.pc?.removeTrack(sender);
+            } catch {}
+          });
+        }
+
+        // Stop all transceiver receivers
+        if (typeof this.pc.getReceivers === 'function') {
+          this.pc.getReceivers().forEach((receiver) => {
+            if (receiver.track) {
+              try {
+                receiver.track.stop();
+              } catch {}
+            }
+          });
+        }
+
+        if (this.pc.signalingState !== 'closed') {
+          this.pc.close();
+        }
+      } catch (err) {
+        console.warn('[WebRTC] Error closing RTCPeerConnection:', err);
+      }
       this.pc = null;
     }
 
     this.pendingIceCandidates = [];
+    this.isMuted = false;
 
-    // Save Call Record in Dexie
+    // 5. Save Call Record in Dexie
     if (this.activeSession) {
       const record: CallSessionRecord = {
         callId: this.activeSession.callId,
@@ -811,20 +1092,27 @@ class WebRtcCallingService {
         emergencyType: this.activeSession.emergencyType,
       };
 
-      db.callSessions.add(record).catch((err) => console.warn('[WebRTC] Save call session error:', err));
+      try {
+        db.callSessions.add(record).catch((err) => console.warn('[WebRTC] Save call session error:', err));
+      } catch {}
     }
 
     this.activeSession = null;
     this.notifyState(finalState, error);
 
     // Return to IDLE after a short pause so user sees final state
-    setTimeout(() => {
-      if (this.callState === finalState) {
-        this.notifyState('IDLE');
-        this.durationSeconds = 0;
-        this.notifyDuration(0);
-      }
-    }, 2500);
+    if (finalState !== 'IDLE') {
+      this.idleResetTimer = setTimeout(() => {
+        if (this.callState === finalState) {
+          this.notifyState('IDLE');
+          this.durationSeconds = 0;
+          this.notifyDuration(0);
+        }
+      }, 2500);
+    } else {
+      this.durationSeconds = 0;
+      this.notifyDuration(0);
+    }
   }
 }
 

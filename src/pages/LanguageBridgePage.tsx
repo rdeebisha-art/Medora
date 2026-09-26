@@ -8,7 +8,7 @@ import { db } from '../db/db';
 import { LANGUAGE_METADATA, SupportedLanguageCode } from '../data/languages';
 import { speechRecognitionService } from '../services/voice/speechRecognitionService';
 import { speechSynthesisService } from '../services/voice/speechSynthesisService';
-import { detectSpokenLanguage, translateHealthcareText } from '../services/languageBridge/translator';
+import { detectSpokenLanguage, translateHealthcareText, translateHealthcareTextAsync } from '../services/languageBridge/translator';
 import {
   clearSessionMessages,
   createBridgeSession,
@@ -132,7 +132,7 @@ export default function LanguageBridgePage() {
 
     const sourceLang = autoDetect && !detected.mismatch ? detected.language : expected;
     const targetLang = speaker === 'patient' ? doctorLanguage : patientLanguage;
-    const result = translateHealthcareText(text, sourceLang, targetLang);
+    const result = await translateHealthcareTextAsync(text, sourceLang, targetLang);
     await persistAndShow(speaker, result);
 
     if (voiceConversation) {
