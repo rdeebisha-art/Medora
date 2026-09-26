@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams, useLocation, Link } from 'react-router-dom';
+import { useSearchParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
 import Layout from '../components/Layout';
 import DemoDataBadge from '../components/DemoDataBadge';
@@ -10,16 +10,44 @@ import { A2AWorkflow } from '../components/A2AWorkflow';
 import { MedicalAIErrorBoundary } from '../components/MedicalAIErrorBoundary';
 import { LanguageCode } from '../types';
 import { Stethoscope, Mic, ShieldAlert, FileText, Bot } from 'lucide-react';
+import { aiRouter } from '../services/aiRouter/aiRouter';
 
 export default function AiAssistantPage() {
   const { t } = useTranslation();
   const { currentUser } = useAppStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [activeSystem, setActiveSystem] = useState<'medical' | 'voice' | 'a2a'>('medical');
 
+  const rawQuery = searchParams.get('query') || searchParams.get('q') || searchParams.get('complaint') || '';
+
   useEffect(() => {
+    if (rawQuery) {
+      const decision = aiRouter.route(rawQuery);
+      if (decision.targetSystem === 'EMERGENCY_TRIAGE') {
+        navigate('/emergency', { replace: true });
+        return;
+      }
+      if (
+        decision.destinationRoute &&
+        decision.destinationRoute !== '/ai' &&
+        !decision.destinationRoute.startsWith('/ai?')
+      ) {
+        navigate(decision.destinationRoute, { replace: true });
+        return;
+      }
+      if (decision.targetSystem === 'MEDICAL_AI') {
+        setActiveSystem('medical');
+        return;
+      }
+      if (decision.targetSystem === 'VOICE_AI' && decision.requestType === 'VOICE') {
+        setActiveSystem('voice');
+        return;
+      }
+    }
+
     const tab = searchParams.get('tab');
     if (tab === 'medical' || location.pathname === '/medical-ai') {
       setActiveSystem('medical');
@@ -28,7 +56,7 @@ export default function AiAssistantPage() {
     } else if (tab === 'a2a') {
       setActiveSystem('a2a');
     }
-  }, [searchParams, location.pathname]);
+  }, [searchParams, location.pathname, navigate, rawQuery]);
 
   const handleSelectTab = (tab: 'medical' | 'voice' | 'a2a') => {
     setActiveSystem(tab);
@@ -115,7 +143,10 @@ export default function AiAssistantPage() {
         {/* System Active View */}
         {activeSystem === 'medical' ? (
           <MedicalAIErrorBoundary onBack={() => handleSelectTab('voice')}>
-            <MedicalAIPanel onReturnToVoiceAI={() => handleSelectTab('voice')} />
+            <MedicalAIPanel
+              onReturnToVoiceAI={() => handleSelectTab('voice')}
+              initialQuery={rawQuery}
+            />
           </MedicalAIErrorBoundary>
         ) : activeSystem === 'voice' ? (
           <VoiceAIPanel onSwitchToMedicalAI={() => handleSelectTab('medical')} />

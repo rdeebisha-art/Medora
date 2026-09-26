@@ -76,6 +76,27 @@ export const MedicalAIPanel: React.FC<MedicalAIPanelProps> = ({
   const [duration, setDuration] = useState('3 days');
   const [severity, setSeverity] = useState<'Mild' | 'Moderate' | 'Severe' | 'Critical'>('Moderate');
 
+  // Handle incoming initialQuery updates from search params or router transfer
+  useEffect(() => {
+    if (initialQuery && initialQuery !== chiefComplaint) {
+      setChiefComplaint(initialQuery);
+      const lower = initialQuery.toLowerCase();
+      const detected: string[] = [];
+      if (lower.includes('fever') || lower.includes('temperature') || lower.includes('காய்ச்சல்') || lower.includes('बुखार')) detected.push('Fever');
+      if (lower.includes('cough') || lower.includes('இருமல்') || lower.includes('खांसी')) detected.push('Cough');
+      if (lower.includes('headache') || lower.includes('தலைவலி') || lower.includes('सिरदर्द')) detected.push('Headache');
+      if (lower.includes('stomach') || lower.includes('abdominal') || lower.includes('வயிறு') || lower.includes('पेट')) detected.push('Stomach pain');
+      if (lower.includes('chest pain') || lower.includes('நெஞ்சு வலி') || lower.includes('सीने में दर्द')) detected.push('Chest pain');
+      if (lower.includes('breath') || lower.includes('மூச்சு') || lower.includes('सांस')) detected.push('Breathing difficulty');
+      if (lower.includes('vomit') || lower.includes('வாந்தி') || lower.includes('उल्टी')) detected.push('Vomiting');
+      if (lower.includes('diarrhea') || lower.includes('loose')) detected.push('Diarrhea');
+
+      if (detected.length > 0) {
+        setSelectedSymptoms((prev) => Array.from(new Set([...prev, ...detected])));
+      }
+    }
+  }, [initialQuery]);
+
   // Exact clinical measurements (Requirement 26)
   const [temperature, setTemperature] = useState('102°F');
   const [bp, setBp] = useState('120/80');

@@ -27,6 +27,7 @@ interface VoiceMessageItem {
   text: string;
   time: string;
   isTransfer?: boolean;
+  userQuery?: string;
   navRoute?: string;
 }
 
@@ -91,6 +92,7 @@ export const VoiceAIPanel: React.FC<VoiceAIPanelProps> = ({ onSwitchToMedicalAI 
       text: response.responseText,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isTransfer: response.isMedicalQuery || response.suggestedAction === 'TRANSFER_TO_MEDICAL_AI',
+      userQuery: textToSend,
       navRoute: response.suggestedAction === 'NAVIGATE' ? response.destinationRoute : undefined,
     };
 
@@ -201,7 +203,8 @@ export const VoiceAIPanel: React.FC<VoiceAIPanelProps> = ({ onSwitchToMedicalAI 
                       if (onSwitchToMedicalAI) {
                         onSwitchToMedicalAI();
                       }
-                      navigate('/ai?tab=medical');
+                      const qParam = m.userQuery ? `&query=${encodeURIComponent(m.userQuery)}` : '';
+                      navigate(`/ai?tab=medical${qParam}`);
                     }}
                     className="w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-2xs cursor-pointer active:scale-98"
                   >
