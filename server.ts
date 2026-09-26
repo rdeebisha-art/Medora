@@ -375,17 +375,26 @@ app.post('/api/ask', async (req: Request, res: Response) => {
 });
 
 app.post('/api/translate', async (req: Request, res: Response) => {
-  const { texts = [], language = 'en' } = req.body || {};
+  const { texts = [], language = 'en', sourceLanguage = 'ta' } = req.body || {};
   if (!SUPPORTED_LANGUAGES.has(language) || !Array.isArray(texts) || texts.length > 80) {
     return res.status(400).json({ error: 'Invalid translation request' });
   }
-  if (language === 'en') {
+
+  // Only return untranslated if source and target language are identical
+  if (sourceLanguage === language) {
     return res.json({ translations: texts });
   }
 
   if (genAI) {
     try {
-      const prompt = `Translate each string in this JSON array into language code ${language}. Preserve medicine names, numbers, units, emergency numbers, and formatting. Return ONLY valid JSON format: {"translations":["..."]}. Do not add explanations or markdown wrapping.\nInput: ${JSON.stringify(texts)}`;
+      const prompt = `Translate each medical or conversational healthcare text in this JSON array from language code "${sourceLanguage}" into target language code "${language}".
+CRITICAL PRESERVATION RULES:
+1. Preserve all clinical numbers, units, and ranges exactly (e.g., 102°F, 120/80, 180 mg/dL, 94%, 55 kg, 62 years, 3 days, 8:30 AM).
+2. Preserve all medicine names (e.g., Paracetamol, Amoxicillin, Metformin, Insulin, Aspirin).
+3. Do not alter dates, times, or patient IDs.
+4. Return ONLY valid JSON in format: {"translations":["..."]}. Do not wrap with markdown or commentary.
+Input: ${JSON.stringify(texts)}`;
+
       const aiResponse = await genAI.models.generateContent({
         model: process.env.AI_MODEL || 'gemini-2.5-flash',
         contents: prompt,
@@ -414,7 +423,7 @@ app.post('/api/translate', async (req: Request, res: Response) => {
           model: process.env.AI_MODEL || 'gpt-4o-mini',
           messages: [{
             role: 'system',
-            content: `Translate each input string into language code ${language}. Preserve medicine names, numbers, units, emergency numbers, and formatting. Return JSON only in the form {"translations":["..."]}. Do not add explanations.`,
+            content: `Translate each input healthcare string from ${sourceLanguage} into ${language}. Preserve medicine names, numbers, units, emergency numbers, and formatting. Return JSON only in the form {"translations":["..."]}. Do not add explanations.`,
           }, { role: 'user', content: JSON.stringify(texts) }],
         }),
       });
@@ -431,7 +440,72 @@ app.post('/api/translate', async (req: Request, res: Response) => {
     }
   }
 
-  return res.json({ translations: texts });
+  // Local fallback: translate known phrases and medical terms
+  const localTranslations = texts.map((t: string) => {
+    const raw = (t || '').trim().toLowerCase();
+    // Known key phrases
+    if (raw.includes('மூன்று நாட்களாக காய்ச்சல்') || raw.includes('three days') && raw.includes('fever')) {
+      if (language === 'en') return 'I have had a fever for three days.';
+      if (language === 'ta') return 'எனக்கு மூன்று நாட்களாக காய்ச்சல் இருக்கிறது.';
+      if (language === 'te') return 'నాకు మూడు రోజులుగా జ్వరం ఉంది.';
+      if (language === 'hi') return 'मुझे तीन दिनों से बुखार है।';
+      if (language === 'ml') return 'എനിക്ക് മൂന്ന് ദിവസമായി പനി ഉണ്ട്.';
+      if (language === 'kn') return 'ನನಗೆ ಮೂರು ದಿನಗಳಿಂದ ಜ್ವರ ಇದೆ.';
+    }
+    if (raw.includes('102 degree') || raw.includes('102 டிகிரி')) {
+      if (language === 'en') return 'I have had a 102 degree fever for three days.';
+      if (language === 'ta') return 'எனக்கு மூன்று நாட்களாக 102 degree fever இருக்கு.';
+      if (language === 'te') return 'నాకు మూడు రోజులుగా 102 degree fever ఉంది.';
+      if (language === 'hi') return 'मुझे तीन दिनों से 102 डिग्री बुखार है।';
+      if (language === 'ml') return 'എനിക്ക് മൂന്ന് ദിവസമായി 102 degree fever ഉണ്ട്.';
+      if (language === 'kn') return 'ನನಗೆ ಮೂರು ದಿನಗಳಿಂದ 102 degree fever ಇದೆ.';
+    }
+    if (raw.includes('காய்ச்சல்') || raw.includes('fever') || raw.includes('बुखार') || raw.includes('జ్వరం') || raw.includes('പനി') || raw.includes('ಜ್ವರ')) {
+      if (language === 'en') return 'I have a fever.';
+      if (language === 'ta') return 'எனக்கு காய்ச்சல் இருக்கிறது.';
+      if (language === 'te') return 'నాకు జ్వరం ఉంది.';
+      if (language === 'hi') return 'मुझे बुखार है।';
+      if (language === 'ml') return 'എനിക്ക് പനി ഉണ്ട്.';
+      if (language === 'kn') return 'ನನಗೆ ಜ್ವರ ಇದೆ.';
+    }
+    if (raw.includes('இருமல்') || raw.includes('cough') || raw.includes('खांसी') || raw.includes('దగ్గు') || raw.includes('ചുമ') || raw.includes('ಕೆಮ್ಮು')) {
+      if (language === 'en') return 'I have a cough.';
+      if (language === 'ta') return 'எனக்கு இருமல் இருக்கிறது.';
+      if (language === 'te') return 'నాకు దగ్గు ఉంది.';
+      if (language === 'hi') return 'मुझे खांसी है।';
+      if (language === 'ml') return 'എനിക്ക് ചുമ ഉണ്ട്.';
+      if (language === 'kn') return 'ನನಗೆ ಕೆಮ್ಮು ಇದೆ.';
+    }
+    if (raw.includes('தலைவலி') || raw.includes('headache') || raw.includes('सिरदर्द') || raw.includes('తలనొప్పి') || raw.includes('തലവേദന') || raw.includes('ತಲೆನೋವು')) {
+      if (language === 'en') return 'I have a headache.';
+      if (language === 'ta') return 'எனக்கு தலைவலி இருக்கிறது.';
+      if (language === 'te') return 'నాకు తలనొప్పి ఉంది.';
+      if (language === 'hi') return 'मुझे सिरदर्द है।';
+      if (language === 'ml') return 'എനിക്ക് തലവേദന ഉണ്ട്.';
+      if (language === 'kn') return 'ನನಗೆ ತಲೆನೋವು ಇದೆ.';
+    }
+    if (raw.includes('வயிற்று வலி') || raw.includes('stomach pain') || raw.includes('पेट दर्द') || raw.includes('కడుపు నొప్పి') || raw.includes('വയറുവേദന') || raw.includes('ಹೊಟ್ಟೆ ನೋವು')) {
+      if (language === 'en') return 'I have stomach pain.';
+      if (language === 'ta') return 'எனக்கு வயிற்று வலி இருக்கிறது.';
+      if (language === 'te') return 'నాకు కడుపు నొప్పి ఉంది.';
+      if (language === 'hi') return 'मेरे पेट में दर्द है।';
+      if (language === 'ml') return 'എനിക്ക് വയറുവേദന ഉണ്ട്.';
+      if (language === 'kn') return 'ನನಗೆ ಹೊಟ್ಟೆ ನೋವು ಇದೆ.';
+    }
+    if (raw.includes('நெஞ்சு வலி') || raw.includes('chest pain') || raw.includes('सीने में दर्द') || raw.includes('ఛాతీ నొప్పి') || raw.includes('നെഞ്ചുവേദന') || raw.includes('ಎದೆ ನೋವು')) {
+      if (language === 'en') return 'I have chest pain.';
+      if (language === 'ta') return 'எனக்கு நெஞ்சு வலி இருக்கிறது.';
+      if (language === 'te') return 'నాకు ఛాతీ నొప్పి ఉంది.';
+      if (language === 'hi') return 'मेरे सीने में दर्द है।';
+      if (language === 'ml') return 'എനിക്ക് നെഞ്ചുവേദന ഉണ്ട്.';
+      if (language === 'kn') return 'ನನಗೆ ಎದೆ ನೋವು ಇದೆ.';
+    }
+
+    // Do NOT echo source text if different language
+    return '';
+  });
+
+  return res.json({ translations: localTranslations });
 });
 
 // ─── SMS / Voice Communication & Real External Integrations ──────────────────

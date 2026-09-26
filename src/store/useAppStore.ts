@@ -56,6 +56,12 @@ interface AppState {
   currentRole: Role | null;
   appLanguage: string;
   language: string; // for backward compatibility
+  patientLanguage: string;
+  doctorLanguage: string;
+  patientDetectedLanguage: string | null;
+  doctorDetectedLanguage: string | null;
+  conversationLanguage: string;
+  translationTargetLanguage: string;
   activeDirectCall: ActiveCallInfo | null;
   incomingCall: IncomingCallInfo | null;
   voiceNavigationLanguage: VoiceNavLanguageOption;
@@ -72,6 +78,12 @@ interface AppState {
   logout: () => void;
   setLanguage: (lang: string) => void;
   setAppLanguage: (lang: string) => void;
+  setPatientLanguage: (lang: string) => void;
+  setDoctorLanguage: (lang: string) => void;
+  setPatientDetectedLanguage: (lang: string | null) => void;
+  setDoctorDetectedLanguage: (lang: string | null) => void;
+  setConversationLanguage: (lang: string) => void;
+  setTranslationTargetLanguage: (lang: string) => void;
 }
 
 const getStoredLanguage = (): string => {
@@ -139,6 +151,12 @@ export const useAppStore = create<AppState>((set) => ({
   currentRole: initialUser?.role || 'patient',
   appLanguage: initialLanguage,
   language: initialLanguage,
+  patientLanguage: initialUser?.language === 'ta' ? 'ta-IN' : initialUser?.language ? `${initialUser.language}-IN` : 'ta-IN',
+  doctorLanguage: 'en-IN',
+  patientDetectedLanguage: null,
+  doctorDetectedLanguage: null,
+  conversationLanguage: 'en-IN',
+  translationTargetLanguage: 'en-IN',
   activeDirectCall: null,
   incomingCall: null,
   voiceNavigationLanguage: getStoredVoiceNavLanguage(),
@@ -201,6 +219,13 @@ export const useAppStore = create<AppState>((set) => ({
     i18n.changeLanguage(validLang);
     set({ appLanguage: validLang, language: validLang });
   },
+
+  setPatientLanguage: (lang) => set({ patientLanguage: lang }),
+  setDoctorLanguage: (lang) => set({ doctorLanguage: lang }),
+  setPatientDetectedLanguage: (lang) => set({ patientDetectedLanguage: lang }),
+  setDoctorDetectedLanguage: (lang) => set({ doctorDetectedLanguage: lang }),
+  setConversationLanguage: (lang) => set({ conversationLanguage: lang }),
+  setTranslationTargetLanguage: (lang) => set({ translationTargetLanguage: lang }),
 }));
 
 // Seed DB on app load

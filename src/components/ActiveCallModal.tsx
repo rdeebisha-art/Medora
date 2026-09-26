@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   PhoneOff, Volume2, VolumeX, Mic, MicOff,
   ShieldAlert, User, Clock, Languages, FileText, CheckCircle2,
-  AlertCircle, Wifi, Radio
+  AlertCircle, Wifi, Radio, Pause, Play
 } from 'lucide-react';
 import { db } from '../db/db';
 import { ActiveCallInfo, useAppStore } from '../store/useAppStore';
@@ -81,6 +81,16 @@ export const ActiveCallModal: React.FC<ActiveCallModalProps> = ({ callInfo, onCl
   const handleToggleMute = () => {
     const muted = webrtcCallingService.toggleMute();
     setIsMuted(muted);
+  };
+
+  const handlePauseMic = () => {
+    webrtcCallingService.pauseMicrophone();
+    setIsMuted(true);
+  };
+
+  const handleResumeMic = () => {
+    webrtcCallingService.resumeMicrophone();
+    setIsMuted(false);
   };
 
   const handleToggleSpeaker = () => {
@@ -300,7 +310,7 @@ export const ActiveCallModal: React.FC<ActiveCallModalProps> = ({ callInfo, onCl
         </div>
 
         {/* Call Controls */}
-        <div className="p-5 bg-slate-950/90 border-t border-slate-800 flex items-center justify-around">
+        <div className="p-4 bg-slate-950/90 border-t border-slate-800 flex items-center justify-around gap-2">
           
           {/* Mute Button */}
           <button
@@ -308,14 +318,30 @@ export const ActiveCallModal: React.FC<ActiveCallModalProps> = ({ callInfo, onCl
             disabled={callState !== 'CONNECTED'}
             onClick={handleToggleMute}
             aria-label={isMuted ? 'Unmute Microphone' : 'Mute Microphone'}
-            className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl transition ${
+            className={`flex flex-col items-center gap-1 p-2.5 rounded-2xl transition ${
               isMuted
                 ? 'bg-rose-600/30 text-rose-300 ring-2 ring-rose-500'
                 : 'bg-slate-800 hover:bg-slate-700 text-white'
             } ${callState !== 'CONNECTED' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
           >
-            {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-            <span className="text-[11px] font-medium">{isMuted ? 'Muted' : 'Mute'}</span>
+            {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+            <span className="text-[10px] font-medium">{isMuted ? 'Unmute' : 'Mute'}</span>
+          </button>
+
+          {/* Pause / Resume Mic Button */}
+          <button
+            type="button"
+            disabled={callState !== 'CONNECTED'}
+            onClick={isMuted ? handleResumeMic : handlePauseMic}
+            aria-label={isMuted ? 'Resume Microphone' : 'Pause Microphone'}
+            className={`flex flex-col items-center gap-1 p-2.5 rounded-2xl transition ${
+              isMuted
+                ? 'bg-amber-600/30 text-amber-300 ring-2 ring-amber-500'
+                : 'bg-slate-800 hover:bg-slate-700 text-white'
+            } ${callState !== 'CONNECTED' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+          >
+            {isMuted ? <Play className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
+            <span className="text-[10px] font-medium">{isMuted ? 'Resume' : 'Pause Mic'}</span>
           </button>
 
           {/* End Call / Close Button */}
@@ -324,9 +350,9 @@ export const ActiveCallModal: React.FC<ActiveCallModalProps> = ({ callInfo, onCl
               type="button"
               onClick={handleEndCall}
               aria-label="End Medora Call"
-              className="flex flex-col items-center gap-1.5 p-4 rounded-full bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-950/60 transition scale-105 active:scale-95 cursor-pointer"
+              className="flex flex-col items-center gap-1 p-3.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-950/60 transition scale-105 active:scale-95 cursor-pointer"
             >
-              <PhoneOff className="w-7 h-7" />
+              <PhoneOff className="w-6 h-6" />
               <span className="sr-only">End Call</span>
             </button>
           ) : (
@@ -339,7 +365,7 @@ export const ActiveCallModal: React.FC<ActiveCallModalProps> = ({ callInfo, onCl
                   onClose();
                 }
               }}
-              className="px-6 py-3 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm shadow-md transition cursor-pointer"
+              className="px-5 py-2.5 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md transition cursor-pointer"
             >
               {durationSeconds > 5 && !summarySaved ? 'Save Summary' : 'Close'}
             </button>
@@ -351,14 +377,14 @@ export const ActiveCallModal: React.FC<ActiveCallModalProps> = ({ callInfo, onCl
             disabled={callState !== 'CONNECTED'}
             onClick={handleToggleSpeaker}
             aria-label={isSpeaker ? 'Mute Speaker' : 'Enable Speaker'}
-            className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl transition ${
+            className={`flex flex-col items-center gap-1 p-2.5 rounded-2xl transition ${
               isSpeaker
                 ? 'bg-slate-800 hover:bg-slate-700 text-white'
                 : 'bg-rose-600/30 text-rose-300 ring-2 ring-rose-500'
             } ${callState !== 'CONNECTED' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
           >
-            {isSpeaker ? <Volume2 className="w-6 h-6" /> : <VolumeX className="w-6 h-6" />}
-            <span className="text-[11px] font-medium">{isSpeaker ? 'Speaker' : 'Muted'}</span>
+            {isSpeaker ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+            <span className="text-[10px] font-medium">{isSpeaker ? 'Speaker' : 'Muted'}</span>
           </button>
         </div>
 

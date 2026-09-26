@@ -673,7 +673,7 @@ class WebRtcCallingService {
     } else if (state === 'disconnected') {
       this.notifyState('RECONNECTING');
     } else if (state === 'failed') {
-      this.cleanupCall('FAILED', 'Unable to establish the voice connection.');
+      this.cleanupCall('FAILED', 'Call could not be connected.');
     } else if (state === 'closed') {
       this.cleanupCall('ENDED');
     }
@@ -712,6 +712,34 @@ class WebRtcCallingService {
   }
 
   /**
+   * Pause microphone stream
+   */
+  public pauseMicrophone(): boolean {
+    if (!this.localStream) return false;
+    this.localStream.getAudioTracks().forEach((track) => {
+      track.enabled = false;
+    });
+    this.isMuted = true;
+    return true;
+  }
+
+  /**
+   * Resume microphone stream
+   */
+  public resumeMicrophone(): boolean {
+    if (!this.localStream) return false;
+    this.localStream.getAudioTracks().forEach((track) => {
+      track.enabled = true;
+    });
+    this.isMuted = false;
+    return true;
+  }
+
+  public isMicrophonePaused(): boolean {
+    return this.isMuted;
+  }
+
+  /**
    * Toggle speaker output
    */
   public toggleSpeaker(): boolean {
@@ -721,6 +749,7 @@ class WebRtcCallingService {
     }
     return this.isSpeakerOn;
   }
+
 
   /**
    * End the current call session

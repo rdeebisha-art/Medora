@@ -4,7 +4,13 @@ export type BridgeLang = 'en' | 'ta' | 'te' | 'ml' | 'kn' | 'hi';
 
 export type TranslationConfidence = 'HIGH' | 'MEDIUM' | 'LOW';
 
+export type CanonicalTranslationStatus =
+  | 'TRANSLATED'
+  | 'NEEDS_CONFIRMATION'
+  | 'UNSUPPORTED';
+
 export type TranslationStatus =
+  | CanonicalTranslationStatus
   | 'Translated'
   | 'SameLanguage'
   | 'NeedsConfirmation'
@@ -35,7 +41,7 @@ export interface BridgeTranslationResult {
   translatedText: string;
   translationConfidence: TranslationConfidence;
   translationStatus: TranslationStatus;
-  engine: 'local-phrase' | 'same-language' | 'unsupported';
+  engine: 'local-phrase' | 'same-language' | 'online-model' | 'clinical-dictionary' | 'unsupported';
   preservedTokens: ProtectedToken[];
   emergencyIntent?: string;
   isEmergency: boolean;
@@ -43,6 +49,7 @@ export interface BridgeTranslationResult {
   isAppointment: boolean;
   matchedPhraseId?: string;
   needsConfirmation: boolean;
+  displayNotice?: string;
 }
 
 export const BRIDGE_LANGS: BridgeLang[] = ['en', 'ta', 'te', 'ml', 'kn', 'hi'];

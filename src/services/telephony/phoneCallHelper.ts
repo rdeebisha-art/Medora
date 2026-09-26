@@ -99,6 +99,19 @@ export async function initiatePhoneCall(
     }
   }
 
+  // Emergency telephone numbers (108, 112, 102) require external telephony network, NOT WebRTC!
+  const isEmergencyNumber = sanitized === '108' || sanitized === '112' || sanitized === '102' || options?.contactType === 'EMERGENCY';
+  if (isEmergencyNumber) {
+    const { callEmergencyNumber } = await import('./emergencyTelephonyAdapter');
+    const emergencyRes = await callEmergencyNumber(sanitized);
+    return {
+      actionTaken: emergencyRes.status === 'NOT_CONFIGURED' ? 'FAILED' : 'SERVER_CALL_INITIATED',
+      status: emergencyRes.status === 'INITIATED' ? 'INITIATED' : 'FAILED',
+      message: emergencyRes.message,
+      sanitizedPhone: sanitized,
+    };
+  }
+
   // Launch direct in-app Medora WebRTC call console without opening external apps, Phone app, or Truecaller
   try {
     const store = useAppStore.getState();
@@ -106,10 +119,10 @@ export async function initiatePhoneCall(
       store.startDirectCall({
         name: contactName || `Medora Contact (${sanitized})`,
         phone: sanitized,
-        category: sanitized === '108' || sanitized === '112' ? 'EMERGENCY' : sanitized === '102' ? 'AMBULANCE' : options?.contactType === 'DOCTOR' ? 'DOCTOR' : options?.contactType === 'HOSPITAL' ? 'HOSPITAL' : 'CUSTOM',
+        category: options?.contactType === 'FAMILY' ? 'FAMILY' : options?.contactType === 'DOCTOR' ? 'DOCTOR' : options?.contactType === 'HOSPITAL' ? 'HOSPITAL' : 'CUSTOM',
         location: 'Medora Direct WebRTC Audio Line (In-App)',
-        targetUserId: options?.contactType === 'DOCTOR' ? 'DOC-01' : undefined,
-        emergency: sanitized === '108' || sanitized === '112',
+        targetUserId: options?.contactType === 'DOCTOR' ? 'DOC-01' : options?.contactType === 'FAMILY' ? `FAM-0${options.patientId || 1}` : undefined,
+        emergency: false,
       });
       return {
         actionTaken: 'SERVER_CALL_INITIATED',
@@ -127,3 +140,4 @@ export async function initiatePhoneCall(
     sanitizedPhone: sanitized,
   };
 }
+
