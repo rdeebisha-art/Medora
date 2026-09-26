@@ -70,7 +70,8 @@ export default function MedicalRecordsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [records, setRecords] = useState<MedicalRecord[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const initialSearch = searchParams.get('search') || searchParams.get('q') || '';
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [activeFilter, setActiveFilter] = useState<'all' | MedicalRecordType>('all');
   const [showAdd, setShowAdd] = useState(false);
   const [refresh, setRefresh] = useState(0);
@@ -98,10 +99,14 @@ export default function MedicalRecordsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  // Check ?add=true query param on load
+  // Check ?add=true and ?search= query params on load
   useEffect(() => {
     if (searchParams.get('add') === 'true') {
       setShowAdd(true);
+    }
+    const urlQ = searchParams.get('search') || searchParams.get('q');
+    if (urlQ) {
+      setSearchQuery(urlQ);
     }
   }, [searchParams]);
 

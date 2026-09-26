@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
@@ -27,6 +27,8 @@ import {
   ShieldCheck,
   Plus,
   Calendar,
+  Search,
+  X,
 } from 'lucide-react';
 
 type FilterType = 'all' | 'active' | 'completed';
@@ -42,6 +44,8 @@ export default function MedicinesPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [isLabelsModalOpen, setIsLabelsModalOpen] = useState(false);
   const [selectedMedIdForLabel, setSelectedMedIdForLabel] = useState<number | undefined>(undefined);
+  const initialSearch = searchParams.get('search') || searchParams.get('q') || '';
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
 
   // Form State adhering to Requirement 6:
   // Name, Dosage, Frequency, Timing (morning/afternoon/night, before/after food), Start/End date, Doctor, Instructions, Reminder enabled
@@ -72,12 +76,27 @@ export default function MedicinesPage() {
   const [showRemindersTray, setShowRemindersTray] = useState(false);
   const [notificationFeedback, setNotificationFeedback] = useState<string | null>(null);
 
-  // Check ?add=true param
+  // Check ?add=true and ?search= param
   useEffect(() => {
     if (searchParams.get('add') === 'true') {
       setShowAdd(true);
     }
+    const urlSearch = searchParams.get('search') || searchParams.get('q');
+    if (urlSearch) {
+      setSearchQuery(urlSearch);
+    }
   }, [searchParams]);
+
+  const filteredMedicines = useMemo(() => {
+    if (!searchQuery.trim()) return medicines;
+    const q = searchQuery.toLowerCase().trim();
+    return medicines.filter((m) =>
+      m.name.toLowerCase().includes(q) ||
+      m.doctor.toLowerCase().includes(q) ||
+      m.dose.toLowerCase().includes(q) ||
+      m.instructions.toLowerCase().includes(q)
+    );
+  }, [medicines, searchQuery]);
 
   // Load medicines and trigger Automated Push Notification Scheduling
   useEffect(() => {
@@ -287,21 +306,44 @@ export default function MedicinesPage() {
           )}
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex bg-slate-100 border border-[#E2E8F0] rounded-xl p-1">
-          {(['active', 'all', 'completed'] as FilterType[]).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                filter === f
-                  ? 'bg-white text-[#16A34A] shadow-xs'
-                  : 'text-[#64748B] hover:text-[#0F172A]'
-              }`}
-            >
-              {t(`medicines.${f}`, f.charAt(0).toUpperCase() + f.slice(1))}
-            </button>
-          ))}
+        {/* Search Bar & Filter Pills */}
+        <div className="space-y-2">
+          <div className="relative flex items-center">
+            <Search size={15} className="absolute left-3.5 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search medicines by name, dose, or doctor..."
+              className="w-full pl-9 pr-8 py-2 bg-white border border-[#E2E8F0] rounded-xl text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#16A34A] shadow-2xs"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 p-1 text-slate-400 hover:text-slate-600 rounded-full"
+                title="Clear"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          <div className="flex bg-slate-100 border border-[#E2E8F0] rounded-xl p-1">
+            {(['active', 'all', 'completed'] as FilterType[]).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  filter === f
+                    ? 'bg-white text-[#16A34A] shadow-xs'
+                    : 'text-[#64748B] hover:text-[#0F172A]'
+                }`}
+              >
+                {t(`medicines.${f}`, f.charAt(0).toUpperCase() + f.slice(1))}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Add Medicine Modal (Requirement 6) */}
@@ -504,14 +546,27 @@ export default function MedicinesPage() {
         )}
 
         {/* Medicine List */}
-        {medicines.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
+        {filteredMedicines.length === 0 ? (
+          <div className="text-center py-12 text-gray-400 bg-white/70 border border-slate-200 rounded-3xl p-6">
             <div className="text-5xl mb-3">💊</div>
-            <p>{t('medicines.noMedicines', 'No medicines recorded')}</p>
+            <p className="font-bold text-slate-700">
+              {searchQuery.trim()
+                ? `No medicines matching "${searchQuery}"`
+                : t('medicines.noMedicines', 'No medicines recorded')}
+            </p>
+            {searchQuery.trim() && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="mt-3 text-xs text-[#16A34A] font-extrabold hover:underline"
+              >
+                Clear Search Filter
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-3">
-            {medicines.map((m) => (
+            {filteredMedicines.map((m) => (
               <MedicineCard
                 key={m.id}
                 medicine={m}

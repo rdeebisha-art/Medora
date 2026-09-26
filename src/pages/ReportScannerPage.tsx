@@ -214,21 +214,21 @@ export default function ReportScannerPage() {
         )}
 
         {/* Upload Buttons */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             onClick={() => fileRef.current?.click()}
-            className="flex flex-col items-center justify-center bg-white border-2 border-indigo-200 hover:border-indigo-400 border-dashed rounded-3xl p-6 transition-all shadow-xs group"
+            className="flex flex-col items-center justify-center bg-white border-2 border-indigo-200 hover:border-indigo-400 border-dashed rounded-3xl p-5 sm:p-6 transition-all shadow-xs group min-h-[100px]"
           >
-            <Upload className="w-8 h-8 text-indigo-600 mb-2 group-hover:scale-110 transition-transform" />
+            <Upload className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-600 mb-2 group-hover:scale-110 transition-transform" />
             <span className="text-xs font-black text-indigo-950">Upload Report File (PDF/Image)</span>
             <span className="text-[10px] text-slate-400 mt-0.5">Select image or document file</span>
           </button>
 
           <button
             onClick={() => cameraRef.current?.click()}
-            className="flex flex-col items-center justify-center bg-white border-2 border-emerald-200 hover:border-emerald-400 border-dashed rounded-3xl p-6 transition-all shadow-xs group"
+            className="flex flex-col items-center justify-center bg-white border-2 border-emerald-200 hover:border-emerald-400 border-dashed rounded-3xl p-5 sm:p-6 transition-all shadow-xs group min-h-[100px]"
           >
-            <Camera className="w-8 h-8 text-emerald-600 mb-2 group-hover:scale-110 transition-transform" />
+            <Camera className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-600 mb-2 group-hover:scale-110 transition-transform" />
             <span className="text-xs font-black text-emerald-950">Take Camera Photo</span>
             <span className="text-[10px] text-slate-400 mt-0.5">Capture printed lab sheet</span>
           </button>

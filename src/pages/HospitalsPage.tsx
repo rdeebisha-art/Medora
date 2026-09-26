@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { db, Hospital } from '../db/db';
 import Layout from '../components/Layout';
 import DemoDataBadge from '../components/DemoDataBadge';
@@ -7,11 +8,20 @@ import { callPhoneNumber } from '../services/calling/phoneNumberUtils';
 
 export default function HospitalsPage() {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const initialSearch = searchParams.get('search') || searchParams.get('q') || '';
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(initialSearch);
   const [selectedRouteNotice, setSelectedRouteNotice] = useState<string | null>(null);
 
   useEffect(() => { db.hospitals.toArray().then(setHospitals); }, []);
+
+  useEffect(() => {
+    const urlQ = searchParams.get('search') || searchParams.get('q');
+    if (urlQ) {
+      setSearch(urlQ);
+    }
+  }, [searchParams]);
 
   const filtered = hospitals.filter(h =>
     h.name.toLowerCase().includes(search.toLowerCase()) ||

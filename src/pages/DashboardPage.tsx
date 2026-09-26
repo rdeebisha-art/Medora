@@ -10,6 +10,7 @@ import DemoDataBadge from '../components/DemoDataBadge';
 import SpeakToMedoraCard from '../components/SpeakToMedoraCard';
 import MedoraHealthcareTeam from '../components/MedoraHealthcareTeam';
 import { RecentHealthActivitySection } from '../components/RecentHealthActivitySection';
+import { MedoraSearchBar } from '../components/MedoraSearchBar';
 import {
   TriangleAlert as AlertTriangle,
   Sparkles,
@@ -466,6 +467,32 @@ export default function DashboardPage() {
               </Link>
             </div>
           </div>
+        </div>
+
+        {/* ========================================================= */}
+        {/* PROMINENT QUICK SEARCH HERO SECTION                       */}
+        {/* ========================================================= */}
+        <div className="bg-white border-2 border-teal-500/40 rounded-3xl p-4 sm:p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center font-bold text-base shadow-2xs border border-teal-200/50">
+                🔍
+              </div>
+              <div>
+                <h2 className="text-sm font-black text-slate-900 tracking-tight">
+                  Search Medora
+                </h2>
+                <p className="text-[11px] text-slate-500">
+                  Find medical records, lab reports, symptoms, medicines, doctors, and hospitals instantly
+                </p>
+              </div>
+            </div>
+            <span className="hidden sm:inline-block text-[10px] bg-teal-100 text-teal-800 font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-teal-200">
+              Offline Search
+            </span>
+          </div>
+
+          <MedoraSearchBar variant="hero" showChips={true} />
         </div>
 
         {/* ========================================================= */}

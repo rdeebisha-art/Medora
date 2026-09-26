@@ -21,6 +21,7 @@ import {
 import { LanguageCode, FamilyMember, UserRole } from '../types';
 import { TRANSLATIONS } from '../i18n/translations';
 import { voiceService } from '../services/voiceService';
+import { MedoraSearchBar } from './MedoraSearchBar';
 
 interface HeaderProps {
   currentLang: LanguageCode;
@@ -201,6 +202,11 @@ export const Header: React.FC<HeaderProps> = ({
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Central Universal Search Bar */}
+          <div className="flex-1 max-w-xs xl:max-w-sm hidden lg:block mx-2">
+            <MedoraSearchBar variant="standalone" />
           </div>
 
           {/* STREAMLINED PRIMARY NAVIGATION (6 Core Tabs on Desktop) */}

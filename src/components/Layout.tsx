@@ -10,6 +10,7 @@ import NotificationBell from './NotificationBell';
 import EmergencyOverlay from './EmergencyOverlay';
 import ConnectivityStatusIndicator from './ConnectivityStatusIndicator';
 import { ActiveCallModal } from './ActiveCallModal';
+import { MedoraSearchBar } from './MedoraSearchBar';
 
 const LANGUAGES = [
   { code: 'en', label: 'EN', name: 'English', native: 'English' },
@@ -73,10 +74,10 @@ export default function Layout({ children }: LayoutProps) {
     <div className={`min-h-screen flex flex-col bg-transparent text-[#0F172A] overflow-x-hidden ${is2GMode ? 'text-base' : ''} ${isSimpleMode ? 'text-lg' : ''}`}>
       <ConnectivityStatusIndicator />
 
-      <header className="bg-[#0F766E] text-white px-3 sm:px-4 py-2.5 sm:py-3 shadow-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
+      <header className="bg-[#0F766E] text-white px-3 sm:px-4 py-2 sm:py-2.5 shadow-md sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
           {/* Logo & Tagline */}
-          <Link to="/dashboard" className="flex items-center gap-2 group min-w-0 flex-shrink-1">
+          <Link to="/dashboard" className="flex items-center gap-2 group min-w-0 flex-shrink-0">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-gradient-to-br from-teal-400 to-teal-600 text-teal-950 font-black text-lg sm:text-xl flex items-center justify-center shadow-sm flex-shrink-0">
               +
             </div>
@@ -89,6 +90,11 @@ export default function Layout({ children }: LayoutProps) {
               </div>
             </div>
           </Link>
+
+          {/* Central Universal Search Bar (Desktop & Tablet) */}
+          <div className="flex-1 max-w-md mx-2 hidden sm:block relative">
+            <MedoraSearchBar variant="header" />
+          </div>
 
           {/* Header Controls */}
           <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
@@ -173,6 +179,11 @@ export default function Layout({ children }: LayoutProps) {
               {currentUser?.name ? currentUser.name[0].toUpperCase() : <User size={15} />}
             </button>
           </div>
+        </div>
+
+        {/* Mobile Search Bar Row (Mobile only - always visible on smaller screens) */}
+        <div className="sm:hidden mt-2 pt-1 border-t border-teal-600/30">
+          <MedoraSearchBar variant="mobile" />
         </div>
       </header>
 

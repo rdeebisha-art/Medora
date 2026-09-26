@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
 import { db, Patient, DoctorSummary, Medicine, Doctor, Appointment } from '../db/db';
 import Layout from '../components/Layout';
@@ -26,7 +26,16 @@ export default function DoctorPortalPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [notes, setNotes] = useState('');
   const [saved, setSaved] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams] = useSearchParams();
+  const initialSearch = searchParams.get('search') || searchParams.get('q') || '';
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
+
+  useEffect(() => {
+    const urlQ = searchParams.get('search') || searchParams.get('q');
+    if (urlQ) {
+      setSearchQuery(urlQ);
+    }
+  }, [searchParams]);
 
   // Prescription Form State
   const [showAddMed, setShowAddMed] = useState(false);
