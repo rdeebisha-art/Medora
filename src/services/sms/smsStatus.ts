@@ -1,9 +1,13 @@
 export type SmsRealStatus =
+  | 'DRAFT'
   | 'QUEUED'
-  | 'SENDING'
-  | 'SENT'
+  | 'SUBMITTED'
   | 'DELIVERED'
   | 'FAILED'
+  | 'OFFLINE_OUTBOX'
+  | 'DEMO_ONLY'
+  | 'SENDING'
+  | 'SENT'
   | 'PENDING_SYNC'
   | 'NOT_CONFIGURED';
 
@@ -17,6 +21,7 @@ export interface SmsSendPayload {
   senderId?: string;
   templateId?: string;
   language?: string;
+  isDemoMode?: boolean;
 }
 
 export interface SmsResponseData {
@@ -34,6 +39,9 @@ export interface SmsResponseData {
   provider?: string;
   providerStatus?: string;
   error?: string;
+  info?: string;
+  demoNotice?: string;
+  configured?: boolean;
   createdAt: string;
   updatedAt: string;
   isOfflineQueued?: boolean;

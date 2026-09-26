@@ -556,6 +556,15 @@ function normalizeToE164(phone: string): string | null {
   return null;
 }
 
+// GET /api/sms/config
+app.get('/api/sms/config', (_req: Request, res: Response) => {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const fromNumber = process.env.TWILIO_FROM_NUMBER;
+  const isConfigured = Boolean(accountSid && authToken && fromNumber);
+  return res.json({ configured: isConfigured, provider: isConfigured ? 'Twilio' : 'None' });
+});
+
 // POST /api/sms/send
 app.post('/api/sms/send', async (req: Request, res: Response) => {
   const {
@@ -567,6 +576,7 @@ app.post('/api/sms/send', async (req: Request, res: Response) => {
     alertType = 'HEALTH_ALERT',
     senderId = process.env.SMS_SENDER_ID || 'MEDORA',
     templateId,
+    isDemoMode = false,
   } = req.body || {};
 
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -577,13 +587,12 @@ app.post('/api/sms/send', async (req: Request, res: Response) => {
   const messageId = `SMS-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
   const createdAt = new Date().toISOString();
 
-  if (!isConfigured) {
+  // Explicit Demo Mode handling
+  if (isDemoMode) {
     const rawNumber = String(recipientPhone || '').trim();
     const cleanNumber = normalizeToE164(rawNumber) || rawNumber || '+919876543210';
-    const carrierSid = `SM${Math.random().toString(36).substring(2, 10)}${Date.now().toString(36)}`;
-    const sentRecord: SmsRecord = {
+    return res.status(200).json({
       messageId,
-      providerMessageId: carrierSid,
       patientId,
       familyId,
       consultationId,
@@ -592,15 +601,44 @@ app.post('/api/sms/send', async (req: Request, res: Response) => {
       messageText: message || '',
       senderId,
       templateId,
-      status: 'SENT',
-      provider: 'Cellular Telecom SMS Gateway',
-      providerStatus: 'delivered',
+      status: 'DEMO_ONLY',
+      configured: isConfigured,
+      demoNotice: 'DEMO ONLY — NOT SENT TO PHONE',
+      createdAt,
+      updatedAt: createdAt,
+    });
+  }
+
+  // MODE B — NO SMS PROVIDER CONFIGURED
+  if (!isConfigured) {
+    const rawNumber = String(recipientPhone || '').trim();
+    const cleanNumber = normalizeToE164(rawNumber) || rawNumber || '+919876543210';
+    const outboxRecord: SmsRecord = {
+      messageId,
+      patientId,
+      familyId,
+      consultationId,
+      alertType,
+      recipientPhone: cleanNumber,
+      messageText: message || '',
+      senderId,
+      templateId,
+      status: 'NOT_CONFIGURED',
+      provider: 'None',
+      error: 'Real SMS sending is not configured. Saved to SMS Outbox for later sending.',
       createdAt,
       updatedAt: createdAt,
     };
-    smsStore.set(messageId, sentRecord);
-    return res.status(200).json(sentRecord);
+    smsStore.set(messageId, outboxRecord);
+    return res.status(200).json({
+      ...outboxRecord,
+      status: 'OFFLINE_OUTBOX',
+      configured: false,
+      info: 'Real SMS sending is not configured. Saved to SMS Outbox for later sending.',
+    });
   }
+
+  // MODE A — REAL SMS PROVIDER CONFIGURED
 
   const e164 = normalizeToE164(recipientPhone || '');
   if (!e164) {
@@ -958,26 +996,22 @@ app.post('/api/analysis/image', async (req: Request, res: Response) => {
   const cleanBase64 = imageBase64.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, '');
 
   if (!genAI) {
-    // High-accuracy verified computer vision fallback (>90% confidence score)
-    const isChest = bodyPart.toLowerCase().includes('chest');
-    const aiFindings = isChest
-      ? 'Digital Radiography (CXR-PA View): Trachea is midline. Both lung fields appear normally aerated with distinct bronchovascular markings extending symmetrically. Cardiac silhouette is within normal limits (Cardiothoracic Ratio < 0.50). Bilateral costophrenic and cardiophrenic angles are acute and clear. No focal air-space consolidation, effusion, or active pneumothorax identified. Visualized thoracic bony cage and ribs intact without displaced fracture line.'
-      : `Digital Radiography Scan (${bodyPart}): Visualized cortical margins and articular alignments intact. No gross focal cortical disruption, pathological fracture line, joint effusion, or displaced dislocation identified. Soft tissue shadow is within unremarkable clinical limits.`;
-
+    // Honest model unavailable reporting (Requirements 6 & 7)
     return res.status(200).json({
-      status: 'AI_ASSISTED',
-      study: `Digital Radiography (${bodyPart})`,
+      status: 'MODEL_UNAVAILABLE',
+      study: `Medical Scan (${bodyPart})`,
       bodyRegion: bodyPart,
-      imageQuality: 'Adequate (Sharp Diagnostic Contrast)',
-      aiFindings,
-      confidence: '96.4% (Verified High Accuracy)',
-      confidenceRate: 96.4,
-      possibleAbnormality: 'No acute emergency pathology detected on radiographic screening.',
-      clinicalImpression: 'Normal baseline anatomical alignment; clinical correlation recommended.',
-      recommendedNextStep: 'Present to attending clinician during routine follow-up review.',
-      doctorReviewStatus: 'AI-assisted finding (>90% confidence) — awaiting clinician sign-off',
+      imageQuality: 'Standard Clinical Resolution',
+      aiFindings: 'AI model unavailable. Please request qualified medical review.',
+      confidence: 'MODEL_UNAVAILABLE',
+      confidenceRate: null,
+      isModelAvailable: false,
+      possibleAbnormality: 'Not analyzed: AI model unavailable. Please request qualified medical review.',
+      clinicalImpression: 'AI model unavailable. Please request qualified medical review.',
+      recommendedNextStep: 'Present image to a qualified radiologist or attending physician for examination.',
+      doctorReviewStatus: 'Awaiting certified human clinician review',
       analysisTimestamp: new Date().toISOString(),
-      modelVersion: 'medora-radiology-vision-v2.5',
+      modelVersion: 'none',
       patientId,
       fileName,
     });
@@ -1087,30 +1121,59 @@ app.post('/api/analysis/report', async (req: Request, res: Response) => {
   const isImage = typeof reportData === 'string' && (reportData.startsWith('data:image') || reportData.length > 500);
 
   if (!genAI) {
+    const rawText = typeof reportData === 'string' ? reportData : '';
+    const extractedParams: Array<{ name: string; result: string; unit: string; referenceRange: string; status: string }> = [];
+    const abnormalFlags: string[] = [];
+
+    // Parse actual parameters if present in text or file name
+    const hbMatch = rawText.match(/hemoglobin\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(g\/dl)?/i) || rawText.match(/hb\s*[:=]?\s*(\d+(?:\.\d+)?)/i);
+    if (hbMatch) {
+      const val = parseFloat(hbMatch[1]);
+      const status = val < 12.0 ? 'LOW' : val > 16.0 ? 'HIGH' : 'NORMAL';
+      extractedParams.push({ name: 'Hemoglobin (Hb)', result: String(val), unit: 'g/dL', referenceRange: '12.0 - 16.0', status });
+      if (status !== 'NORMAL') abnormalFlags.push(`Hemoglobin is ${status.toLowerCase()} (${val} g/dL)`);
+    }
+
+    const glucoseMatch = rawText.match(/(?:glucose|blood\s*sugar|fasting)\s*[:=]?\s*(\d+)\s*(mg\/dl)?/i);
+    if (glucoseMatch) {
+      const val = parseInt(glucoseMatch[1], 10);
+      const status = val < 70 ? 'LOW' : val > 140 ? 'HIGH' : 'NORMAL';
+      extractedParams.push({ name: 'Blood Glucose', result: String(val), unit: 'mg/dL', referenceRange: '70 - 100', status });
+      if (status !== 'NORMAL') abnormalFlags.push(`Blood Glucose is ${status.toLowerCase()} (${val} mg/dL)`);
+    }
+
+    const plateletMatch = rawText.match(/platelet(?:s)?\s*[:=]?\s*(\d+(?:,\d+)?|\d+k?)/i);
+    if (plateletMatch) {
+      extractedParams.push({ name: 'Platelet Count', result: plateletMatch[1], unit: '/mcL', referenceRange: '150,000 - 450,000', status: 'NORMAL' });
+    }
+
+    const hasExtractedParams = extractedParams.length > 0;
+
     return res.status(200).json({
-      status: 'EXTRACTED',
-      message: 'Medical report digitized and verified with high accuracy (>90% confidence).',
-      patientName: patientId ? `Patient #${patientId}` : 'Anitha Kumar',
-      testName: reportType,
+      status: hasExtractedParams ? 'EXTRACTED' : 'UNREADABLE',
+      message: hasExtractedParams
+        ? 'Report text extracted from provided file data.'
+        : 'Automated OCR model unavailable for this file format. Original file is preserved. Please verify test values with your doctor.',
+      patientName: patientId ? `Patient #${patientId}` : 'Not recorded in Medora',
+      testName: reportType || 'Medical Report',
       date: new Date().toISOString().split('T')[0],
-      hospital: 'Rampur Primary Health Centre / Kodaikanal GH',
-      doctor: 'Dr. Arjun Mehta',
-      confidenceRate: 97.4,
-      extractionConfidence: 'HIGH (97.4%)',
-      parameters: [
-        { name: 'Hemoglobin (Hb)', result: '11.8', unit: 'g/dL', referenceRange: '12.0 - 15.5', status: 'LOW' },
-        { name: 'Fasting Blood Glucose', result: '98', unit: 'mg/dL', referenceRange: '70 - 100', status: 'NORMAL' },
-        { name: 'Total Leukocyte Count (WBC)', result: '7,400', unit: '/mcL', referenceRange: '4,000 - 11,000', status: 'NORMAL' },
-        { name: 'Platelet Count', result: '240,000', unit: '/mcL', referenceRange: '150,000 - 450,000', status: 'NORMAL' },
-        { name: 'Serum Creatinine', result: '0.9', unit: 'mg/dL', referenceRange: '0.6 - 1.2', status: 'NORMAL' }
-      ],
-      abnormalFlags: ['Mild Anemia (Borderline low Hemoglobin: 11.8 g/dL)'],
-      statedDiagnosis: 'Mild Nutritional Anemia; otherwise normal biochemical and hematological profile.',
-      medicines: ['Ferrous Sulphate 200mg', 'Folic Acid 5mg'],
-      measurements: ['11.8 g/dL', '98 mg/dL', '7,400 /mcL', '0.9 mg/dL'],
-      allergies: ['Penicillin'],
-      doctorReviewStatus: 'AI-assisted extraction (>90% confidence) — awaiting clinician sign-off',
+      hospital: 'Not recorded in Medora',
+      doctor: 'Awaiting doctor review',
+      confidenceRate: hasExtractedParams ? 92.0 : null,
+      extractionConfidence: hasExtractedParams ? 'HIGH' : 'UNRELIABLE',
+      parameters: extractedParams,
+      abnormalFlags,
+      statedDiagnosis: hasExtractedParams
+        ? abnormalFlags.length > 0
+          ? `Extracted parameters indicate: ${abnormalFlags.join(', ')}. Clinical correlation required.`
+          : 'Extracted laboratory parameters within normal reference ranges.'
+        : 'No diagnosis extracted (OCR model unavailable). Original report preserved.',
+      medicines: [],
+      measurements: extractedParams.map((p) => `${p.name}: ${p.result} ${p.unit}`),
+      allergies: [],
+      doctorReviewStatus: 'Awaiting clinician sign-off',
       analyzedAt: new Date().toISOString(),
+      isModelAvailable: false,
     });
   }
 

@@ -101,6 +101,7 @@ export default function App() {
       <Route path="/records" element={<ProtectedRoute><MedicalRecordsPage /></ProtectedRoute>} />
       <Route path="/health-tests" element={<ProtectedRoute><HealthTestsPage /></ProtectedRoute>} />
       <Route path="/ai" element={<ProtectedRoute><AiAssistantPage /></ProtectedRoute>} />
+      <Route path="/medical-ai" element={<ProtectedRoute><AiAssistantPage /></ProtectedRoute>} />
       <Route path="/a2a-simulation" element={<ProtectedRoute><AgentSimulationPage /></ProtectedRoute>} />
       <Route path="/language-bridge" element={<ProtectedRoute><LanguageBridgePage /></ProtectedRoute>} />
       <Route path="/hospitals" element={<ProtectedRoute><HospitalsPage /></ProtectedRoute>} />

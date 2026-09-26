@@ -24,15 +24,30 @@ export class ConfiguredTwilioSmsProvider implements ISmsProvider {
 
       const data: SmsResponseData = await res.json();
 
-      // Record in Dexie smsOutbox for persistent local records
+      // Record in Dexie smsOutbox with accurate status from provider/server
+      const recordStatus =
+        data.status === 'DEMO_ONLY'
+          ? 'DEMO_ONLY'
+          : data.status === 'OFFLINE_OUTBOX' || !data.configured
+          ? 'OFFLINE_OUTBOX'
+          : data.status === 'SUBMITTED'
+          ? 'SUBMITTED'
+          : data.status === 'DELIVERED'
+          ? 'DELIVERED'
+          : data.status === 'FAILED'
+          ? 'FAILED'
+          : 'OFFLINE_OUTBOX';
+
       try {
         await db.smsOutbox.add({
+          messageId: data.messageId,
           toPhone: payload.recipientPhone,
           message: payload.message,
           type: payload.alertType || 'HEALTH_ALERT',
           language: payload.language || 'en',
-          status: 'sent',
+          status: recordStatus as any,
           createdAt: new Date().toISOString(),
+          info: data.info || (data as any).demoNotice || undefined,
         });
       } catch {
         // IDB fallback
@@ -40,26 +55,30 @@ export class ConfiguredTwilioSmsProvider implements ISmsProvider {
 
       return data;
     } catch {
-      // If network unreachable, record and mark as sent immediately via cellular telephony handoff
+      // If network unreachable, record locally in SMS Outbox for later sending
+      const offlineMsgId = `SMS-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
       try {
         await db.smsOutbox.add({
+          messageId: offlineMsgId,
           toPhone: payload.recipientPhone,
           message: payload.message,
           type: payload.alertType || 'HEALTH_ALERT',
           language: payload.language || 'en',
-          status: 'sent',
+          status: 'OFFLINE_OUTBOX' as any,
           createdAt: new Date().toISOString(),
+          info: 'Offline. Saved to SMS Outbox for later sending.',
         });
       } catch {}
 
       return {
-        messageId: `SMS-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-        providerMessageId: `SM${Math.random().toString(36).substring(2, 9)}`,
-        status: 'SENT',
+        messageId: offlineMsgId,
+        status: 'OFFLINE_OUTBOX',
         recipientPhone: payload.recipientPhone,
         messageText: payload.message,
+        info: 'Real SMS sending is not configured or network offline. Saved to SMS Outbox for later sending.',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        isOfflineQueued: true,
       };
     }
   }

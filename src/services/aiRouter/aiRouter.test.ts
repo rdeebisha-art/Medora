@@ -83,6 +83,58 @@ describe('Dual AI Architecture Isolation & Routing Tests', () => {
     expect(decision.requestType).toBe('MEDICAL');
   });
 
+  // Requirement 2 Specific Examples:
+  it('routes "How do I upload a report?" to APP HELP / REPORT UPLOAD', () => {
+    const decision = aiRouter.route('How do I upload a report?');
+    expect(decision.targetSystem).toBe('VOICE_AI');
+    expect(decision.requestType).toBe('APP_HELP');
+    expect(decision.destinationRoute).toBe('/report-scanner');
+  });
+
+  it('routes "Show my medical records" to MEDICAL RECORDS', () => {
+    const decision = aiRouter.route('Show my medical records');
+    expect(decision.targetSystem).toBe('LOCAL_NAVIGATION');
+    expect(decision.destinationRoute).toBe('/records');
+  });
+
+  it('routes "Add a blood pressure reading" to HEALTH RECORD INPUT', () => {
+    const decision = aiRouter.route('Add a blood pressure reading');
+    expect(decision.targetSystem).toBe('LOCAL_NAVIGATION');
+    expect(decision.requestType).toBe('RECORD_INPUT');
+    expect(decision.destinationRoute).toBe('/health-tests?add=true');
+  });
+
+  it('routes "I have fever" to MEDICAL AI', () => {
+    const decision = aiRouter.route('I have fever');
+    expect(decision.targetSystem).toBe('MEDICAL_AI');
+    expect(decision.requestType).toBe('MEDICAL');
+  });
+
+  it('routes "I have chest pain" to EMERGENCY TRIAGE FIRST', () => {
+    const decision = aiRouter.route('I have chest pain');
+    expect(decision.targetSystem).toBe('EMERGENCY_TRIAGE');
+    expect(decision.isEmergency).toBe(true);
+    expect(decision.destinationRoute).toBe('/emergency');
+  });
+
+  it('routes "Call doctor" to CALLING workflow', () => {
+    const decision = aiRouter.route('Call doctor');
+    expect(decision.requestType).toBe('CALLING');
+    expect(decision.destinationRoute).toBe('/appointments');
+  });
+
+  it('routes "Send this to doctor" to SMS/MESSAGE workflow', () => {
+    const decision = aiRouter.route('Send this to doctor');
+    expect(decision.requestType).toBe('MESSAGING');
+    expect(decision.destinationRoute).toBe('/sms');
+  });
+
+  it('routes "Add medicine" to MEDICINE ENTRY', () => {
+    const decision = aiRouter.route('Add medicine');
+    expect(decision.requestType).toBe('RECORD_INPUT');
+    expect(decision.destinationRoute).toBe('/medicines?add=true');
+  });
+
   // Clinical reasoning verification for fever, duration and 102°F
   it('Medical AI performs structured clinical reasoning with exact number preservation and uncertainty', async () => {
     const res = await medicalAIService.analyzeMedicalRequest({

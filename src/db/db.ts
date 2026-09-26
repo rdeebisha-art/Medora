@@ -75,15 +75,36 @@ export interface Medicine {
   missedCount?: number;
 }
 
+export type MedicalRecordType =
+  | 'vitals'
+  | 'report'
+  | 'vaccination'
+  | 'consultation'
+  | 'prescription'
+  | 'diagnosis'
+  | 'vital'
+  | 'symptom'
+  | 'lab_result'
+  | 'medical_history'
+  | 'allergy'
+  | 'procedure'
+  | 'hospital_visit'
+  | 'other';
+
 export interface MedicalRecord {
   id?: number;
   patientId: number;
-  type: 'vitals' | 'report' | 'vaccination' | 'consultation' | 'prescription';
+  type: MedicalRecordType | string;
   date: string;
   data: Record<string, unknown>;
   doctorId?: number;
+  doctor?: string;
+  hospital?: string;
+  title?: string;
+  time?: string;
   notes?: string;
   fileData?: string;
+  measurements?: string | Record<string, string>;
 }
 
 export interface HealthTest {
@@ -200,14 +221,29 @@ export interface LanguageBridgeCorrection {
   timestamp: string;
 }
 
+export type SmsOutboxStatus =
+  | 'pending'
+  | 'PENDING_OFFLINE'
+  | 'PENDING_USER_SEND'
+  | 'sent'
+  | 'failed'
+  | 'DEMO_ONLY'
+  | 'QUEUED'
+  | 'SUBMITTED'
+  | 'DELIVERED'
+  | 'OFFLINE_OUTBOX';
+
 export interface SmsOutbox {
   id?: number;
   toPhone: string;
   message: string;
   type: string;
   language: string;
-  status: 'pending' | 'PENDING_OFFLINE' | 'PENDING_USER_SEND' | 'sent' | 'failed';
+  status: SmsOutboxStatus;
   createdAt: string;
+  info?: string;
+  messageId?: string;
+  patientId?: number | string;
 }
 
 export interface SyncLog {

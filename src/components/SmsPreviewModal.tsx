@@ -101,19 +101,75 @@ export const SmsPreviewModal: React.FC<SmsPreviewModalProps> = ({
         {result && (
           <div
             className={`p-3.5 rounded-2xl border text-xs space-y-1.5 ${
-              result.status === 'SENT' || result.status === 'DELIVERED'
+              result.status === 'DEMO_ONLY'
+                ? 'bg-amber-50 border-amber-300 text-amber-950'
+                : result.status === 'SUBMITTED' || result.status === 'DELIVERED'
                 ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
-                : 'bg-indigo-50 border-indigo-200 text-indigo-950'
+                : result.status === 'FAILED'
+                ? 'bg-rose-50 border-rose-300 text-rose-950'
+                : 'bg-blue-50 border-blue-200 text-blue-950'
             }`}
           >
-            <div className="font-bold flex items-center gap-1.5 text-emerald-800">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>✓ SMS Dispatched Immediately to {payload.recipientPhone}!</span>
-            </div>
-            <div className="text-[11px] text-slate-600 space-y-0.5 pl-5">
-              <div>Carrier Routing ID: <span className="font-mono font-bold text-slate-800">{result.providerMessageId || result.messageId}</span></div>
-              <div>Status: <span className="font-bold text-emerald-700">DELIVERED VIA CELLULAR GATEWAY</span></div>
-            </div>
+            {result.status === 'DEMO_ONLY' ? (
+              <>
+                <div className="font-bold flex items-center gap-1.5 text-amber-900">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>DEMO ONLY — NOT SENT TO PHONE</span>
+                </div>
+                <div className="text-[11px] text-amber-800 space-y-0.5 pl-5">
+                  <div>To: <span className="font-mono font-bold">{payload.recipientPhone}</span></div>
+                  <div>Status: <span className="font-bold">DEMO ONLY — NOT SENT TO PHONE</span></div>
+                  <div>Message ID: <span className="font-mono">{result.messageId}</span></div>
+                  <div className="mt-1 text-slate-600 italic">
+                    This was rendered in SMS Demo / Test Mode for review and workflow verification.
+                  </div>
+                </div>
+              </>
+            ) : result.status === 'SUBMITTED' ? (
+              <>
+                <div className="font-bold flex items-center gap-1.5 text-emerald-800">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>SMS submitted successfully</span>
+                </div>
+                <div className="text-[11px] text-slate-600 space-y-0.5 pl-5">
+                  <div>Provider ID: <span className="font-mono font-bold text-slate-800">{result.providerMessageId || result.messageId}</span></div>
+                  <div>Status: <span className="font-bold text-emerald-700">SUBMITTED</span></div>
+                </div>
+              </>
+            ) : result.status === 'DELIVERED' ? (
+              <>
+                <div className="font-bold flex items-center gap-1.5 text-emerald-800">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>SMS Delivered</span>
+                </div>
+                <div className="text-[11px] text-slate-600 space-y-0.5 pl-5">
+                  <div>Provider ID: <span className="font-mono font-bold text-slate-800">{result.providerMessageId || result.messageId}</span></div>
+                  <div>Status: <span className="font-bold text-emerald-700">DELIVERED</span></div>
+                </div>
+              </>
+            ) : result.status === 'FAILED' ? (
+              <>
+                <div className="font-bold flex items-center gap-1.5 text-rose-800">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>Transmission Failed</span>
+                </div>
+                <div className="text-[11px] text-rose-700 pl-5">
+                  {result.error || 'Provider rejected message submission.'}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="font-bold flex items-center gap-1.5 text-blue-900">
+                  <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0" />
+                  <span>Saved to SMS Outbox for later sending</span>
+                </div>
+                <div className="text-[11px] text-blue-800 space-y-0.5 pl-5">
+                  <div>Real SMS sending is not configured.</div>
+                  <div>Status: <span className="font-bold text-blue-900">OFFLINE_OUTBOX</span></div>
+                  <div>Saved locally for transmission once a cellular provider is active.</div>
+                </div>
+              </>
+            )}
           </div>
         )}
 

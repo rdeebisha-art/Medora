@@ -6,6 +6,7 @@ import DemoDataBadge from '../components/DemoDataBadge';
 import {
   agentSimulationCoordinator,
   AgentSimulationResult,
+  SpecializedAgentDef,
 } from '../services/ai/agentSimulationService';
 import {
   Bot,
@@ -24,32 +25,36 @@ import {
   Printer,
   FileText,
   Search,
+  Filter,
 } from 'lucide-react';
 
 const SUGGESTED_CONDITIONS = [
-  'Diabetes',
-  'Hypertension',
-  'Acute Fever / Dengue',
-  'Asthma / Cough',
-  'Maternal Health / Pregnancy',
-  'Childhood Diarrhea',
-  'Newborn Care',
+  'Acute Fever and Headache',
+  'Diabetes Mellitus & High Blood Sugar',
+  'Hypertension & Chest Pain',
+  'Asthma / Cough and Breathing',
+  'Maternal Health & Pregnancy Care',
+  'Childhood Diarrhea & Dehydration',
+  'Newborn & Infant Care',
   'Elderly Fall / Joint Pain',
-  'Nutritional Anemia',
+  'Nutritional Anemia & Blood Count',
+  'Surgery Follow-up & Wound Review',
+  'Medical Report Analysis',
+  'Radiology & X-ray Scan',
 ];
 
 export default function AgentSimulationPage() {
   const { t } = useTranslation();
   const { currentUser } = useAppStore();
 
-  const [conditionInput, setConditionInput] = useState<string>('Diabetes');
+  const [conditionInput, setConditionInput] = useState<string>('Acute Fever and Headache');
   const [isRunning, setIsRunning] = useState<boolean>(false);
-  const [activeAgentIndex, setActiveAgentIndex] = useState<number>(0);
   const [simulationResult, setSimulationResult] = useState<AgentSimulationResult | null>(null);
+  const [agentFilter, setAgentFilter] = useState<'all' | 'executed' | 'skipped'>('executed');
 
   // Auto-run once on mount for instant preview
   useEffect(() => {
-    handleRunSimulation('Diabetes');
+    handleRunSimulation('Acute Fever and Headache');
   }, []);
 
   const handleRunSimulation = async (queryToRun?: string) => {
@@ -57,26 +62,24 @@ export default function AgentSimulationPage() {
     if (!targetQuery.trim()) return;
 
     setIsRunning(true);
-    setActiveAgentIndex(0);
-
-    // Animate through agents for realistic simulation feedback
-    const interval = setInterval(() => {
-      setActiveAgentIndex((prev) => (prev + 1) % 9);
-    }, 180);
 
     try {
-      // Simulate coordinated agent reasoning step (500ms)
-      await new Promise((r) => setTimeout(r, 600));
+      await new Promise((r) => setTimeout(r, 400));
       const res = await agentSimulationCoordinator.runSimulation(
         targetQuery,
         currentUser?.id
       );
       setSimulationResult(res);
     } finally {
-      clearInterval(interval);
       setIsRunning(false);
     }
   };
+
+  const displayedAgents = (simulationResult?.allAgents || []).filter((ag) => {
+    if (agentFilter === 'executed') return ag.executionStatus === 'EXECUTED';
+    if (agentFilter === 'skipped') return ag.executionStatus === 'SKIPPED';
+    return true;
+  });
 
   return (
     <Layout>
@@ -87,18 +90,18 @@ export default function AgentSimulationPage() {
             <div className="flex items-center gap-2">
               <span className="text-2xl">🤖</span>
               <h1 className="text-xl sm:text-2xl font-black text-[#0F766E]">
-                Agent-to-Agent Medical Simulation
+                26-Agent Multi-Specialist Medical Simulation
               </h1>
             </div>
             <p className="text-xs text-[#64748B]">
-              Multi-Specialist Collaborative Clinical Reasoning & Educational Triage (100% Offline)
+              Collaborative clinical reasoning across 26 specialized agents. Only relevant agents are executed.
             </p>
           </div>
           <div className="flex items-center gap-2">
             <DemoDataBadge />
             <button
               onClick={() => window.print()}
-              className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 shadow-2xs"
+              className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer"
             >
               <Printer size={13} />
               <span>Print Brief</span>
@@ -109,7 +112,7 @@ export default function AgentSimulationPage() {
         {/* Input Card */}
         <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
           <label className="block text-xs font-bold text-[#0F172A] uppercase tracking-wider">
-            Disease / Condition Input:
+            Clinical Symptom or Condition Input:
           </label>
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
@@ -119,19 +122,19 @@ export default function AgentSimulationPage() {
                 value={conditionInput}
                 onChange={(e) => setConditionInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleRunSimulation()}
-                placeholder="Type a disease or medical condition... (e.g. Diabetes, Fever, Hypertension)"
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-all"
+                placeholder="Enter condition, symptom, or test query (e.g. Fever, Blood Report, Pregnancy)..."
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3 py-2 text-xs font-medium text-slate-900 focus:outline-none focus:border-teal-600 focus:bg-white transition-all"
               />
             </div>
             <button
               onClick={() => handleRunSimulation()}
               disabled={isRunning || !conditionInput.trim()}
-              className="bg-[#0F766E] hover:bg-[#115E59] active:scale-95 disabled:opacity-50 text-white text-xs sm:text-sm px-6 py-2.5 rounded-xl font-black flex items-center justify-center gap-2 shadow-sm transition-all"
+              className="bg-[#0F766E] hover:bg-[#115E59] disabled:opacity-50 text-white px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer active:scale-98"
             >
               {isRunning ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Consulting Agents...</span>
+                  <span>Executing Agents...</span>
                 </>
               ) : (
                 <>
@@ -144,7 +147,7 @@ export default function AgentSimulationPage() {
 
           {/* Quick Condition Chips */}
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            <span className="text-[11px] font-bold text-slate-500">Quick Examples:</span>
+            <span className="text-[11px] font-bold text-slate-500">Quick Test Cases:</span>
             {SUGGESTED_CONDITIONS.map((c) => (
               <button
                 key={c}
@@ -152,7 +155,7 @@ export default function AgentSimulationPage() {
                   setConditionInput(c);
                   handleRunSimulation(c);
                 }}
-                className={`text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all ${
+                className={`text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
                   conditionInput === c
                     ? 'bg-teal-50 text-teal-800 border-teal-300 font-bold'
                     : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -164,51 +167,80 @@ export default function AgentSimulationPage() {
           </div>
         </div>
 
-        {/* 9 Specialist Agents Status Bar */}
-        <div className="bg-[#F8FAFC] border border-slate-200 rounded-2xl p-3.5">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-              <Bot size={15} className="text-teal-600" />
-              <span>9 Simulated Specialist Agents (Local Multi-Agent Roster)</span>
-            </span>
-            <span className="text-[11px] text-slate-500 font-medium">Educational Decision-Support Only</span>
+        {/* 26 Specialist Agents Roster & Filter */}
+        <div className="bg-[#F8FAFC] border border-slate-200 rounded-2xl p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-2.5">
+            <div className="flex items-center gap-2">
+              <Bot size={18} className="text-teal-600" />
+              <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                Specialized Agents Roster (26 Total)
+              </span>
+              <span className="text-[10px] bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded-full">
+                {simulationResult?.executedAgents.length || 0} Executed
+              </span>
+              <span className="text-[10px] bg-slate-200 text-slate-600 font-bold px-2 py-0.5 rounded-full">
+                {simulationResult?.skippedAgents.length || 0} Skipped
+              </span>
+            </div>
+
+            {/* Filter buttons */}
+            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1 text-[11px]">
+              <button
+                onClick={() => setAgentFilter('executed')}
+                className={`px-2.5 py-0.5 rounded-lg font-bold transition-all cursor-pointer ${
+                  agentFilter === 'executed' ? 'bg-teal-700 text-white' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Executed Only ({simulationResult?.executedAgents.length || 0})
+              </button>
+              <button
+                onClick={() => setAgentFilter('all')}
+                className={`px-2.5 py-0.5 rounded-lg font-bold transition-all cursor-pointer ${
+                  agentFilter === 'all' ? 'bg-teal-700 text-white' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                All 26 Agents
+              </button>
+              <button
+                onClick={() => setAgentFilter('skipped')}
+                className={`px-2.5 py-0.5 rounded-lg font-bold transition-all cursor-pointer ${
+                  agentFilter === 'skipped' ? 'bg-teal-700 text-white' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Skipped ({simulationResult?.skippedAgents.length || 0})
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-            {[
-              { name: 'General Physician', icon: '🩺' },
-              { name: 'Emergency Triage', icon: '🚨' },
-              { name: 'Diabetes Specialist', icon: '🩸' },
-              { name: 'Nutrition Expert', icon: '🥗' },
-              { name: 'Pediatric Care', icon: '👶' },
-              { name: 'Maternal Care', icon: '🤰' },
-              { name: 'Newborn Care', icon: '🍼' },
-              { name: 'Elderly Care', icon: '👴' },
-              { name: 'Medication Safety', icon: '💊' },
-            ].map((ag, i) => {
-              const isActive = isRunning && activeAgentIndex === i;
-              const isConsulted =
-                simulationResult?.consultedAgents.some((ca) =>
-                  ca.agentName.toLowerCase().includes(ag.name.toLowerCase().split(' ')[0])
-                ) || false;
-
+          {/* Grid of Agents */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+            {displayedAgents.map((ag) => {
+              const isExecuted = ag.executionStatus === 'EXECUTED';
               return (
                 <div
-                  key={ag.name}
-                  className={`p-2 rounded-xl border text-xs flex items-center gap-2 transition-all ${
-                    isActive
-                      ? 'bg-amber-50 border-amber-400 text-amber-900 shadow-xs scale-102 ring-2 ring-amber-300'
-                      : isConsulted
-                      ? 'bg-emerald-50 border-emerald-300 text-emerald-900 font-bold'
-                      : 'bg-white border-slate-200 text-slate-600 opacity-70'
+                  key={ag.id}
+                  className={`p-2.5 rounded-xl border text-xs flex flex-col justify-between transition-all ${
+                    isExecuted
+                      ? 'bg-emerald-50/80 border-emerald-300 text-emerald-950 font-bold shadow-2xs'
+                      : 'bg-white border-slate-200 text-slate-500 opacity-60'
                   }`}
                 >
-                  <span className="text-base">{ag.icon}</span>
-                  <div className="truncate">
-                    <p className="font-bold truncate text-[11px]">{ag.name}</p>
-                    <p className="text-[9px] text-slate-500">
-                      {isActive ? 'Processing...' : isConsulted ? '✓ Consulted' : 'Standby'}
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{ag.avatarIcon}</span>
+                    <div className="truncate">
+                      <p className="font-bold truncate text-[11px] text-slate-900">{ag.name}</p>
+                      <p className="text-[9px] text-slate-500 truncate">{ag.purpose}</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 pt-1 border-t border-slate-200/60 flex items-center justify-between text-[9px]">
+                    <span
+                      className={`font-black ${
+                        isExecuted ? 'text-emerald-700' : 'text-slate-400'
+                      }`}
+                    >
+                      {isExecuted ? '✓ EXECUTED' : 'SKIPPED (N/A)'}
+                    </span>
+                    <span className="text-slate-400 font-mono">#{ag.id.slice(0, 8)}</span>
                   </div>
                 </div>
               );
@@ -253,13 +285,62 @@ export default function AgentSimulationPage() {
               </div>
             </div>
 
+            {/* Executed Agents Deep-Dive Cards */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <CheckCircle2 size={15} className="text-emerald-600" />
+                <span>Active Agent Clinical Contributions ({simulationResult.executedAgents.length} Executed)</span>
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {simulationResult.executedAgents.map((ag) => (
+                  <div
+                    key={ag.id}
+                    className="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-2xs space-y-2"
+                  >
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{ag.avatarIcon}</span>
+                        <div>
+                          <p className="font-bold text-xs text-slate-900">{ag.name}</p>
+                          <p className="text-[10px] text-slate-500">{ag.purpose}</p>
+                        </div>
+                      </div>
+                      <span className="text-[9px] bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">
+                        EXECUTED
+                      </span>
+                    </div>
+
+                    <div className="space-y-1 text-xs">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase">Observations:</p>
+                      <ul className="text-[11px] text-slate-700 space-y-0.5">
+                        {ag.observations.map((obs, i) => (
+                          <li key={i} className="flex items-start gap-1">
+                            <span className="text-teal-600 font-bold">•</span>
+                            <span>{obs}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {ag.recommendedTests.length > 0 && (
+                      <div className="space-y-1 text-xs pt-1 border-t border-slate-100">
+                        <p className="text-[10px] font-bold text-slate-500 uppercase">Recommended Tests:</p>
+                        <p className="text-[11px] text-slate-600">{ag.recommendedTests.join(', ')}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Grid of Results: Concerns, Symptoms, Evidence, Red Flags */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Relevant Symptoms & Possible Concerns */}
               <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
                 <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                   <Activity size={15} className="text-teal-600" />
-                  <span>Relevant Symptoms & Possible Concerns</span>
+                  <span>Relevant Symptoms &amp; Possible Concerns</span>
                 </h3>
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-bold text-slate-500 uppercase">Symptoms to Note:</p>
@@ -285,153 +366,63 @@ export default function AgentSimulationPage() {
                 </div>
               </div>
 
-              {/* Supporting Evidence & Tests Commonly Considered */}
+              {/* Red Flags & Safety Warnings */}
+              <div className="bg-red-50/60 border border-red-200 rounded-2xl p-4 shadow-2xs space-y-3">
+                <h3 className="text-xs font-black text-red-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <AlertTriangle size={15} className="text-red-600" />
+                  <span>Emergency Triage &amp; Red Flags</span>
+                </h3>
+                <ul className="text-xs text-red-800 space-y-1.5">
+                  {simulationResult.redFlags.map((rf, idx) => (
+                    <li key={idx} className="flex items-start gap-1.5">
+                      <span className="text-red-600 font-bold">⚠️</span>
+                      <span className="font-medium">{rf}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="bg-white/80 border border-red-200 rounded-xl p-2.5 text-[11px] text-red-900 font-medium">
+                  If any of the above warning signs emerge, do not wait. Contact 108 or reach the nearest hospital immediately.
+                </div>
+              </div>
+
+              {/* Supportive Care & Nutrition Advice */}
               <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
                 <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                  <FileText size={15} className="text-blue-600" />
-                  <span>Supporting Evidence & Diagnostic Tests</span>
-                </h3>
-                <div className="space-y-1.5">
-                  <p className="text-[11px] font-bold text-slate-500 uppercase">Supporting Clinical Evidence:</p>
-                  <ul className="text-xs text-slate-700 space-y-1">
-                    {simulationResult.supportingEvidence.map((e, idx) => (
-                      <li key={idx} className="flex items-start gap-1.5">
-                        <span className="text-blue-600 font-bold">✓</span>
-                        <span>{e}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="space-y-1.5 pt-2 border-t border-slate-100">
-                  <p className="text-[11px] font-bold text-slate-500 uppercase">Tests Commonly Considered by Doctors:</p>
-                  <ul className="text-xs text-slate-700 space-y-1">
-                    {simulationResult.testsCommonlyConsidered.map((tItem, idx) => (
-                      <li key={idx} className="flex items-start gap-1.5">
-                        <span className="text-purple-600 font-bold">•</span>
-                        <span>{tItem}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            {/* Red Flags & Emergency Warning */}
-            <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 space-y-2">
-              <h3 className="text-xs font-black text-red-900 uppercase tracking-wider flex items-center gap-2">
-                <AlertTriangle size={16} className="text-red-600" />
-                <span>Emergency Red Flag Warning Signs (Seek Immediate Medical Care)</span>
-              </h3>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-red-800 font-medium">
-                {simulationResult.redFlags.map((rf, idx) => (
-                  <li key={idx} className="flex items-start gap-1.5 bg-white/70 p-2 rounded-xl border border-red-100">
-                    <span className="text-red-600 font-bold">⚠️</span>
-                    <span>{rf}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Lifestyle, Supportive Suggestions & When to Consult Doctor */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-emerald-50/60 border border-emerald-200 rounded-2xl p-4 space-y-2.5">
-                <h3 className="text-xs font-black text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
                   <Apple size={15} className="text-emerald-600" />
-                  <span>Lifestyle & Supportive Home Care Suggestions</span>
+                  <span>Supportive Care &amp; Nutrition Guidance</span>
                 </h3>
-                <ul className="text-xs text-emerald-800 space-y-1.5">
-                  {simulationResult.lifestyleSupportiveSuggestions.map((adv, idx) => (
+                <ul className="text-xs text-slate-700 space-y-1.5">
+                  {simulationResult.lifestyleSupportiveSuggestions.map((sug, idx) => (
                     <li key={idx} className="flex items-start gap-1.5">
-                      <span className="text-emerald-600 font-bold">✦</span>
-                      <span>{adv}</span>
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span>{sug}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="bg-amber-50/60 border border-amber-200 rounded-2xl p-4 space-y-2.5">
-                <h3 className="text-xs font-black text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <Stethoscope size={15} className="text-amber-700" />
-                  <span>When to Consult a Qualified Doctor</span>
-                </h3>
-                <ul className="text-xs text-amber-800 space-y-1.5">
-                  {simulationResult.whenToConsultDoctor.map((wc, idx) => (
-                    <li key={idx} className="flex items-start gap-1.5">
-                      <span className="text-amber-600 font-bold">→</span>
-                      <span>{wc}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            {/* Medication Information Section (Safe Non-Prescriptive) */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
-              <div className="flex items-center justify-between">
+              {/* Questions for Doctor */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
                 <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                  <Pill size={15} className="text-teal-600" />
-                  <span>Medication Section (Prescribed & Reference Context)</span>
+                  <HelpCircle size={15} className="text-indigo-600" />
+                  <span>Questions to Ask Your Doctor</span>
                 </h3>
-                <span className="text-[10px] bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">
-                  No Auto-Prescribing
-                </span>
+                <ul className="text-xs text-slate-700 space-y-1.5">
+                  {simulationResult.questionsForDoctor.map((q, idx) => (
+                    <li key={idx} className="flex items-start gap-1.5">
+                      <span className="text-indigo-600 font-bold">?</span>
+                      <span>{q}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-
-              {simulationResult.currentPatientPrescribedMedications.length > 0 ? (
-                <div className="space-y-1.5">
-                  <p className="text-[11px] font-bold text-slate-600">
-                    Existing Doctor Prescriptions Recorded for Current Patient:
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {simulationResult.currentPatientPrescribedMedications.map((m) => (
-                      <div
-                        key={m.id}
-                        className="bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs space-y-0.5"
-                      >
-                        <p className="font-extrabold text-slate-900">{m.name}</p>
-                        <p className="text-[11px] text-slate-600">
-                          {m.dose} · {m.frequency}
-                        </p>
-                        <p className="text-[10px] text-teal-700 font-medium">{m.instructions}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs text-slate-600">
-                  <p className="font-bold text-slate-700">No active prescriptions stored for this patient.</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    "Dosage information not available without clinician prescription. Do not self-administer."
-                  </p>
-                </div>
-              )}
-
-              <div className="bg-teal-50 border border-teal-200 p-2.5 rounded-xl text-xs text-teal-800 font-medium">
-                <ShieldCheck size={14} className="inline mr-1 text-teal-700" />
-                {simulationResult.generalMedicationInfoNotice}
-              </div>
-            </div>
-
-            {/* Questions to Ask Doctor */}
-            <div className="bg-indigo-50/60 border border-indigo-200 rounded-2xl p-4 space-y-2">
-              <h3 className="text-xs font-black text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
-                <HelpCircle size={15} className="text-indigo-600" />
-                <span>Questions for Your Doctor During Consultation</span>
-              </h3>
-              <ul className="text-xs text-indigo-800 space-y-1.5">
-                {simulationResult.questionsForDoctor.map((q, idx) => (
-                  <li key={idx} className="flex items-start gap-1.5">
-                    <span className="text-indigo-600 font-bold">?</span>
-                    <span>{q}</span>
-                  </li>
-                ))}
-              </ul>
             </div>
 
             {/* Disclaimer */}
-            <p className="text-[11px] text-slate-500 text-center italic">
-              {simulationResult.educationalDisclaimer}
-            </p>
+            <div className="bg-slate-100 border border-slate-200 rounded-2xl p-3 text-[11px] text-slate-600 flex items-start gap-2">
+              <ShieldCheck size={16} className="text-teal-700 shrink-0 mt-0.5" />
+              <span>{simulationResult.educationalDisclaimer}</span>
+            </div>
           </div>
         )}
       </div>

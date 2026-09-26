@@ -1,19 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams, useLocation, Link } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
 import Layout from '../components/Layout';
 import DemoDataBadge from '../components/DemoDataBadge';
 import { VoiceAIPanel } from '../components/VoiceAIPanel';
 import { MedicalAIPanel } from '../components/MedicalAIPanel';
 import { A2AWorkflow } from '../components/A2AWorkflow';
+import { MedicalAIErrorBoundary } from '../components/MedicalAIErrorBoundary';
 import { LanguageCode } from '../types';
-import { Stethoscope, Mic, ShieldAlert, FileText, Sparkles, Bot, Users } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Stethoscope, Mic, ShieldAlert, FileText, Bot } from 'lucide-react';
 
 export default function AiAssistantPage() {
   const { t } = useTranslation();
   const { currentUser } = useAppStore();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+
   const [activeSystem, setActiveSystem] = useState<'medical' | 'voice' | 'a2a'>('medical');
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'medical' || location.pathname === '/medical-ai') {
+      setActiveSystem('medical');
+    } else if (tab === 'voice') {
+      setActiveSystem('voice');
+    } else if (tab === 'a2a') {
+      setActiveSystem('a2a');
+    }
+  }, [searchParams, location.pathname]);
+
+  const handleSelectTab = (tab: 'medical' | 'voice' | 'a2a') => {
+    setActiveSystem(tab);
+    setSearchParams({ tab });
+  };
 
   const currentLang = (currentUser?.language as LanguageCode) || 'en';
 
@@ -28,7 +48,7 @@ export default function AiAssistantPage() {
             </div>
             <div>
               <div className="font-black text-sm flex items-center gap-2">
-                <span>Medora Multi-Agent & AI Architecture</span>
+                <span>Medora Multi-Agent &amp; AI Architecture</span>
                 <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold">
                   {activeSystem === 'medical'
                     ? 'Clinical Reasoning'
@@ -54,8 +74,8 @@ export default function AiAssistantPage() {
         <div className="grid grid-cols-3 gap-1.5 bg-slate-200/80 p-1.5 rounded-2xl border border-slate-300">
           <button
             type="button"
-            onClick={() => setActiveSystem('medical')}
-            className={`py-2 px-2 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all ${
+            onClick={() => handleSelectTab('medical')}
+            className={`py-2 px-2 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               activeSystem === 'medical'
                 ? 'bg-purple-700 text-white shadow-md ring-2 ring-purple-300'
                 : 'text-slate-700 hover:bg-white/60'
@@ -67,8 +87,8 @@ export default function AiAssistantPage() {
 
           <button
             type="button"
-            onClick={() => setActiveSystem('voice')}
-            className={`py-2 px-2 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all ${
+            onClick={() => handleSelectTab('voice')}
+            className={`py-2 px-2 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               activeSystem === 'voice'
                 ? 'bg-teal-700 text-white shadow-md ring-2 ring-teal-300'
                 : 'text-slate-700 hover:bg-white/60'
@@ -80,8 +100,8 @@ export default function AiAssistantPage() {
 
           <button
             type="button"
-            onClick={() => setActiveSystem('a2a')}
-            className={`py-2 px-2 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all ${
+            onClick={() => handleSelectTab('a2a')}
+            className={`py-2 px-2 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               activeSystem === 'a2a'
                 ? 'bg-indigo-700 text-white shadow-md ring-2 ring-indigo-300'
                 : 'text-slate-700 hover:bg-white/60'
@@ -94,9 +114,11 @@ export default function AiAssistantPage() {
 
         {/* System Active View */}
         {activeSystem === 'medical' ? (
-          <MedicalAIPanel />
+          <MedicalAIErrorBoundary onBack={() => handleSelectTab('voice')}>
+            <MedicalAIPanel onReturnToVoiceAI={() => handleSelectTab('voice')} />
+          </MedicalAIErrorBoundary>
         ) : activeSystem === 'voice' ? (
-          <VoiceAIPanel />
+          <VoiceAIPanel onSwitchToMedicalAI={() => handleSelectTab('medical')} />
         ) : (
           <div className="bg-white rounded-2xl border border-slate-200 p-2 shadow-xs">
             <A2AWorkflow currentLang={currentLang} />

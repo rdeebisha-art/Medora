@@ -27,9 +27,14 @@ interface VoiceMessageItem {
   text: string;
   time: string;
   isTransfer?: boolean;
+  navRoute?: string;
 }
 
-export const VoiceAIPanel: React.FC = () => {
+interface VoiceAIPanelProps {
+  onSwitchToMedicalAI?: () => void;
+}
+
+export const VoiceAIPanel: React.FC<VoiceAIPanelProps> = ({ onSwitchToMedicalAI }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { currentUser, language, setVoiceNavOpen } = useAppStore();
@@ -86,6 +91,7 @@ export const VoiceAIPanel: React.FC = () => {
       text: response.responseText,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isTransfer: response.isMedicalQuery || response.suggestedAction === 'TRANSFER_TO_MEDICAL_AI',
+      navRoute: response.suggestedAction === 'NAVIGATE' ? response.destinationRoute : undefined,
     };
 
     setMessages((prev) => [...prev, aiMsg]);
@@ -192,12 +198,29 @@ export const VoiceAIPanel: React.FC = () => {
                 <div className="mt-2.5 pt-2 border-t border-slate-200">
                   <button
                     onClick={() => {
-                      navigate('/ai');
+                      if (onSwitchToMedicalAI) {
+                        onSwitchToMedicalAI();
+                      }
+                      navigate('/ai?tab=medical');
                     }}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-2xs cursor-pointer active:scale-98"
                   >
                     <Stethoscope className="w-3.5 h-3.5" />
                     <span>Open Medora Medical AI →</span>
+                  </button>
+                </div>
+              )}
+
+              {m.navRoute && (
+                <div className="mt-2.5 pt-2 border-t border-slate-200">
+                  <button
+                    onClick={() => {
+                      navigate(m.navRoute!);
+                    }}
+                    className="w-full bg-teal-700 hover:bg-teal-800 text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-2xs cursor-pointer active:scale-98"
+                  >
+                    <ArrowRight className="w-3.5 h-3.5" />
+                    <span>Open {m.navRoute.replace('/', '').replace(/-/g, ' ') || 'Page'} →</span>
                   </button>
                 </div>
               )}
