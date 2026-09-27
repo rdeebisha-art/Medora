@@ -8,8 +8,9 @@ import DemoDataBadge from '../components/DemoDataBadge';
 import {
   Calendar, Clock, User, Stethoscope, CheckCircle2,
   XCircle, AlertCircle, Plus, ChevronRight, Phone,
-  MapPin, Printer, ArrowLeft, RefreshCw, PhoneCall
+  MapPin, Printer, ArrowLeft, RefreshCw, PhoneCall, MessageSquare
 } from 'lucide-react';
+import { openExternalSmsApp } from '../services/sms/smsAppLauncher';
 
 export default function AppointmentsPage() {
   const { t } = useTranslation();
@@ -326,10 +327,21 @@ export default function AppointmentsPage() {
                       )}
                       <button
                         onClick={() => setConfirmedAppt({ appt, doctor: doc })}
-                        className="text-xs text-slate-600 font-bold hover:underline py-1 flex items-center gap-1"
+                        className="text-xs text-slate-600 font-bold hover:underline py-1 flex items-center gap-1 cursor-pointer"
                       >
                         <Printer size={13} />
                         <span>Print Slip</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          const details = `Medora Appointment #${appt.id || ''}: With ${doc?.name || 'Doctor'} on ${appt.date}. Reason: ${appt.reason}. Hospital: Rampur PHC. Please bring health records.`;
+                          openExternalSmsApp(currentUser?.phone || '+919876543210', details);
+                        }}
+                        className="text-xs text-indigo-700 font-bold hover:underline py-1 flex items-center gap-1 cursor-pointer"
+                        title="Send appointment details via SMS to phone"
+                      >
+                        <MessageSquare size={13} />
+                        <span>Send SMS to Phone</span>
                       </button>
                     </div>
 

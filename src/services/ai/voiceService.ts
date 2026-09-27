@@ -53,10 +53,19 @@ export class VoiceService {
     }
 
     // 2. CALLING WORKFLOW ("Call doctor", "call ambulance", "phone doctor")
-    if (/\b(?:call|phone|dial|ring)\s+(?:the\s+)?(?:doctor|dr|ambulance|hospital|clinic)\b/i.test(lower) || /மருத்துவரை அழைக்கவும்|डॉक्टर को कॉल/.test(raw)) {
+    if (/\b(?:call|phone|dial|ring)\s+(?:the\s+)?(?:doctor|dr|ambulance|hospital|clinic)\b/i.test(lower) || /மருத்துவரை அழைக்கவும்|डॉक्टर को कॉल|డాక్టర్‌కు కాల్|ഡോക്ടറെ വിളിക്കുക|ವೈದ್ಯರಿಗೆ ಕರೆ/.test(raw)) {
+      const callMsg: Record<string, string> = {
+        en: 'Opening doctor calling and appointments directory.',
+        ta: 'மருத்துவர் அழைப்பு மற்றும் சந்திப்பு முன்பதிவு பக்கத்தைத் திறக்கிறேன்.',
+        hi: 'डॉक्टर कॉलिंग और अपॉइंटमेंट डायरेक्टरी खोल रहा हूँ।',
+        te: 'డాక్టర్ కాలింగ్ మరియు అపాయింట్‌మెంట్ల పేజీని తెరుస్తున్నాను.',
+        ml: 'ഡോക്ടറെ വിളിക്കാനുള്ള അപ്പോയിന്റ്മെന്റ് പേജ് തുറക്കുന്നു.',
+        kn: 'ವೈದ್ಯರ ಕರೆ ಮತ್ತು ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಪಟ್ಟಿಯನ್ನು ತೆರೆಯಲಾಗುತ್ತಿದೆ.',
+      };
+
       return {
         source: 'VOICE_AI',
-        responseText: 'Opening doctor calling and appointments directory.',
+        responseText: callMsg[langKey] || callMsg.en,
         language: langKey,
         isMedicalQuery: false,
         destinationRoute: '/appointments',
@@ -65,10 +74,19 @@ export class VoiceService {
     }
 
     // 3. SMS / MESSAGE WORKFLOW ("Send this to doctor", "message doctor")
-    if (/\b(?:send\s+(?:this\s+)?to\s+doctor|message\s+doctor|text\s+doctor|send\s+sms|sms\s+doctor)\b/i.test(lower) || /மருத்துவருக்கு அனுப்பு|डॉक्टर को भेजें/.test(raw)) {
+    if (/\b(?:send\s+(?:this\s+)?to\s+doctor|message\s+doctor|text\s+doctor|send\s+sms|sms\s+doctor)\b/i.test(lower) || /மருத்துவருக்கு அனுப்பு|डॉक्टर को भेजें|డాక్టర్‌కు సందేశం|ഡോക്ടർക്ക് സന്ദേശം|ವೈದ್ಯರಿಗೆ ಸಂದೇಶ/.test(raw)) {
+      const smsMsg: Record<string, string> = {
+        en: 'Opening SMS & communications center to message your doctor.',
+        ta: 'மருத்துவருக்கு செய்தி அனுப்ப எஸ்.எம்.எஸ் பக்கத்தைத் திறக்கிறேன்.',
+        hi: 'डॉक्टर को संदेश भेजने के लिए एसएमएस केंद्र खोल रहा हूँ।',
+        te: 'డాక్టర్‌కు సందేశం పంపడానికి SMS కేంద్రాన్ని తెరుస్తున్నాను.',
+        ml: 'ഡോക്ടർക്ക് സന്ദേശം അയക്കാൻ എസ്.എം.എസ് പേജ് തുറക്കുന്നു.',
+        kn: 'ವೈದ್ಯರಿಗೆ ಸಂದೇಶ ಕಳುಹಿಸಲು SMS ವಿಭಾಗವನ್ನು ತೆರೆಯಲಾಗುತ್ತಿದೆ.',
+      };
+
       return {
         source: 'VOICE_AI',
-        responseText: 'Opening SMS & communications center to message your doctor.',
+        responseText: smsMsg[langKey] || smsMsg.en,
         language: langKey,
         isMedicalQuery: false,
         destinationRoute: '/sms',
@@ -80,7 +98,7 @@ export class VoiceService {
     const isAppHelp =
       /^(?:how\s+(?:do\s+i|to)\s+(?:upload|scan|attach)|how\s+do\s+i\s+use|what\s+is\s+medora|who\s+are\s+you|help\b)/i.test(lower) ||
       /\bhow\s+(?:do\s+i|to)\s+upload\s+(?:a\s+)?report\b/i.test(lower) ||
-      /அறிக்கையை எவ்வாறு பதிவேற்றுவது|रिपोर्ट कैसे अपलोड करें/.test(raw);
+      /அறிக்கையை எவ்வாறு பதிவேற்றுவது|रिपोर्ट कैसे अपलोड करें|రిపోర్ట్ ఎలా అప్‌లోడ్ చేయాలి|റിപ്പോർട്ട് എങ്ങനെ അപ്‌ലോഡ് ചെയ്യാം|ವರದಿಯನ್ನು ಹೇಗೆ ಅಪ್‌ಲೋಡ್ ಮಾಡುವುದು/.test(raw);
 
     if (isAppHelp) {
       const helpMsg: Record<string, string> = {
@@ -88,8 +106,8 @@ export class VoiceService {
         ta: 'மருத்துவ அறிக்கையை பதிவேற்ற, ரிப்போர்ட் ஸ்கேனர் அல்லது மெடிக்கல் ரெக்கார்ட்ஸ் பக்கத்தில் கேமரா மூலம் புகைப்படம் எடுக்கலாம் அல்லது கோப்பைத் தேர்ந்தெடுக்கலாம். ஸ்கேனர் பக்கத்தைத் திறக்கிறேன்.',
         hi: 'रिपोर्ट अपलोड करने के लिए रिपोर्ट स्कैनर या मेडिकल रिकॉर्ड्स पर जाएं। आप कैमरा से फोटो ले सकते हैं या फाइल चुन सकते हैं। स्कैनर खोल रहा हूँ।',
         te: 'రిపోర్టును అప్‌లోడ్ చేయడానికి రిపోర్ట్ స్కానర్ లేదా మెడికల్ రికార్డ్స్‌కి వెళ్లి ఫోటో తీయవచ్చు లేదా ఫైల్‌ను ఎంచుకోవచ్చు. స్కానర్‌ను తెరుస్తున్నాను.',
-        ml: 'റിപ്പോർട്ട് അപ്‌ലോഡ് ചെയ്യാൻ റിപ്പോർട്ട് സ്കാനറിലോ മെഡിക്കൽ റെക്കോർഡുകളിലോ പോയി ഫോട്ടോ എടുക്കുകയോ ഫയൽ തിരഞ്ഞെടുക്കുകയോ ചെയ്യാം.',
-        kn: 'ವರದಿಯನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಲು ರಿಪೋರ್ಟ್ ಸ್ಕ್ಯಾನರ್‌ಗೆ ಹೋಗಿ ಕ್ಯಾಮೆರಾ ಮೂಲಕ ಫೋಟೋ ತೆಗೆದುಕೊಳ್ಳಬಹುದು.',
+        ml: 'റിപ്പോർട്ട് അപ്‌ലോഡ് ചെയ്യാൻ റിപ്പോർട്ട് സ്കാനറിലോ മെഡിക്കൽ റെക്കോർഡുകളിലോ പോയി ഫോട്ടോ എടുക്കുകയോ ഫയൽ തിരഞ്ഞെടുക്കുകയോ ചെയ്യാം. സ്കാനർ തുറക്കുന്നു.',
+        kn: 'ವರದಿಯನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಲು ರಿಪೋರ್ಟ್ ಸ್ಕ್ಯಾನರ್‌ಗೆ ಹೋಗಿ ಕ್ಯಾಮೆರಾ ಮೂಲಕ ಫೋಟೋ ತೆಗೆದುಕೊಳ್ಳಬಹುದು அல்லது ಫೈಲ್ ಆಯ್ಕೆ ಮಾಡಬಹುದು. ಸ್ಕ್ಯಾನರ್ ತೆರೆಯಲಾಗುತ್ತಿದೆ.',
       };
 
       return {
@@ -104,9 +122,18 @@ export class VoiceService {
 
     // 5. HEALTH RECORD INPUT & CREATION (e.g. "Add a blood pressure reading", "Add medicine", "Add vital")
     if (/\b(?:add|record|enter|log)\s+(?:a\s+)?(?:blood\s+pressure|bp)(?:\s+reading)?\b/i.test(lower) || /\b(?:add|enter)\s+(?:a\s+)?(?:vital|vitals)\b/i.test(lower)) {
+      const bpMsg: Record<string, string> = {
+        en: 'Opening Health Tests to add your blood pressure reading.',
+        ta: 'இரத்த அழுத்த அளவைச் சேர்க்க உடல்நலப் பரிசோதனைப் பக்கத்தைத் திறக்கிறேன்.',
+        hi: 'रक्तचाप माप दर्ज करने के लिए स्वास्थ्य परीक्षण पृष्ठ खोल रहा हूँ।',
+        te: 'రక్తపోటు కొలతను నమోదు చేయడానికి ఆరోగ్య పరీక్షల పేజీని తెరుస్తున్నాను.',
+        ml: 'രക്തസമ്മർദ്ദം രേഖപ്പെടുത്താൻ ആരോഗ്യ പരിശോധന പേജ് തുറക്കുന്നു.',
+        kn: 'ರಕ್ತದೊತ್ತಡದ ವಿವರ ನಮೂದಿಸಲು ಆರೋಗ್ಯ ಪರೀಕ್ಷೆಗಳ ಪುಟವನ್ನು ತೆರೆಯಲಾಗುತ್ತಿದೆ.',
+      };
+
       return {
         source: 'VOICE_AI',
-        responseText: 'Opening Health Tests to add your blood pressure reading.',
+        responseText: bpMsg[langKey] || bpMsg.en,
         language: langKey,
         isMedicalQuery: false,
         destinationRoute: '/health-tests?add=true',
@@ -115,9 +142,18 @@ export class VoiceService {
     }
 
     if (/\b(?:add|new|enter)\s+(?:a\s+)?medicine\b/i.test(lower)) {
+      const medMsg: Record<string, string> = {
+        en: 'Opening Medicine entry form to add your medication.',
+        ta: 'மருந்து சேர்க்கும் படிவத்தைத் திறக்கிறேன்.',
+        hi: 'दवा जोड़ने का फ़ॉर्म खोल रहा हूँ।',
+        te: 'మందులు జోడించే ఫారమ్‌ను తెరుస్తున్నాను.',
+        ml: 'മരുന്ന് ചേർക്കാനുള്ള ഫോം തുറക്കുന്നു.',
+        kn: 'ಔಷಧಿ ಸೇರಿಸುವ ಫಾರಂ ತೆರೆಯಲಾಗುತ್ತಿದೆ.',
+      };
+
       return {
         source: 'VOICE_AI',
-        responseText: 'Opening Medicine entry form to add your medication.',
+        responseText: medMsg[langKey] || medMsg.en,
         language: langKey,
         isMedicalQuery: false,
         destinationRoute: '/medicines?add=true',
@@ -127,9 +163,18 @@ export class VoiceService {
 
     // 6. MEDICAL RECORDS NAVIGATION ("Show my medical records", "Open medicines")
     if (/\b(?:show|open|view|display)\s+(?:my\s+)?medical\s+records\b/i.test(lower) || lower === 'medical records' || lower === 'open records') {
+      const recMsg: Record<string, string> = {
+        en: 'Opening your Medical Records.',
+        ta: 'உங்கள் மருத்துவப் பதிவேடுகளைத் திறக்கிறேன்.',
+        hi: 'आपके मेडिकल रिकॉर्ड्स खोल रहा हूँ।',
+        te: 'మీ వైద్య రికార్డులను తెరుస్తున్నాను.',
+        ml: 'നിങ്ങളുടെ മെഡിക്കൽ രേഖകൾ തുറക്കുന്നു.',
+        kn: 'ನಿಮ್ಮ ವೈದ್ಯಕೀಯ ದಾಖಲೆಗಳನ್ನು ತೆರೆಯಲಾಗುತ್ತಿದೆ.',
+      };
+
       return {
         source: 'VOICE_AI',
-        responseText: 'Opening your Medical Records.',
+        responseText: recMsg[langKey] || recMsg.en,
         language: langKey,
         isMedicalQuery: false,
         destinationRoute: '/records',
@@ -138,9 +183,18 @@ export class VoiceService {
     }
 
     if (/\b(?:open|show|view)\s+medicines\b/i.test(lower) || lower === 'medicines') {
+      const medsMsg: Record<string, string> = {
+        en: 'Opening your medicines list and schedule.',
+        ta: 'உங்கள் மருந்துகள் பட்டியல் மற்றும் அட்டவணையைத் திறக்கிறேன்.',
+        hi: 'आपकी दवाइयों की सूची और समय-सारणी खोल रहा हूँ।',
+        te: 'మీ మందుల జాబితా మరియు షెడ్యూల్‌ను తెరుస్తున్నాను.',
+        ml: 'നിങ്ങളുടെ മരുന്നുകളുടെ പട്ടിക തുറക്കുന്നു.',
+        kn: 'ನಿಮ್ಮ ಔಷಧಿಗಳ ಪಟ್ಟಿಯನ್ನು ತೆರೆಯಲಾಗುತ್ತಿದೆ.',
+      };
+
       return {
         source: 'VOICE_AI',
-        responseText: 'Opening your medicines list and schedule.',
+        responseText: medsMsg[langKey] || medsMsg.en,
         language: langKey,
         isMedicalQuery: false,
         destinationRoute: '/medicines',
@@ -211,13 +265,67 @@ export class VoiceService {
     // 10. Navigation Commands (Deterministic offline pattern matching)
     const navMatch = voiceCommandMatcher.matchCommand(raw, 'auto');
     if (navMatch.matched && navMatch.route) {
+      const routeKey = navMatch.route.replace('/', '');
+      const routeNames: Record<string, Record<string, string>> = {
+        medicines: {
+          en: 'medicines',
+          ta: 'மருந்துகள்',
+          hi: 'दवाइयों',
+          te: 'మందుల',
+          ml: 'മരുന്നുകൾ',
+          kn: 'ಔಷಧಿಗಳ',
+        },
+        records: {
+          en: 'medical records',
+          ta: 'மருத்துவ ஆவணங்கள்',
+          hi: 'मेडिकल रिकॉर्ड्स',
+          te: 'వైద్య రికార్డుల',
+          ml: 'മെഡിക്കൽ രേഖകൾ',
+          kn: 'ವೈದ್ಯಕೀಯ ದಾಖಲೆಗಳ',
+        },
+        emergency: {
+          en: 'emergency triage',
+          ta: 'அவசர சிகிச்சை',
+          hi: 'आपातकालीन सहायता',
+          te: 'అత్యవసర చికిత్స',
+          ml: 'അടിയന്തര ചികിത്സ',
+          kn: 'ತುರ್ತು ಚಿಕಿತ್ಸೆ',
+        },
+        appointments: {
+          en: 'appointments',
+          ta: 'மருத்துவர் சந்திப்புகள்',
+          hi: 'अपॉइंटमेंट',
+          te: 'అపాయింట్‌మెంట్ల',
+          ml: 'അപ്പോയിന്റ്മെന്റുകൾ',
+          kn: 'ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್‌ಗಳ',
+        },
+        'report-scanner': {
+          en: 'report scanner',
+          ta: 'அறிக்கை ஸ்கேனர்',
+          hi: 'रिपोर्ट स्कैनर',
+          te: 'రిపోర్ట్ స్కానర్',
+          ml: 'റിപ്പോർട്ട് സ്കാനർ',
+          kn: 'ವರದಿ ಸ್ಕ್ಯಾನರ್',
+        },
+        dashboard: {
+          en: 'dashboard',
+          ta: 'முதன்மை பக்கம்',
+          hi: 'डैशबोर्ड',
+          te: 'డ్యాష్‌బోర్డ్',
+          ml: 'ഡാഷ്‌ബോർഡ്',
+          kn: 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್',
+        },
+      };
+
+      const localizedRoute = routeNames[routeKey]?.[langKey] || routeKey;
+
       const navMessages: Record<string, string> = {
-        en: `Opening ${navMatch.route.replace('/', '') || 'page'} for you now.`,
-        ta: `${navMatch.route.replace('/', '')} பக்கத்தைத் திறக்கிறேன்.`,
-        hi: `${navMatch.route.replace('/', '')} पृष्ठ खोल रहा हूँ।`,
-        te: `${navMatch.route.replace('/', '')} పేజీని తెరుస్తున్నాను.`,
-        ml: `${navMatch.route.replace('/', '')} പേജ് തുറക്കുന്നു.`,
-        kn: `${navMatch.route.replace('/', '')} ಪುಟವನ್ನು ತೆರೆಯಲಾಗುತ್ತಿದೆ.`,
+        en: `Opening ${localizedRoute} for you now.`,
+        ta: `${localizedRoute} பக்கத்தைத் திறக்கிறேன்.`,
+        hi: `${localizedRoute} पृष्ठ खोल रहा हूँ।`,
+        te: `${localizedRoute} పేజీని తెరుస్తున్నాను.`,
+        ml: `${localizedRoute} പേജ് തുറക്കുന്നു.`,
+        kn: `${localizedRoute} ಪುಟವನ್ನು ತೆರೆಯಲಾಗುತ್ತಿದೆ.`,
       };
 
       return {

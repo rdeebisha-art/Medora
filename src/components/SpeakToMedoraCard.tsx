@@ -57,22 +57,42 @@ export default function SpeakToMedoraCard() {
     }
   }, [turns, isProcessing]);
 
-  const handleStartListening = () => {
+  const handleStartListening = async () => {
     setStatusNotice(null);
     setTranscript('');
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setStatusNotice(
+        'Offline Notice: Browser speech recognition requires an internet connection on most devices. If speech input is unavailable, please type below.'
+      );
+    }
+
+    try {
+      await speechRecognitionService.requestMicrophonePermission();
+    } catch {}
 
     const success = speechRecognitionService.startListening(activeLang, {
       onStart: () => setIsListening(true),
       onResult: (text: string, isFinal: boolean) => {
         setTranscript(text);
+        setTextInput(text);
         if (isFinal && text.trim().length > 1) {
           handleProcessUtterance(text);
         }
       },
       onError: (err: string, errCode?: string) => {
         setIsListening(false);
-        // Do not display aborted error as persistent failure
-        if (errCode !== 'aborted') {
+        if (errCode === 'not-allowed' || errCode === 'permission-denied') {
+          setStatusNotice('Microphone permission was denied. Please allow microphone access in your browser settings.');
+        } else if (errCode === 'audio-capture') {
+          setStatusNotice('Microphone unavailable. Please ensure your microphone is connected and working.');
+        } else if (errCode === 'language-not-supported') {
+          setStatusNotice(`Speech recognition for ${activeLang} is not supported in this browser. Please type below.`);
+        } else if (errCode === 'no-speech') {
+          setStatusNotice('No speech detected. Please speak clearly into your microphone.');
+        } else if (errCode === 'network') {
+          setStatusNotice('Speech recognition network error. On most browsers, voice recognition requires an internet connection. Please type below.');
+        } else if (errCode !== 'aborted') {
           setStatusNotice(err);
         }
       },

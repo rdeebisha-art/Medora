@@ -12,6 +12,10 @@ export class SpeechRecognitionService {
   private isListening: boolean = false;
   private currentLanguage: SupportedLanguageCode = 'en-IN';
   private listeningTimeout: any = null;
+  private silenceTimeout: any = null;
+  private accumulatedTranscript: string = '';
+  private activeCallbacks: SpeechRecognitionCallbacks | null = null;
+  private hasDispatchedFinal: boolean = false;
 
   constructor() {
     this.initRecognition();
@@ -28,7 +32,7 @@ export class SpeechRecognitionService {
       if (SpeechRecognitionClass) {
         try {
           this.recognition = new SpeechRecognitionClass();
-          this.recognition.continuous = false;
+          this.recognition.continuous = true;
           this.recognition.interimResults = true;
           this.recognition.maxAlternatives = 1;
         } catch (e) {
@@ -98,7 +102,41 @@ export class SpeechRecognitionService {
             return 'माइक्रोफ़ोन की अनुमति अस्वीकृत की गई। कृपया ब्राउज़र सेटिंग्स में अनुमति दें।';
           case 'en':
           default:
-            return 'Microphone permission was denied. Please allow microphone access.';
+            return 'Microphone permission was denied. Please allow microphone access in your browser settings.';
+        }
+
+      case 'audio-capture':
+        switch (langCode) {
+          case 'ta':
+            return 'மைக்ரோஃபோன் கிடைக்கவில்லை அல்லது இணைக்கப்படவில்லை. மைக் அமைப்புகளை சரிபார்க்கவும்.';
+          case 'te':
+            return 'మైక్రోఫోన్ అందుబాటులో లేదు. దయచేసి మైక్ సెట్టింగ్‌లను తనిఖీ చేయండి.';
+          case 'ml':
+            return 'മൈക്രോഫോൺ ലഭ്യമല്ല. മൈക്ക് ക്രമീകരണങ്ങൾ പരിശോധിക്കുക.';
+          case 'kn':
+            return 'ಮೈಕ್ರೊಫೋನ್ ಲಭ್ಯವಿಲ್ಲ. ದಯವಿಟ್ಟು ಮೈಕ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.';
+          case 'hi':
+            return 'माइक्रोफ़ोन उपलब्ध नहीं है। कृपया माइक सेटिंग्स जांचें।';
+          case 'en':
+          default:
+            return 'Microphone unavailable. Please ensure your microphone is connected and working.';
+        }
+
+      case 'language-not-supported':
+        switch (langCode) {
+          case 'ta':
+            return 'இந்த மொழிக்கான குரல் அறிதல் உங்கள் சாதனத்தில் கிடைக்கவில்லை. தட்டச்சு செய்யலாம்.';
+          case 'te':
+            return 'ఈ భాషకు వాయిస్ రికగ్నిషన్ అందుబాటులో లేదు. మీరు క్రింద టైప్ చేయవచ్చు.';
+          case 'ml':
+            return 'ഈ ഭാഷയ്ക്കുള്ള വോയ്സ് തിരിച്ചറിയൽ ലഭ്യമല്ല. നിങ്ങൾക്ക് ടൈപ്പ് ചെയ്യാം.';
+          case 'kn':
+            return 'ಈ ಭಾಷೆಯ ಧ್ವನಿ ಗುರುತಿಸುವಿಕೆ ಲಭ್ಯವಿಲ್ಲ. ದಯವಿಟ್ಟು ಟೈಪ್ ಮಾಡಿ.';
+          case 'hi':
+            return 'इस भाषा के लिए आवाज़ पहचान इस डिवाइस पर उपलब्ध नहीं है। आप नीचे टाइप कर सकते हैं।';
+          case 'en':
+          default:
+            return 'Speech recognition is not supported for this language on your browser. Please type your message.';
         }
 
       case 'no-speech':
@@ -172,6 +210,19 @@ export class SpeechRecognitionService {
     }
   }
 
+  public async requestMicrophonePermission(): Promise<boolean> {
+    if (typeof navigator !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((track) => track.stop());
+        return true;
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  }
+
   public startListening(
     language: SupportedLanguageCode,
     callbacks: SpeechRecognitionCallbacks
@@ -188,43 +239,75 @@ export class SpeechRecognitionService {
 
     try {
       this.stopListening();
+      if (!this.recognition) {
+        this.initRecognition();
+      }
 
       this.currentLanguage = language;
+      this.activeCallbacks = callbacks;
+      this.accumulatedTranscript = '';
+      this.hasDispatchedFinal = false;
       this.recognition.lang = language;
 
       this.recognition.onstart = () => {
         this.isListening = true;
-        // Safety timeout to prevent infinite listening lock if browser hangs
+        // Safety timeout (30 seconds) to prevent infinite listening lock if browser hangs
         if (this.listeningTimeout) clearTimeout(this.listeningTimeout);
         this.listeningTimeout = setTimeout(() => {
           if (this.isListening) {
             this.stopListening();
-            callbacks.onEnd();
           }
-        }, 25000);
+        }, 30000);
         callbacks.onStart();
       };
 
       this.recognition.onresult = (event: any) => {
-        let interimTranscript = '';
         let finalTranscript = '';
+        let interimTranscript = '';
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
+        for (let i = 0; i < event.results.length; ++i) {
+          const item = event.results[i];
+          const text = item[0]?.transcript || '';
+          if (item.isFinal) {
+            finalTranscript += text + ' ';
           } else {
-            interimTranscript += event.results[i][0].transcript;
+            interimTranscript += text;
           }
         }
 
-        const resultText = finalTranscript || interimTranscript;
-        callbacks.onResult(resultText, !!finalTranscript);
+        const fullResult = (finalTranscript + interimTranscript).trim();
+        if (fullResult) {
+          this.accumulatedTranscript = fullResult;
+          // Real-time word catching: immediately update caller
+          callbacks.onResult(fullResult, false);
+
+          // Debounce silence timer (1800ms) to auto-finalize when user finishes speaking
+          if (this.silenceTimeout) clearTimeout(this.silenceTimeout);
+          this.silenceTimeout = setTimeout(() => {
+            if (this.isListening && this.accumulatedTranscript.trim() && !this.hasDispatchedFinal) {
+              this.hasDispatchedFinal = true;
+              callbacks.onResult(this.accumulatedTranscript.trim(), true);
+              this.stopListening();
+            }
+          }, 1800);
+        }
       };
 
       this.recognition.onerror = (event: any) => {
         if (this.listeningTimeout) clearTimeout(this.listeningTimeout);
-        this.isListening = false;
+        if (this.silenceTimeout) clearTimeout(this.silenceTimeout);
         const errCode = event.error || 'unknown';
+
+        // If no-speech or aborted, but words were already caught, deliver them
+        if ((errCode === 'no-speech' || errCode === 'aborted') && this.accumulatedTranscript.trim() && !this.hasDispatchedFinal) {
+          this.hasDispatchedFinal = true;
+          callbacks.onResult(this.accumulatedTranscript.trim(), true);
+          this.isListening = false;
+          callbacks.onEnd();
+          return;
+        }
+
+        this.isListening = false;
 
         // 'aborted' is a benign cancellation event when user stops speaking or taps mic again
         if (errCode === 'aborted') {
@@ -238,7 +321,15 @@ export class SpeechRecognitionService {
 
       this.recognition.onend = () => {
         if (this.listeningTimeout) clearTimeout(this.listeningTimeout);
+        if (this.silenceTimeout) clearTimeout(this.silenceTimeout);
         this.isListening = false;
+
+        // CRITICAL: Deliver any caught words before closing session
+        if (this.accumulatedTranscript.trim() && !this.hasDispatchedFinal) {
+          this.hasDispatchedFinal = true;
+          callbacks.onResult(this.accumulatedTranscript.trim(), true);
+        }
+
         callbacks.onEnd();
       };
 
@@ -246,6 +337,7 @@ export class SpeechRecognitionService {
       return true;
     } catch (e: any) {
       if (this.listeningTimeout) clearTimeout(this.listeningTimeout);
+      if (this.silenceTimeout) clearTimeout(this.silenceTimeout);
       this.isListening = false;
       const msg = this.getLocalizedError('unknown', this.currentLanguage);
       callbacks.onError(msg, 'unknown');
@@ -259,6 +351,10 @@ export class SpeechRecognitionService {
       clearTimeout(this.listeningTimeout);
       this.listeningTimeout = null;
     }
+    if (this.silenceTimeout) {
+      clearTimeout(this.silenceTimeout);
+      this.silenceTimeout = null;
+    }
     if (this.recognition && this.isListening) {
       try {
         this.recognition.stop();
@@ -267,6 +363,20 @@ export class SpeechRecognitionService {
       }
       this.isListening = false;
     }
+
+    if (this.accumulatedTranscript.trim() && !this.hasDispatchedFinal && this.activeCallbacks) {
+      this.hasDispatchedFinal = true;
+      this.activeCallbacks.onResult(this.accumulatedTranscript.trim(), true);
+    }
+  }
+
+  public getAccumulatedTranscript(): string {
+    return this.accumulatedTranscript;
+  }
+
+  public clearAccumulatedTranscript(): void {
+    this.accumulatedTranscript = '';
+    this.hasDispatchedFinal = false;
   }
 
   public getIsListening(): boolean {

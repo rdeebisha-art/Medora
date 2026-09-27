@@ -22,6 +22,8 @@ export class SpeechSynthesisService {
   private synth: SpeechSynthesis | null = null;
   private isSpeaking: boolean = false;
   private currentUtterance: SpeechSynthesisUtterance | null = null;
+  private currentCallbacks: SpeechCallbacks | null = null;
+  private keepAliveInterval: any = null;
   private status: SpeechStatus = 'IDLE';
   private statusListeners: Array<(status: SpeechStatus) => void> = [];
   private voiceListeners: Array<() => void> = [];
@@ -209,6 +211,8 @@ export class SpeechSynthesisService {
 
     const matchedVoice = this.getVoiceForLanguage(targetLang);
 
+    this.currentCallbacks = callbacks || null;
+
     try {
       const utterance = new SpeechSynthesisUtterance(cleanText);
       utterance.lang = targetLang;
@@ -223,11 +227,22 @@ export class SpeechSynthesisService {
         this.isSpeaking = true;
         this.setStatus('SPEAKING');
         callbacks?.onStart?.();
+
+        // Chrome garbage collection keep-alive for speech synthesis
+        if (this.keepAliveInterval) clearInterval(this.keepAliveInterval);
+        this.keepAliveInterval = setInterval(() => {
+          if (this.synth && this.isSpeaking && !this.synth.paused) {
+            this.synth.pause();
+            this.synth.resume();
+          }
+        }, 12000);
       };
 
       utterance.onend = () => {
+        if (this.keepAliveInterval) clearInterval(this.keepAliveInterval);
         this.isSpeaking = false;
         this.currentUtterance = null;
+        this.currentCallbacks = null;
         this.setStatus('IDLE');
         callbacks?.onEnd?.();
       };
@@ -243,9 +258,11 @@ export class SpeechSynthesisService {
       };
 
       utterance.onerror = (e) => {
+        if (this.keepAliveInterval) clearInterval(this.keepAliveInterval);
         console.warn('[SpeechSynthesis] Error event:', e);
         this.isSpeaking = false;
         this.currentUtterance = null;
+        this.currentCallbacks = null;
         // 'canceled' or 'interrupted' is common when stop() is called
         if (e.error === 'canceled' || e.error === 'interrupted') {
           this.setStatus('STOPPED');
@@ -259,9 +276,11 @@ export class SpeechSynthesisService {
       this.synth.speak(utterance);
       return true;
     } catch (err: any) {
+      if (this.keepAliveInterval) clearInterval(this.keepAliveInterval);
       console.warn('[SpeechSynthesis] Execution error:', err);
       this.isSpeaking = false;
       this.currentUtterance = null;
+      this.currentCallbacks = null;
       this.setStatus('ERROR');
       callbacks?.onError?.(`Speech failed: ${err?.message || 'Could not start audio'}`);
       return false;
@@ -276,6 +295,7 @@ export class SpeechSynthesisService {
       try {
         this.synth.pause();
         this.setStatus('PAUSED');
+        this.currentCallbacks?.onPause?.();
       } catch (e) {
         console.warn('[SpeechSynthesis] Pause error:', e);
       }
@@ -290,6 +310,7 @@ export class SpeechSynthesisService {
       try {
         this.synth.resume();
         this.setStatus('SPEAKING');
+        this.currentCallbacks?.onResume?.();
       } catch (e) {
         console.warn('[SpeechSynthesis] Resume error:', e);
       }
@@ -301,6 +322,10 @@ export class SpeechSynthesisService {
    * Clears queue, updates state to STOPPED, and ensures no overlapping audio.
    */
   public stop(): void {
+    if (this.keepAliveInterval) {
+      clearInterval(this.keepAliveInterval);
+      this.keepAliveInterval = null;
+    }
     if (this.synth) {
       try {
         this.synth.cancel();
@@ -309,6 +334,7 @@ export class SpeechSynthesisService {
       }
       this.isSpeaking = false;
       this.currentUtterance = null;
+      this.currentCallbacks = null;
       this.setStatus('STOPPED');
     }
   }

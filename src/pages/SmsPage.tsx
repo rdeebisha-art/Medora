@@ -6,6 +6,8 @@ import Layout from '../components/Layout';
 import DemoDataBadge from '../components/DemoDataBadge';
 import { smsService } from '../services/sms/smsService';
 import { SmsPreviewModal } from '../components/SmsPreviewModal';
+import { DeviceSmsComposerCard } from '../components/DeviceSmsComposerCard';
+import { openExternalSmsApp } from '../services/sms/smsAppLauncher';
 import { SmsSendPayload, SmsResponseData } from '../services/sms/smsStatus';
 import {
   Send,
@@ -144,7 +146,15 @@ export default function SmsPage() {
     const targetMsg = form.message.trim();
 
     try {
-      const response = await smsService.sendSms({
+      // 1. Immediately launch phone's native SMS application with number and message pre-filled
+      await openExternalSmsApp(targetPhone, targetMsg, {
+        alertType: form.type,
+        language: form.language,
+        patientId: currentUser?.id,
+      });
+
+      // 2. Also register in local database and outbox
+      await smsService.sendSms({
         recipientPhone: targetPhone,
         message: targetMsg,
         patientId: currentUser?.id,
@@ -153,32 +163,10 @@ export default function SmsPage() {
         isDemoMode: isDemoMode,
       });
 
-      if (response.status === 'DEMO_ONLY') {
-        setFeedback({
-          type: 'demo',
-          text: `SMS Demo / Test Mode: Verified for ${targetPhone}. Status: DEMO ONLY — NOT SENT TO PHONE.`,
-        });
-      } else if (response.status === 'SUBMITTED') {
-        setFeedback({
-          type: 'success',
-          text: `SMS submitted successfully for ${targetPhone}.`,
-        });
-      } else if (response.status === 'DELIVERED') {
-        setFeedback({
-          type: 'success',
-          text: `SMS Delivered to ${targetPhone}.`,
-        });
-      } else if (response.status === 'OFFLINE_OUTBOX' || !response.configured) {
-        setFeedback({
-          type: 'outbox',
-          text: 'Real SMS sending is not configured. Saved to SMS Outbox for later sending.',
-        });
-      } else {
-        setFeedback({
-          type: 'error',
-          text: response.error || 'Failed to submit SMS.',
-        });
-      }
+      setFeedback({
+        type: 'success',
+        text: `📱 SMS details prepared for ${targetPhone}. Phone messaging app opened with recipient & details. Complete sending in your SMS app.`,
+      });
 
       setForm({ toPhone: '', type: 'family_alert', language: language || 'en', message: '' });
       setShowCompose(false);
@@ -186,7 +174,7 @@ export default function SmsPage() {
     } catch {
       setFeedback({
         type: 'outbox',
-        text: 'Saved to SMS Outbox for later sending (Network offline).',
+        text: `Message saved to SMS Outbox for ${targetPhone}.`,
       });
       setShowCompose(false);
       setRefresh((r) => r + 1);
@@ -280,10 +268,15 @@ export default function SmsPage() {
               onClick={() => setShowCompose(true)}
               className="bg-teal-600 hover:bg-teal-500 text-white text-xs px-3.5 py-2 rounded-xl font-bold flex items-center gap-1 shadow-md active:scale-95 transition-all"
             >
-              + {t('sms.compose')}
+              + {t('sms.compose')} (Provider API)
             </button>
           </div>
         </div>
+
+        {/* Device SMS Application Launcher (Native sms: URI) */}
+        <DeviceSmsComposerCard
+          onSmsRequested={() => setRefresh((r) => r + 1)}
+        />
 
         {/* Demo / Test Mode Toggle Card (Requirement 4) */}
         <div className="bg-slate-900 border border-slate-700 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
@@ -535,13 +528,7 @@ export default function SmsPage() {
                     className="w-full bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-teal-900/40 active:scale-95 transition-all text-xs cursor-pointer"
                   >
                     <Send size={14} />
-                    <span>
-                      {isDemoMode
-                        ? 'Simulate in Demo Mode'
-                        : isProviderConfigured
-                        ? 'Submit to Real Provider'
-                        : 'Save to SMS Outbox'}
-                    </span>
+                    <span>Send to Phone (Opens SMS App)</span>
                   </button>
 
                   <button

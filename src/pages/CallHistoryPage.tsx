@@ -4,10 +4,11 @@ import Layout from '../components/Layout';
 import DemoDataBadge from '../components/DemoDataBadge';
 import { db, CallSessionRecord } from '../db/db';
 import { useAppStore } from '../store/useAppStore';
+import { DevicePhoneCallCard } from '../components/DevicePhoneCallCard';
 import {
   PhoneCall, PhoneIncoming, PhoneOutgoing, PhoneMissed,
   ShieldAlert, Clock, Calendar, CheckCircle2, XCircle,
-  RefreshCw, Stethoscope, User, Search, Filter, ShieldCheck
+  RefreshCw, Stethoscope, User, Search, Filter, ShieldCheck, Phone
 } from 'lucide-react';
 
 export default function CallHistoryPage() {
@@ -278,10 +279,13 @@ export default function CallHistoryPage() {
           <div className="mt-4 pt-4 border-t border-teal-700/60 flex items-center gap-2 text-xs text-teal-200/90 font-medium">
             <ShieldCheck size={14} className="text-emerald-300 flex-shrink-0" />
             <span>
-              Privacy Guarantee: Voice calls connect directly via WebRTC peer connection. Call audio is never recorded, uploaded, or stored.
+              Privacy Guarantee: Voice calls connect directly via WebRTC peer connection or your device's native dialer. Audio is never recorded or stored.
             </span>
           </div>
         </div>
+
+        {/* Real Phone Calling Interface — Native Device Dialer */}
+        <DevicePhoneCallCard onCallRequested={() => fetchCalls()} />
 
         {/* Filters and Search Bar */}
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">

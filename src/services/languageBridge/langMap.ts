@@ -1,6 +1,8 @@
 import { SupportedLanguageCode } from '../../data/languages';
 import { BridgeLang } from '../../data/languageBridge/types';
 
+export type { BridgeLang };
+
 export function toBridgeLang(code: SupportedLanguageCode | string): BridgeLang {
   const short = code.slice(0, 2).toLowerCase();
   if (short === 'ta' || short === 'te' || short === 'ml' || short === 'kn' || short === 'hi' || short === 'en') {

@@ -95,9 +95,96 @@ export function isMobileBrowser(): boolean {
     (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches && 'ontouchstart' in window);
 }
 
+export type DeviceCallStatus =
+  | 'IDLE'
+  | 'DIALER_OPEN_REQUESTED'
+  | 'CALL_INITIATED_BY_DEVICE'
+  | 'CALL_IN_PROGRESS'
+  | 'CALL_ENDED'
+  | 'CALL_FAILED'
+  | 'STATUS_UNKNOWN';
+
+export interface DeviceDialerResult {
+  success: boolean;
+  status: DeviceCallStatus;
+  actionTaken: 'DIALER_OPEN_REQUESTED' | 'INVALID_NUMBER' | 'DESKTOP_FALLBACK' | 'FAILED';
+  message: string;
+  normalizedPhone: string;
+  rawInput: string;
+  telUri: string | null;
+  isMobile: boolean;
+}
+
 /**
- * Initiates in-browser Web Calling directly within the Medora website
- * NEVER redirects to the phone or leaves the website.
+ * Initiates an external phone call using the device's native phone dialer via safe tel: URI.
+ * Does NOT pretend that Medora itself connected the call.
+ * Does NOT claim the call was answered or connected.
+ */
+export function openDeviceDialer(phoneNumber: string, contactName?: string): DeviceDialerResult {
+  const result = normalizePhoneNumber(phoneNumber);
+  const isMobile = isMobileBrowser();
+
+  if (!result.isValid || !result.telUri) {
+    return {
+      success: false,
+      status: 'CALL_FAILED',
+      actionTaken: 'INVALID_NUMBER',
+      message: result.error || 'Please enter a valid phone number with 3 to 15 digits.',
+      normalizedPhone: result.normalized || '',
+      rawInput: phoneNumber,
+      telUri: null,
+      isMobile,
+    };
+  }
+
+  const cleanNum = result.normalized;
+
+  try {
+    if (typeof window !== 'undefined') {
+      try {
+        window.location.href = result.telUri;
+      } catch {}
+      try {
+        const link = document.createElement('a');
+        link.href = result.telUri;
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch {}
+    }
+
+    const message = isMobile
+      ? 'Phone dialer opened. Review the number and press Call in your phone app.'
+      : 'Phone dialer requested. A compatible calling application or mobile device is required to place the call.';
+
+    return {
+      success: true,
+      status: 'DIALER_OPEN_REQUESTED',
+      actionTaken: isMobile ? 'DIALER_OPEN_REQUESTED' : 'DESKTOP_FALLBACK',
+      message,
+      normalizedPhone: cleanNum,
+      rawInput: phoneNumber,
+      telUri: result.telUri,
+      isMobile,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      status: 'CALL_FAILED',
+      actionTaken: 'FAILED',
+      message: `Failed to open phone dialer: ${err?.message || 'Unsupported browser'}. Please dial ${cleanNum} manually.`,
+      normalizedPhone: cleanNum,
+      rawInput: phoneNumber,
+      telUri: result.telUri,
+      isMobile,
+    };
+  }
+}
+
+/**
+ * Backward compatibility wrapper for in-app or dialer calls.
+ * Clearly separates WebRTC in-app calls (for Medora users) from external phone numbers.
  */
 export function callPhoneNumber(
   phoneNumber: string,
@@ -105,51 +192,13 @@ export function callPhoneNumber(
   category?: ActiveCallInfo['category'],
   location?: string
 ): { success: boolean; message: string; telUri?: string; actionTaken: string } {
-  const result = normalizePhoneNumber(phoneNumber);
-
-  if (!result.isValid) {
-    return {
-      success: false,
-      message: result.error || 'Please enter a valid phone number.',
-      actionTaken: 'INVALID_NUMBER',
-    };
-  }
-
-  const cleanNum = result.normalized;
-  let detectedCategory: ActiveCallInfo['category'] = category || 'DOCTOR';
-  let defaultName = contactName || 'Healthcare Professional';
-
-  if (cleanNum === '108' || phoneNumber.includes('108')) {
-    detectedCategory = 'EMERGENCY';
-    defaultName = '108 Emergency Ambulance Dispatcher';
-  } else if (cleanNum === '102' || phoneNumber.includes('102')) {
-    detectedCategory = 'AMBULANCE';
-    defaultName = '102 Janani Express Maternity Transport';
-  } else if (cleanNum === '112' || phoneNumber.includes('112')) {
-    detectedCategory = 'EMERGENCY';
-    defaultName = '112 National Emergency Response Service';
-  }
-
-  // Trigger in-browser active WebRTC call modal directly in Medora
-  try {
-    useAppStore.getState().startDirectCall({
-      name: defaultName,
-      phone: cleanNum,
-      category: detectedCategory,
-      location: location || 'Medora In-App WebRTC Voice',
-      notes: 'Active in-app WebRTC call session',
-      targetUserId: detectedCategory === 'DOCTOR' ? 'DOC-01' : 'DOC-01',
-      emergency: detectedCategory === 'EMERGENCY',
-      emergencyType: detectedCategory === 'EMERGENCY' ? 'Direct Emergency Call' : undefined,
-    });
-  } catch (err) {
-    console.warn('[Medora Call] In-app call dispatch notice:', err);
-  }
+  const dialerResult = openDeviceDialer(phoneNumber, contactName);
 
   return {
-    success: true,
-    message: `Connected in-browser call to ${defaultName} (${cleanNum}).`,
-    actionTaken: 'IN_APP_WEB_CALL_LAUNCHED',
+    success: dialerResult.success,
+    message: dialerResult.message,
+    telUri: dialerResult.telUri || undefined,
+    actionTaken: dialerResult.actionTaken,
   };
 }
 

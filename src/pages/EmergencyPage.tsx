@@ -465,6 +465,9 @@ export default function EmergencyPage() {
   };
 
   const handleCallAmbulance108 = () => {
+    if (typeof window !== 'undefined') {
+      try { window.location.href = 'tel:108'; } catch {}
+    }
     setActiveCall({
       name: '108 Rural Ambulance & Trauma Hotline',
       phone: '108',
@@ -480,6 +483,10 @@ export default function EmergencyPage() {
     const emergencyId = `EMG-${Date.now()}`;
     const patientId = currentPatient?.id || 1;
     const doctorId = 'DOC-01';
+
+    if (typeof window !== 'undefined') {
+      try { window.location.href = 'tel:9800001111'; } catch {}
+    }
 
     // Record in local Dexie emergency incidents
     try {
@@ -498,7 +505,7 @@ export default function EmergencyPage() {
       });
     } catch {}
 
-    // Initiate REAL WebRTC emergency call
+    // Initiate WebRTC & phone dialer emergency call
     setActiveCall({
       callId,
       name: 'Dr. Arjun Mehta (Emergency Medical Officer)',
@@ -515,6 +522,9 @@ export default function EmergencyPage() {
   };
 
   const handleCallHospital = () => {
+    if (typeof window !== 'undefined') {
+      try { window.location.href = 'tel:04542241200'; } catch {}
+    }
     setActiveCall({
       name: 'Kodaikanal Government Hospital',
       phone: '04542-241200',
@@ -525,6 +535,9 @@ export default function EmergencyPage() {
   };
 
   const handleCall112 = () => {
+    if (typeof window !== 'undefined') {
+      try { window.location.href = 'tel:112'; } catch {}
+    }
     setActiveCall({
       name: '112 National Unified Emergency Hotline',
       phone: '112',
@@ -535,6 +548,9 @@ export default function EmergencyPage() {
   };
 
   const handleCall102 = () => {
+    if (typeof window !== 'undefined') {
+      try { window.location.href = 'tel:102'; } catch {}
+    }
     setActiveCall({
       name: '102 Janani Shishu Express Ambulance',
       phone: '102',
@@ -546,6 +562,9 @@ export default function EmergencyPage() {
 
   const handleCallEmergencyContact = () => {
     const contactPhone = currentPatient?.emergencyContact || '108';
+    if (typeof window !== 'undefined') {
+      try { window.location.href = `tel:${contactPhone}`; } catch {}
+    }
     setActiveCall({
       name: currentPatient?.name ? `Emergency Contact (${currentPatient.name})` : 'Designated Emergency Contact',
       phone: contactPhone,

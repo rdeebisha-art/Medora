@@ -351,7 +351,7 @@ export interface CallHistoryRecord {
   phoneNumber: string;
   contactName?: string;
   contactType: 'PERSON' | 'DOCTOR' | 'FAMILY' | 'HOSPITAL' | 'EMERGENCY';
-  action: 'CALL_INITIATED' | 'CALL_COMPLETED';
+  action: 'DIALER_OPEN_REQUESTED' | 'CALL_INITIATED' | 'CALL_COMPLETED' | 'CALL_FAILED';
   timestamp: string;
 }
 

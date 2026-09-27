@@ -30,6 +30,21 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
   const emergencyFacilities = HEALTHCARE_FACILITIES.filter(f => f.emergencyAvailable);
 
   const handleCall = (name: string, phone: string, category: ActiveCallInfo['category'], location?: string) => {
+    // 1. Real Phone Calling: Immediately launch phone dialer via tel: protocol
+    if (typeof window !== 'undefined') {
+      try {
+        window.location.href = `tel:${phone}`;
+      } catch {}
+      try {
+        const a = document.createElement('a');
+        a.href = `tel:${phone}`;
+        a.rel = 'noopener noreferrer';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } catch {}
+    }
+
     setActiveCall({
       name,
       phone,

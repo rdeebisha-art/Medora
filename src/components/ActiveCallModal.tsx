@@ -59,6 +59,21 @@ export const ActiveCallModal: React.FC<ActiveCallModalProps> = ({ callInfo, onCl
       setDurationSeconds(sec);
     });
 
+    // Trigger native dialer for emergency and telephone calls
+    if (callInfo.phone && typeof window !== 'undefined') {
+      try {
+        window.location.href = `tel:${callInfo.phone}`;
+      } catch {}
+      try {
+        const a = document.createElement('a');
+        a.href = `tel:${callInfo.phone}`;
+        a.rel = 'noopener noreferrer';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } catch {}
+    }
+
     // Start outgoing call if not already in session and not an incoming acceptance
     if (!callInfo.isIncoming && webrtcCallingService.getCallState() === 'IDLE') {
       const targetUserId = callInfo.targetUserId || (callInfo.category === 'DOCTOR' ? 'DOC-01' : 'DOC-01');
@@ -308,6 +323,27 @@ export const ActiveCallModal: React.FC<ActiveCallModalProps> = ({ callInfo, onCl
             </div>
           )}
         </div>
+
+        {/* Direct Phone Dialer Action */}
+        {callInfo.phone && (
+          <div className="px-5 py-2.5 bg-slate-900 border-t border-slate-800 flex items-center justify-between gap-3">
+            <div className="text-left">
+              <span className="text-[11px] font-bold text-slate-300 block">Cellular Phone Dial:</span>
+              <span className="text-xs font-mono text-emerald-400 font-bold">{callInfo.phone}</span>
+            </div>
+            <a
+              href={`tel:${callInfo.phone}`}
+              onClick={() => {
+                try {
+                  window.location.href = `tel:${callInfo.phone}`;
+                } catch {}
+              }}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-md transition-all active:scale-95 cursor-pointer"
+            >
+              <span>📞 Open Phone Dialer</span>
+            </a>
+          </div>
+        )}
 
         {/* Call Controls */}
         <div className="p-4 bg-slate-950/90 border-t border-slate-800 flex items-center justify-around gap-2">
