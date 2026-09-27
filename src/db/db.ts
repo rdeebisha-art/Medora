@@ -244,6 +244,10 @@ export interface SmsOutbox {
   info?: string;
   messageId?: string;
   patientId?: number | string;
+  provider?: string;
+  providerStatus?: string;
+  providerMessageId?: string;
+  error?: string;
 }
 
 export interface SyncLog {
