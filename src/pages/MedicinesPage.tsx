@@ -12,6 +12,7 @@ import {
   ScheduledReminder,
   AutoScheduleResult,
 } from '../services/notifications/localNotificationScheduler';
+import { medicationPushNotificationService } from '../services/medications/medicationPushNotificationService';
 import {
   Printer,
   Tag,
@@ -270,13 +271,30 @@ export default function MedicinesPage() {
             <div className="pt-2 border-t border-emerald-800/80 space-y-2 text-xs">
               <div className="flex items-center justify-between text-[11px] text-emerald-200">
                 <span>Active schedules ({scheduledReminders.length}):</span>
-                <button
-                  onClick={() => handleTestNotification()}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-0.5 rounded-lg font-bold flex items-center gap-1 cursor-pointer"
-                >
-                  <Volume2 size={12} />
-                  <span>Test Audio Chime</span>
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={async () => {
+                      const testMedName = medicines[0]?.name || 'Metformin 500mg';
+                      await medicationPushNotificationService.sendTestDoseNotification(testMedName);
+                      setNotificationFeedback(
+                        `✓ Push notification for upcoming ${testMedName} dose dispatched! Check your notification tray.`
+                      );
+                      setTimeout(() => setNotificationFeedback(null), 5000);
+                    }}
+                    className="bg-teal-600 hover:bg-teal-500 text-white px-2 py-0.5 rounded-lg font-bold flex items-center gap-1 cursor-pointer"
+                    title="Send native push notification for upcoming dose"
+                  >
+                    <Bell size={12} />
+                    <span>Test Push Alert</span>
+                  </button>
+                  <button
+                    onClick={() => handleTestNotification()}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-0.5 rounded-lg font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <Volume2 size={12} />
+                    <span>Test Audio Chime</span>
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">

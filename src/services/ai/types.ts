@@ -117,6 +117,7 @@ export interface VoiceServiceRequest {
   text: string;
   language?: string;
   userName?: string;
+  patientId?: number;
 }
 
 export interface VoiceServiceResponse {
@@ -127,4 +128,15 @@ export interface VoiceServiceResponse {
   medicalHandoff?: StructuredMedicalResponse;
   destinationRoute?: string;
   suggestedAction: 'NONE' | 'NAVIGATE' | 'TRANSFER_TO_MEDICAL_AI';
+  medicationData?: {
+    type: 'NEXT_DOSE' | 'TODAY_ADHERENCE';
+    title: string;
+    details: string;
+    medicineName?: string;
+    scheduledTime?: string;
+    dose?: string;
+    instructions?: string;
+    adherenceRate?: number;
+    doses?: any[];
+  };
 }

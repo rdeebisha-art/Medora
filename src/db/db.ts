@@ -618,7 +618,7 @@ export class MedoraDB extends Dexie {
   constructor() {
     super('MedoraDB');
     this.version(1).stores({
-      patients: '++id, phone, role, familyId, isPregnant, isElderly, isNewborn, isChild',
+      patients: '++id, patientCode, phone, role, name, familyId, isPregnant, isElderly, isNewborn, isChild',
       families: '++id, familyName, village',
       doctors: '++id, phone, role, specialty',
       admins: '++id, phone, role',
@@ -664,6 +664,9 @@ export class MedoraDB extends Dexie {
       medicineAdherence: '++id, medicineId, patientId, date, status',
       consultations: '++id, consultationId, patientId, doctorId, status',
       correctionRequests: '++id, requestId, patientId, status',
+    });
+    this.version(7).stores({
+      patients: '++id, patientCode, phone, role, name, familyId, isPregnant, isElderly, isNewborn, isChild',
     });
   }
 }

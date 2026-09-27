@@ -50,6 +50,7 @@ import VoiceNavigationModal from './components/VoiceNavigationModal';
 import { webrtcCallingService } from './services/webrtc/webrtcCallingService';
 import { inAppMessagingService } from './services/messaging/inAppMessagingService';
 import { localNotificationScheduler } from './services/notifications/localNotificationScheduler';
+import { medicationPushNotificationService } from './services/medications/medicationPushNotificationService';
 import { useEffect } from 'react';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -63,8 +64,13 @@ export default function App() {
 
   useEffect(() => {
     const cleanupScheduler = localNotificationScheduler.initScheduler();
-    return () => cleanupScheduler();
-  }, []);
+    const targetPatientId = (currentUser?.role === 'patient' ? currentUser.id : undefined) || 1;
+    const cleanupMedPush = medicationPushNotificationService.init(targetPatientId);
+    return () => {
+      cleanupScheduler();
+      cleanupMedPush();
+    };
+  }, [currentUser]);
 
   useEffect(() => {
     if (currentUser) {

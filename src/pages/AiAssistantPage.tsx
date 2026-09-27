@@ -9,8 +9,9 @@ import { MedicalAIPanel } from '../components/MedicalAIPanel';
 import { A2AWorkflow } from '../components/A2AWorkflow';
 import { MedicalAIErrorBoundary } from '../components/MedicalAIErrorBoundary';
 import { LanguageCode } from '../types';
-import { Stethoscope, Mic, ShieldAlert, FileText, Bot } from 'lucide-react';
+import { Stethoscope, Mic, ShieldAlert, FileText, Bot, ClipboardList } from 'lucide-react';
 import { aiRouter } from '../services/aiRouter/aiRouter';
+import { TriageAssessmentModal } from '../components/TriageAssessmentModal';
 
 export default function AiAssistantPage() {
   const { t } = useTranslation();
@@ -20,6 +21,7 @@ export default function AiAssistantPage() {
   const navigate = useNavigate();
 
   const [activeSystem, setActiveSystem] = useState<'medical' | 'voice' | 'a2a'>('medical');
+  const [isTriageOpen, setIsTriageOpen] = useState<boolean>(false);
 
   const rawQuery = searchParams.get('query') || searchParams.get('q') || searchParams.get('complaint') || '';
 
@@ -98,6 +100,31 @@ export default function AiAssistantPage() {
           <DemoDataBadge />
         </div>
 
+        {/* Triage Assessment Tool Quick Banner */}
+        <div className="bg-white border-2 border-teal-500/40 rounded-2xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center font-bold text-sm border border-teal-200 shrink-0">
+              📋
+            </div>
+            <div>
+              <div className="font-black text-xs text-slate-900">
+                Symptom Triage Assessment Tool
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Step-by-step checklist to evaluate symptoms &amp; find recommended doctors or ASHA health workers
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsTriageOpen(true)}
+            className="w-full sm:w-auto bg-teal-700 hover:bg-teal-800 text-white font-black text-xs px-3.5 py-2 rounded-xl transition-colors shrink-0 shadow-xs cursor-pointer flex items-center justify-center gap-1.5 min-h-[38px]"
+          >
+            <ClipboardList className="w-3.5 h-3.5" />
+            <span>Start Triage Assessment</span>
+          </button>
+        </div>
+
         {/* Primary Toggle for the AI Systems */}
         <div className="grid grid-cols-3 gap-1.5 bg-slate-200/80 p-1.5 rounded-2xl border border-slate-300">
           <button
@@ -173,6 +200,12 @@ export default function AiAssistantPage() {
             <span>Emergency Services (108)</span>
           </Link>
         </div>
+
+        {/* Triage Assessment Tool Modal */}
+        <TriageAssessmentModal
+          isOpen={isTriageOpen}
+          onClose={() => setIsTriageOpen(false)}
+        />
       </div>
     </Layout>
   );

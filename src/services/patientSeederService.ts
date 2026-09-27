@@ -1102,8 +1102,20 @@ export async function seedDemoPatients(forceReset = false): Promise<SeedingResul
   try {
     for (const demo of FICTIONAL_20_DEMO_PATIENTS) {
       // 1. Check if patient already exists by unique patientCode or phone
-      const existingByCode = await db.patients.where({ patientCode: demo.patientCode }).first();
-      const existingByPhone = await db.patients.where({ phone: demo.phone }).first();
+      let existingByCode: Patient | undefined;
+      try {
+        existingByCode = await db.patients.where({ patientCode: demo.patientCode }).first();
+      } catch {
+        // Fallback gracefully to filter if index is not yet available in the store
+        existingByCode = await db.patients.filter((p) => p.patientCode === demo.patientCode).first();
+      }
+
+      let existingByPhone: Patient | undefined;
+      try {
+        existingByPhone = await db.patients.where({ phone: demo.phone }).first();
+      } catch {
+        existingByPhone = await db.patients.filter((p) => p.phone === demo.phone).first();
+      }
 
       let patientId: number;
 

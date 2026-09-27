@@ -118,6 +118,26 @@ export class AIRouter {
       };
     }
 
+    // 5.5 MEDICATION STATUS & DOSE QUERY ("When is my next dose?", "Did I take my medicine?")
+    const isDoseOrAdherenceQuery =
+      /\b(?:when\s+is\s+(?:my\s+)?next\s+(?:dose|medicine|pill)|what\s+is\s+(?:my\s+)?next\s+(?:dose|medicine)|next\s+dose|upcoming\s+dose|did\s+i\s+take\s+(?:my\s+)?(?:medicine|pill|pills|medication|dose)|have\s+i\s+taken\s+(?:my\s+)?(?:medicine|pill|pills|medication))\b/i.test(
+        lower
+      ) ||
+      /(அடுத்த மருந்து எப்போது|நான் மருந்து சாப்பிட்டேனா|मेरी अगली खुराक कब है|क्या मैंने अपनी दवा ली|నా తదుపరి డోస్ ఎప్పుడు|నేను నా మందులు వేసుకున్నానా|അടുത്ത മരുന്ന് എപ്പോൾ|ഞാൻ മരുന്ന് കഴിച്ചോ|ನನ್ನ ಮುಂದಿನ ಡೋಸ್ ಯಾವಾಗ|ನಾನು ಔಷಧಿ ತೆಗೆದುಕೊಂಡೆನಾ)/.test(
+        raw
+      );
+
+    if (isDoseOrAdherenceQuery) {
+      return {
+        targetSystem: 'VOICE_AI',
+        requestType: 'VOICE',
+        reason: 'Medication dose timing or adherence database lookup query.',
+        isEmergency: false,
+        requiresDoctorReview: false,
+        destinationRoute: '/medicines',
+      };
+    }
+
     // 6. NORMAL CONVERSATION & GREETINGS -> VOICE AI (Before generic keyword matchers)
     const isConversational =
       /^(hi|hello|hey|namaste|vanakkam|namaskaram|greetings|good\s*(morning|afternoon|evening))\b/i.test(lower) ||

@@ -116,12 +116,27 @@ export default function LanguageBridgePage() {
   };
 
   const handleUtterance = async (speaker: ViewMode, text: string) => {
+    const raw = text.trim();
+    if (!raw) return;
+
     const expected = speaker === 'patient' ? patientLanguage : doctorLanguage;
-    const detected = detectSpokenLanguage(text, autoDetect ? undefined : expected);
+    const targetLang = speaker === 'patient' ? doctorLanguage : patientLanguage;
+
+    const detected = detectSpokenLanguage(raw, autoDetect ? undefined : expected);
     if (speaker === 'patient') setPatientDetectedLanguage(detected.language);
     else setDoctorDetectedLanguage(detected.language);
 
-    if (autoDetect && detected.mismatch) {
+    let sourceLang = expected;
+    let actualTarget = targetLang;
+
+    if (detected.language === targetLang && detected.confidence >= 0.75) {
+      sourceLang = targetLang;
+      actualTarget = expected;
+    } else if (detected.language && detected.language !== targetLang && detected.confidence >= 0.7) {
+      sourceLang = detected.language;
+    }
+
+    if (autoDetect && detected.mismatch && detected.confidence >= 0.8) {
       setPendingLangChange({ speaker, language: detected.language });
       setLangChangePrompt(
         t('languageBridge.languageChanged', {
@@ -130,13 +145,11 @@ export default function LanguageBridgePage() {
       );
     }
 
-    const sourceLang = autoDetect && !detected.mismatch ? detected.language : expected;
-    const targetLang = speaker === 'patient' ? doctorLanguage : patientLanguage;
-    const result = await translateHealthcareTextAsync(text, sourceLang, targetLang);
+    const result = await translateHealthcareTextAsync(raw, sourceLang, actualTarget);
     await persistAndShow(speaker, result);
 
     if (voiceConversation) {
-      const listenLang = speaker === 'patient' ? doctorLanguage : patientLanguage;
+      const listenLang = actualTarget;
       speakTranslation(result, listenLang);
     }
   };
@@ -329,22 +342,58 @@ export default function LanguageBridgePage() {
 
         {step === 'active' && (
           <>
-            <div className="bg-gradient-to-br from-[#F0FDFA] to-[#EFF6FF] border border-[#E2E8F0] rounded-3xl p-5 shadow-sm">
+            <div className="bg-gradient-to-br from-[#F0FDFA] to-[#EFF6FF] border border-[#E2E8F0] rounded-3xl p-4 sm:p-5 shadow-sm space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <div className="text-xs font-bold uppercase tracking-wide text-[#0F766E]">🌐 {t('languageBridge.cardTitle')}</div>
-                  <div className="mt-2 text-sm text-[#0F172A]">
-                    <span className="font-bold">{t('languageBridge.patient')}:</span> {languageDisplayName(patientLanguage)} ({nativeLanguageName(patientLanguage)})
-                  </div>
-                  <div className="text-sm text-[#0F172A]">
-                    <span className="font-bold">{t('languageBridge.doctor')}:</span> {languageDisplayName(doctorLanguage)} ({nativeLanguageName(doctorLanguage)})
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🌐</span>
+                  <div>
+                    <div className="text-xs font-black uppercase tracking-wide text-[#0F766E]">{t('languageBridge.cardTitle')}</div>
+                    <p className="text-[11px] text-[#64748B]">Bilingual Clinical Translation between Patient &amp; Doctor</p>
                   </div>
                 </div>
-                <div className={`text-xs font-bold px-3 py-1.5 rounded-full ${sameLanguage ? 'bg-green-100 text-green-800' : 'bg-teal-100 text-teal-800'}`}>
-                  {sameLanguage ? `✓ ${t('languageBridge.off')}` : `🟢 ${t('languageBridge.active')}`}
+                <div className={`text-xs font-bold px-3 py-1 rounded-full ${sameLanguage ? 'bg-amber-100 text-amber-800' : 'bg-teal-100 text-teal-800'}`}>
+                  {sameLanguage ? `⚠️ Same Language (No translation needed)` : `🟢 ${t('languageBridge.active')}`}
                 </div>
               </div>
-              <p className="text-[11px] text-[#64748B] mt-2">{t('languageBridge.uiVsConversation', { ui: uiLanguage.toUpperCase() })}</p>
+
+              {/* Live Language Selection Dropdowns */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div className="bg-white/90 border border-teal-200 rounded-2xl p-2.5 shadow-2xs">
+                  <label className="text-[11px] font-black text-teal-900 block mb-1">
+                    👤 {t('languageBridge.patientLanguage')}:
+                  </label>
+                  <select
+                    value={patientLanguage}
+                    onChange={(e) => setPatientLanguage(e.target.value as SupportedLanguageCode)}
+                    className="w-full bg-white border border-teal-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 cursor-pointer"
+                  >
+                    {BRIDGE_LANGS.map((code) => (
+                      <option key={code} value={code}>
+                        {languageDisplayName(code)} ({nativeLanguageName(code)})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="bg-white/90 border border-blue-200 rounded-2xl p-2.5 shadow-2xs">
+                  <label className="text-[11px] font-black text-blue-900 block mb-1">
+                    👨‍⚕️ {t('languageBridge.doctorLanguage')}:
+                  </label>
+                  <select
+                    value={doctorLanguage}
+                    onChange={(e) => setDoctorLanguage(e.target.value as SupportedLanguageCode)}
+                    className="w-full bg-white border border-blue-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                  >
+                    {BRIDGE_LANGS.map((code) => (
+                      <option key={code} value={code}>
+                        {languageDisplayName(code)} ({nativeLanguageName(code)})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <p className="text-[10px] text-[#64748B] pt-0.5">{t('languageBridge.uiVsConversation', { ui: uiLanguage.toUpperCase() })}</p>
             </div>
 
             {langChangePrompt && pendingLangChange && (
@@ -464,6 +513,119 @@ export default function LanguageBridgePage() {
             {!speechSupported && <p className="text-xs text-[#D97706]">{t('languageBridge.typeFallback')}</p>}
             {listening && <p className="text-sm font-bold text-red-600">🔴 {t('languageBridge.listening')}</p>}
 
+            {/* Quick Consultation Suggestion Chips */}
+            <div className="space-y-1.5 pt-1">
+              <div className="text-[11px] font-black text-slate-500 uppercase tracking-wide flex items-center justify-between">
+                <span>{viewMode === 'patient' ? '💡 Common Patient Symptoms (Click to test)' : '💡 Common Doctor Instructions (Click to test)'}</span>
+                <span className="text-[10px] text-teal-700 font-bold">1-tap translate</span>
+              </div>
+              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+                {(viewMode === 'patient'
+                  ? [
+                      {
+                        label: '🌡️ 3-day fever',
+                        text: patientLanguage.startsWith('ta')
+                          ? 'எனக்கு மூன்று நாட்களாக காய்ச்சல் இருக்கிறது.'
+                          : patientLanguage.startsWith('te')
+                          ? 'నాకు మూడు రోజులుగా జ్వరం ఉంది.'
+                          : patientLanguage.startsWith('hi')
+                          ? 'मुझे तीन दिनों से बुखार है।'
+                          : 'I have had a fever for three days.',
+                      },
+                      {
+                        label: '🤕 Headache & vomiting',
+                        text: patientLanguage.startsWith('ta')
+                          ? 'கடுமையான தலைவலி மற்றும் வாந்தி இருக்கிறது.'
+                          : patientLanguage.startsWith('te')
+                          ? 'తీవ్రమైన తలనొప్పి మరియు వాంతులు ఉన్నాయి.'
+                          : patientLanguage.startsWith('hi')
+                          ? 'तेज सिरदर्द और उल्टी है।'
+                          : 'I have severe headache and vomiting.',
+                      },
+                      {
+                        label: '🤢 Stomach pain since yesterday',
+                        text: patientLanguage.startsWith('ta')
+                          ? 'நேற்று முதல் வயிற்று வலி இருக்கிறது.'
+                          : patientLanguage.startsWith('te')
+                          ? 'నిన్నటి నుండి కడుపు నొప్పి ఉంది.'
+                          : patientLanguage.startsWith('hi')
+                          ? 'कल से पेट में दर्द है।'
+                          : 'I have had stomach pain since yesterday.',
+                      },
+                      {
+                        label: '🫁 Chest pain & breathing trouble',
+                        text: patientLanguage.startsWith('ta')
+                          ? 'நெஞ்சு வலி மற்றும் மூச்சுத்திணறல் இருக்கிறது.'
+                          : patientLanguage.startsWith('te')
+                          ? 'ఛాతీ నొప్పి మరియు శ్వాస తీసుకోవడంలో ఇబ్బంది ఉంది.'
+                          : patientLanguage.startsWith('hi')
+                          ? 'सीने में दर्द और सांस लेने में कठिनाई है।'
+                          : 'I have chest pain and difficulty breathing.',
+                      },
+                      {
+                        label: '🤒 102°F temperature',
+                        text: patientLanguage.startsWith('ta')
+                          ? 'எனக்கு மூன்று நாட்களாக 102 degree fever இருக்கு.'
+                          : 'I have had a 102 degree fever for three days.',
+                      },
+                    ]
+                  : [
+                      {
+                        label: '💊 Take after food',
+                        text: doctorLanguage.startsWith('ta')
+                          ? 'இந்த மருந்தை உணவுக்குப் பிறகு சாப்பிடவும்.'
+                          : doctorLanguage.startsWith('hi')
+                          ? 'यह दवा खाना खाने के बाद लें।'
+                          : 'Please take this medication after food.',
+                      },
+                      {
+                        label: '🕒 Twice daily (Morning & Night)',
+                        text: doctorLanguage.startsWith('ta')
+                          ? 'நாளைக்கு இரண்டு முறை சாப்பிடவும்.'
+                          : doctorLanguage.startsWith('hi')
+                          ? 'दिन में दो बार लें (सुबह और रात)।'
+                          : 'Take twice daily morning and night.',
+                      },
+                      {
+                        label: '💧 Drink boiled water & rest',
+                        text: doctorLanguage.startsWith('ta')
+                          ? 'நன்கு காய்ச்சிய தண்ணீர் குடித்து ஓய்வெடுக்கவும்.'
+                          : doctorLanguage.startsWith('hi')
+                          ? 'खूब उबला हुआ पानी पिएं और आराम करें।'
+                          : 'Drink plenty of clean boiled water and rest.',
+                      },
+                      {
+                        label: '❓ How many days of fever?',
+                        text: doctorLanguage.startsWith('ta')
+                          ? 'எத்தனை நாட்களாக காய்ச்சல் இருக்கிறது?'
+                          : doctorLanguage.startsWith('hi')
+                          ? 'कितने दिनों से बुखार है?'
+                          : 'How many days have you had this fever?',
+                      },
+                      {
+                        label: '🏥 Visit hospital immediately',
+                        text: doctorLanguage.startsWith('ta')
+                          ? 'உடனடியாக மருத்துவமனைக்கு செல்லவும்.'
+                          : doctorLanguage.startsWith('hi')
+                          ? 'तुरंत नजदीकी अस्पताल जाएं।'
+                          : 'Please visit the nearest hospital or PHC immediately.',
+                      },
+                    ]
+                ).map((chip, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      void handleUtterance(viewMode, chip.text);
+                    }}
+                    className="px-2.5 py-1.5 bg-white hover:bg-teal-50 border border-slate-200 hover:border-teal-300 text-[11px] font-bold text-slate-800 rounded-xl transition-all whitespace-nowrap shrink-0 shadow-2xs cursor-pointer active:scale-95"
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="flex gap-2">
               <Keyboard className="mt-3 text-[#64748B]" size={20} />
               <textarea
@@ -569,13 +731,15 @@ function PatientPanel({
           <div className="text-xs font-bold text-[#64748B]">{t('languageBridge.yourMessage')}</div>
           <p className="text-lg leading-relaxed">{last.originalText}</p>
           <div className="text-xs font-bold text-[#2563EB]">{t('languageBridge.translationForDoctor')}</div>
-          <p className="text-base bg-[#EFF6FF] rounded-xl p-3">{last.translatedText}</p>
+          <p className="text-base bg-[#EFF6FF] rounded-xl p-3 font-medium text-slate-900">
+            {last.translatedText || last.originalText}
+          </p>
         </>
       )}
       {lastDoctor && (
         <div className="bg-[#F0FDFA] rounded-xl p-3">
-          <div className="text-xs font-bold">{t('languageBridge.doctorReply')}</div>
-          <p className="text-lg">{lastDoctor.translatedText}</p>
+          <div className="text-xs font-bold text-[#0F766E]">{t('languageBridge.doctorReply')}</div>
+          <p className="text-lg font-medium text-slate-900">{lastDoctor.translatedText || lastDoctor.originalText}</p>
         </div>
       )}
     </div>
@@ -601,10 +765,12 @@ function DoctorPanel({
       <p className="text-sm">{t('languageBridge.yourLanguage')}: {LANGUAGE_METADATA[doctorLanguage].name}</p>
       {lastPatient && (
         <>
-          <div className="text-xs font-bold">{t('languageBridge.patientSaid')}</div>
-          <p className="text-lg bg-[#EFF6FF] rounded-xl p-3">{lastPatient.translatedText}</p>
+          <div className="text-xs font-bold text-[#2563EB]">{t('languageBridge.patientSaid')}</div>
+          <p className="text-lg bg-[#EFF6FF] rounded-xl p-3 font-semibold text-slate-900">
+            {lastPatient.translatedText || lastPatient.originalText}
+          </p>
           <div className="text-xs font-bold text-[#64748B]">{t('languageBridge.original')}</div>
-          <p className="text-base">{lastPatient.originalText}</p>
+          <p className="text-base text-slate-700">{lastPatient.originalText}</p>
           {lastPatient.needsConfirmation && (
             <p className="text-sm text-[#B91C1C] font-semibold">⚠ {t('languageBridge.verify')}</p>
           )}
@@ -612,10 +778,10 @@ function DoctorPanel({
       )}
       {lastDoctor && (
         <div className="bg-[#F0FDFA] rounded-xl p-3">
-          <div className="text-xs font-bold">{t('languageBridge.yourReply')}</div>
-          <p>{lastDoctor.originalText}</p>
-          <div className="text-xs mt-2">{t('languageBridge.patientHears')}</div>
-          <p className="text-lg">{lastDoctor.translatedText}</p>
+          <div className="text-xs font-bold text-[#0F766E]">{t('languageBridge.yourReply')}</div>
+          <p className="text-slate-700">{lastDoctor.originalText}</p>
+          <div className="text-xs mt-2 font-bold text-[#0F766E]">{t('languageBridge.patientHears')}</div>
+          <p className="text-lg font-medium text-slate-900">{lastDoctor.translatedText || lastDoctor.originalText}</p>
         </div>
       )}
     </div>

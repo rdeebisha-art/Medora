@@ -37,6 +37,17 @@ interface VoiceMessageItem {
   userQuery?: string;
   navRoute?: string;
   responseLang?: SupportedLanguageCode;
+  medicationData?: {
+    type: 'NEXT_DOSE' | 'TODAY_ADHERENCE';
+    title: string;
+    details: string;
+    medicineName?: string;
+    scheduledTime?: string;
+    dose?: string;
+    instructions?: string;
+    adherenceRate?: number;
+    doses?: any[];
+  };
 }
 
 interface VoiceAIPanelProps {
@@ -157,11 +168,13 @@ export const VoiceAIPanel: React.FC<VoiceAIPanelProps> = ({ onSwitchToMedicalAI 
     setMessages((prev) => [...prev, userMsg]);
 
     try {
-      // Process through existing Medora Voice Service
+      // Process through existing Medora Voice Service with patientId
+      const targetPatientId = (currentUser?.role === 'patient' ? currentUser.id : undefined) || 1;
       const response = await voiceService.processVoiceRequest({
         text: textToSend,
         language: responseLanguage,
         userName: currentUser?.name,
+        patientId: targetPatientId,
       });
 
       const aiMsgId = `ai-${Date.now()}`;
@@ -174,6 +187,7 @@ export const VoiceAIPanel: React.FC<VoiceAIPanelProps> = ({ onSwitchToMedicalAI 
         userQuery: textToSend,
         navRoute: response.suggestedAction === 'NAVIGATE' ? response.destinationRoute : undefined,
         responseLang: responseLanguage,
+        medicationData: response.medicationData,
       };
 
       setMessages((prev) => [...prev, aiMsg]);
@@ -630,6 +644,45 @@ export const VoiceAIPanel: React.FC<VoiceAIPanelProps> = ({ onSwitchToMedicalAI 
                   </div>
                 )}
 
+                {/* Rich Medication Lookup Result Card */}
+                {m.medicationData && (
+                  <div className="mt-3 p-3 bg-teal-50 border border-teal-200 rounded-2xl space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-black text-xs text-teal-950 flex items-center gap-1.5">
+                        <span>💊</span>
+                        <span>{m.medicationData.title}</span>
+                      </span>
+                      {m.medicationData.adherenceRate !== undefined && (
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                          m.medicationData.adherenceRate >= 80 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {m.medicationData.adherenceRate}% Adherence
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-[11px] text-teal-900 font-medium">
+                      {m.medicationData.details}
+                    </p>
+
+                    {m.medicationData.instructions && (
+                      <div className="text-[10px] text-slate-600 bg-white/70 p-2 rounded-xl border border-teal-100">
+                        <strong>Doctor instructions:</strong> {m.medicationData.instructions}
+                      </div>
+                    )}
+
+                    <div className="pt-1 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => navigate('/medicines')}
+                        className="bg-teal-700 hover:bg-teal-800 text-white font-bold text-[11px] px-3 py-1.5 rounded-xl shadow-xs cursor-pointer flex items-center gap-1 transition-colors"
+                      >
+                        <span>Open Medicines Tracker →</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Handoff to Medical AI */}
                 {m.isTransfer && (
                   <div className="mt-2.5 pt-2 border-t border-slate-200">
@@ -650,7 +703,7 @@ export const VoiceAIPanel: React.FC<VoiceAIPanelProps> = ({ onSwitchToMedicalAI 
                 )}
 
                 {/* Quick Navigation Button */}
-                {m.navRoute && (
+                {m.navRoute && !m.medicationData && (
                   <div className="mt-2.5 pt-2 border-t border-slate-200">
                     <button
                       onClick={() => navigate(m.navRoute!)}
@@ -697,15 +750,17 @@ export const VoiceAIPanel: React.FC<VoiceAIPanelProps> = ({ onSwitchToMedicalAI 
       {/* Suggested Quick Conversational Chips */}
       <div className="px-3 py-1.5 bg-white border-t border-slate-100 overflow-x-auto scrollbar-hide flex gap-1.5 shrink-0">
         {[
-          'Hello Medora',
+          '💊 When is my next dose?',
+          '💊 Did I take my medicine?',
           'How do I upload a report?',
           'Where are my medicines?',
           'Call doctor',
+          'Hello Medora',
           'What is Medora?',
         ].map((chip, idx) => (
           <button
             key={idx}
-            onClick={() => handleSend(chip)}
+            onClick={() => handleSend(chip.replace(/^💊\s*/, ''))}
             className="px-2.5 py-1 bg-slate-100 hover:bg-teal-50 hover:text-teal-800 text-[11px] font-semibold text-slate-700 rounded-xl transition-colors whitespace-nowrap shrink-0 min-h-[32px] cursor-pointer"
           >
             {chip}

@@ -440,11 +440,64 @@ Input: ${JSON.stringify(texts)}`;
     }
   }
 
-  // Local fallback: translate known phrases and medical terms
+  // Local fallback: translate medical terms, doctor instructions, and common healthcare phrases
   const localTranslations = texts.map((t: string) => {
     const raw = (t || '').trim().toLowerCase();
-    // Known key phrases
-    if (raw.includes('மூன்று நாட்களாக காய்ச்சல்') || raw.includes('three days') && raw.includes('fever')) {
+
+    // 1. Doctor Instructions
+    if (raw.includes('after food') || raw.includes('after meals') || raw.includes('உணவுக்குப் பிறகு') || raw.includes('भोजन के बाद')) {
+      if (language === 'en') return 'Please take this medicine after food.';
+      if (language === 'ta') return 'இந்த மருந்தை உணவுக்குப் பிறகு சாப்பிடவும்.';
+      if (language === 'te') return 'ఈ మందును భోజనం తర్వాత తీసుకోండి.';
+      if (language === 'hi') return 'यह दवा खाना खाने के बाद लें।';
+      if (language === 'ml') return 'ഈ മരുന്ന് ഭക്ഷണത്തിന് ശേഷം കഴിക്കുക.';
+      if (language === 'kn') return 'ಈ ಔಷಧಿಯನ್ನು ಊಟದ ನಂತರ ತೆಗೆದುಕೊಳ್ಳಿ.';
+    }
+    if (raw.includes('before food') || raw.includes('before meals') || raw.includes('உணவுக்கு முன்') || raw.includes('भोजन से पहले')) {
+      if (language === 'en') return 'Please take this medicine before food.';
+      if (language === 'ta') return 'இந்த மருந்தை உணவுக்கு முன் சாப்பிடவும்.';
+      if (language === 'te') return 'ఈ మందును భోజనానికి ముందు తీసుకోండి.';
+      if (language === 'hi') return 'यह दवा खाना खाने से पहले लें।';
+      if (language === 'ml') return 'ഈ മരുന്ന് ഭക്ഷണത്തിന് മുൻപ് കഴിക്കുക.';
+      if (language === 'kn') return 'ಈ ಔಷಧಿಯನ್ನು ಊಟಕ್ಕೆ ಮುಂಚೆ ತೆಗೆದುಕೊಳ್ಳಿ.';
+    }
+    if (raw.includes('twice daily') || raw.includes('twice a day') || raw.includes('இருமுறை') || raw.includes('दो बार')) {
+      if (language === 'en') return 'Take twice daily (morning and night).';
+      if (language === 'ta') return 'நாளைக்கு இரண்டு முறை சாப்பிடவும் (காலை மற்றும் இரவு).';
+      if (language === 'te') return 'రోజుకు రెండుసార్లు తీసుకోండి (ఉదయం మరియు రాత్రి).';
+      if (language === 'hi') return 'दिन में दो बार लें (सुबह और रात)।';
+      if (language === 'ml') return 'ദിവസത്തിൽ രണ്ട് തവണ കഴിക്കുക.';
+      if (language === 'kn') return 'ದಿನಕ್ಕೆ ಎರಡು ಬಾರಿ ತೆಗೆದುಕೊಳ್ಳಿ.';
+    }
+    if (raw.includes('boiled water') || raw.includes('rest') || raw.includes('தண்ணீர்') || raw.includes('विश्राम')) {
+      if (language === 'en') return 'Drink plenty of clean boiled water and take rest.';
+      if (language === 'ta') return 'நன்கு காய்ச்சிய தண்ணீர் குடித்து ஓய்வெடுக்கவும்.';
+      if (language === 'te') return 'కాచిన నీరు తాగి విశ్రాంతి తీసుకోండి.';
+      if (language === 'hi') return 'खूब उबला हुआ पानी पिएं और आराम करें।';
+      if (language === 'ml') return 'തിളപ്പിച്ചാറിയ വെള്ളം കുടിക്കുകയും വിശ്രമിക്കുകയും ചെയ്യുക.';
+      if (language === 'kn') return 'ಕುದಿಸಿದ ನೀರನ್ನು ಕುಡಿದು ವಿಶ್ರಾಂತಿ ಪಡೆಯಿರಿ.';
+    }
+    if (raw.includes('hospital') || raw.includes('immediately') || raw.includes('மருத்துவமனை') || raw.includes('अस्पताल')) {
+      if (language === 'en') return 'Please visit the nearest hospital or Primary Health Centre immediately.';
+      if (language === 'ta') return 'உடனடியாக அருகிலுள்ள மருத்துவமனைக்கு செல்லவும்.';
+      if (language === 'te') return 'వెంటనే ఆసుపత్రికి వెళ్ళండి.';
+      if (language === 'hi') return 'कृपया तुरंत नजदीकी अस्पताल जाएं।';
+      if (language === 'ml') return 'ഉടൻ തന്നെ അടുത്തുള്ള ആശുപത്രിയിൽ പോകുക.';
+      if (language === 'kn') return 'ತಕ್ಷಣ ಆಸ್ಪತ್ರೆಗೆ ಭೇಟಿ ನೀಡಿ.';
+    }
+
+    // 2. Doctor Questions
+    if (raw.includes('how many days') || raw.includes('since when') || raw.includes('எத்தனை நாள்') || raw.includes('कितने दिन')) {
+      if (language === 'en') return 'How many days have you had these symptoms?';
+      if (language === 'ta') return 'எத்தனை நாட்களாக இந்த அறிகுறிகள் உள்ளன?';
+      if (language === 'te') return 'ఎన్ని రోజులుగా ఈ లక్షణాలు ఉన్నాయి?';
+      if (language === 'hi') return 'कितने दिनों से ये लक्षण हैं?';
+      if (language === 'ml') return 'എത്ര ദിവസമായി ഈ ലക്ഷണങ്ങൾ ഉണ്ട്?';
+      if (language === 'kn') return 'ಎಷ್ಟು ದಿನಗಳಿಂದ ಈ ಲಕ್ಷಣಗಳು ಇವೆ?';
+    }
+
+    // 3. Known key symptoms with durations
+    if (raw.includes('மூன்று நாட்களாக காய்ச்சல்') || (raw.includes('three days') && raw.includes('fever')) || (raw.includes('3 days') && raw.includes('fever'))) {
       if (language === 'en') return 'I have had a fever for three days.';
       if (language === 'ta') return 'எனக்கு மூன்று நாட்களாக காய்ச்சல் இருக்கிறது.';
       if (language === 'te') return 'నాకు మూడు రోజులుగా జ్వరం ఉంది.';
@@ -452,7 +505,7 @@ Input: ${JSON.stringify(texts)}`;
       if (language === 'ml') return 'എനിക്ക് മൂന്ന് ദിവസമായി പനി ഉണ്ട്.';
       if (language === 'kn') return 'ನನಗೆ ಮೂರು ದಿನಗಳಿಂದ ಜ್ವರ ಇದೆ.';
     }
-    if (raw.includes('102 degree') || raw.includes('102 டிகிரி')) {
+    if (raw.includes('102 degree') || raw.includes('102 டிகிரி') || raw.includes('102°f')) {
       if (language === 'en') return 'I have had a 102 degree fever for three days.';
       if (language === 'ta') return 'எனக்கு மூன்று நாட்களாக 102 degree fever இருக்கு.';
       if (language === 'te') return 'నాకు మూడు రోజులుగా 102 degree fever ఉంది.';
@@ -499,6 +552,30 @@ Input: ${JSON.stringify(texts)}`;
       if (language === 'hi') return 'मेरे सीने में दर्द है।';
       if (language === 'ml') return 'എനിക്ക് നെഞ്ചുവേദന ഉണ്ട്.';
       if (language === 'kn') return 'ನನಗೆ ಎದೆ ನೋವು ಇದೆ.';
+    }
+    if (raw.includes('வாந்தி') || raw.includes('vomit') || raw.includes('उल्टी') || raw.includes('వాంతులు') || raw.includes('ഛർദ്ദി')) {
+      if (language === 'en') return 'I have vomiting.';
+      if (language === 'ta') return 'எனக்கு வாந்தி இருக்கிறது.';
+      if (language === 'te') return 'నాకు వాంతులు ఉన్నాయి.';
+      if (language === 'hi') return 'मुझे उल्टी हो रही है।';
+      if (language === 'ml') return 'എനിക്ക് ഛർദ്ദിയുണ്ട്.';
+      if (language === 'kn') return 'ನನಗೆ ವಾಂತಿ ಇದೆ.';
+    }
+    if (raw.includes('வயிற்றுப்போக்கு') || raw.includes('diarrhea') || raw.includes('loose motion') || raw.includes('दस्त') || raw.includes('విరేచనాలు')) {
+      if (language === 'en') return 'I have diarrhea.';
+      if (language === 'ta') return 'எனக்கு வயிற்றுப்போக்கு இருக்கிறது.';
+      if (language === 'te') return 'నాకు విరేచనాలు ఉన్నాయి.';
+      if (language === 'hi') return 'मुझे दस्त हैं।';
+      if (language === 'ml') return 'എനിക്ക് വയറിളക്കമുണ്ട്.';
+      if (language === 'kn') return 'ನನಗೆ ಭೇದಿ ಇದೆ.';
+    }
+    if (raw.includes('மூச்சுத்திணறல்') || raw.includes('breath') || raw.includes('सांस')) {
+      if (language === 'en') return 'I have difficulty breathing.';
+      if (language === 'ta') return 'எனக்கு மூச்சுத்திணறல் இருக்கிறது.';
+      if (language === 'te') return 'నాకు శ్వాస తీసుకోవడంలో ఇబ్బంది ఉంది.';
+      if (language === 'hi') return 'मुझे सांस लेने में कठिनाई है।';
+      if (language === 'ml') return 'എനിക്ക് ശ്വാസതടസ്സമുണ്ട്.';
+      if (language === 'kn') return 'ನನಗೆ ಉಸಿರಾಟದ ತೊಂದರೆ ಇದೆ.';
     }
 
     // Do NOT echo source text if different language

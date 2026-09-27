@@ -11,6 +11,8 @@ import SpeakToMedoraCard from '../components/SpeakToMedoraCard';
 import MedoraHealthcareTeam from '../components/MedoraHealthcareTeam';
 import { RecentHealthActivitySection } from '../components/RecentHealthActivitySection';
 import { MedoraSearchBar } from '../components/MedoraSearchBar';
+import { MedicationAdherenceD3Chart } from '../components/MedicationAdherenceD3Chart';
+import { TriageAssessmentModal } from '../components/TriageAssessmentModal';
 import {
   TriangleAlert as AlertTriangle,
   Sparkles,
@@ -42,6 +44,7 @@ export default function DashboardPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [recentTests, setRecentTests] = useState<HealthTest[]>([]);
   const [emergencyAlertSent, setEmergencyAlertSent] = useState(false);
+  const [isTriageOpen, setIsTriageOpen] = useState(false);
 
   useEffect(() => {
     if (!currentUser?.id) return;
@@ -560,6 +563,41 @@ export default function DashboardPage() {
         </div>
 
         {/* ========================================================= */}
+        {/* TRIAGE ASSESSMENT HERO BANNER                            */}
+        {/* ========================================================= */}
+        <div className="bg-gradient-to-r from-teal-900 via-teal-800 to-slate-900 border border-teal-700/40 rounded-3xl p-4 sm:p-5 shadow-sm text-white">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-teal-500/20 border border-teal-400/30 flex items-center justify-center text-2xl shrink-0">
+                🩺
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="text-[10px] font-black uppercase bg-teal-400 text-teal-950 px-2 py-0.5 rounded-full">
+                    Guided Clinical Triage
+                  </span>
+                  <span className="text-[11px] text-teal-200">Offline &amp; Multi-lingual</span>
+                </div>
+                <h2 className="text-base sm:text-lg font-black tracking-tight text-white">
+                  Not feeling well? Take the Symptom Triage Assessment
+                </h2>
+                <p className="text-xs text-teal-100/90 mt-0.5 max-w-xl leading-relaxed">
+                  Answer basic symptom checklists to identify warning signs and receive clear guidance on visiting a doctor (PHC/CHC) or local ASHA healthcare worker.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsTriageOpen(true)}
+              className="bg-teal-400 hover:bg-teal-300 active:scale-95 text-teal-950 font-black px-4 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-md transition-all shrink-0 cursor-pointer min-h-[44px]"
+            >
+              <span>Start Assessment Checklist</span>
+              <span>&rarr;</span>
+            </button>
+          </div>
+        </div>
+
+        {/* ========================================================= */}
         {/* 3. STAY CONNECTED — RURAL TELECOM INTEGRATION SECTION     */}
         {/* ========================================================= */}
         <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-[#E2E8F0] space-y-3">
@@ -677,6 +715,14 @@ export default function DashboardPage() {
             ⚡ {t('dashboard.quickActionsTitle')}
           </h2>
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <button
+              type="button"
+              onClick={() => setIsTriageOpen(true)}
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl border text-xs font-black whitespace-nowrap shadow-xs hover:shadow-md min-h-11 transition-all bg-teal-50 border-teal-300 text-teal-900 cursor-pointer shrink-0"
+            >
+              <span>🩺</span>
+              <span>Symptom Triage Tool</span>
+            </button>
             {[
               { path: '/appointments', label: t('appointments.title', 'Appointments'), emoji: '📅', color: 'bg-white border-[#E2E8F0] text-[#0F766E]' },
               { path: '/health-tests', label: t('dashboard.qaRecordTest'), emoji: '🧪', color: 'bg-white border-[#E2E8F0] text-[#0F766E]' },
@@ -777,6 +823,9 @@ export default function DashboardPage() {
 
           {/* Care Gap Alerts */}
           {careGaps.length > 0 && <CareGapAlert gaps={careGaps} />}
+
+          {/* D3 Historical Medication Adherence Patterns Visual Component */}
+          <MedicationAdherenceD3Chart patientId={currentUser?.role === 'patient' ? currentUser.id : undefined} />
 
           {/* Recent Health Activity Timeline */}
           <RecentHealthActivitySection />
@@ -914,6 +963,12 @@ export default function DashboardPage() {
           <p className="font-semibold text-[#0F172A]">{t('dashboard.footerTagline')}</p>
           <p className="text-[10px] text-[#64748B]">{t('dashboard.footerDemoDisclaimer')}</p>
         </div>
+
+        {/* Triage Assessment Tool Modal */}
+        <TriageAssessmentModal
+          isOpen={isTriageOpen}
+          onClose={() => setIsTriageOpen(false)}
+        />
       </div>
     </Layout>
   );

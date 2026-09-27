@@ -1,6 +1,7 @@
 import { VoiceServiceRequest, VoiceServiceResponse } from './types';
 import { medicalService } from './medicalService';
 import { voiceCommandMatcher } from '../voiceNavigation/voiceCommandMatcher';
+import { medicationPushNotificationService } from '../medications/medicationPushNotificationService';
 
 export class VoiceService {
   /**
@@ -158,6 +159,137 @@ export class VoiceService {
         isMedicalQuery: false,
         destinationRoute: '/medicines?add=true',
         suggestedAction: 'NAVIGATE',
+      };
+    }
+
+    // 5.5 NEXT DOSE LOOKUP ("When is my next dose?", "What is my next dose?", "When to take medicine")
+    const isNextDoseQuery =
+      /\b(?:when\s+is\s+(?:my\s+)?next\s+(?:dose|medicine|pill)|what\s+is\s+(?:my\s+)?next\s+(?:dose|medicine)|next\s+dose|upcoming\s+dose|when\s+to\s+take\s+(?:my\s+)?medicine)\b/i.test(
+        lower
+      ) ||
+      /(அடுத்த மருந்து எப்போது|मेरी अगली खुराक कब है|నా తదుపరి డోస్ ఎప్పుడు|അടുത്ത മരുന്ന് എപ്പോൾ|ನನ್ನ ಮುಂದಿನ ಡೋಸ್ ಯಾವಾಗ)/.test(
+        raw
+      );
+
+    if (isNextDoseQuery) {
+      const pid = request.patientId || 1;
+      const nextDose = await medicationPushNotificationService.getNextUpcomingDose(pid);
+
+      if (nextDose) {
+        const timeFormatted = nextDose.scheduledTime;
+        const timeDiffDesc = nextDose.isToday
+          ? nextDose.minutesUntilDose <= 15
+            ? 'due right now'
+            : `in ${Math.floor(nextDose.minutesUntilDose / 60)}h ${nextDose.minutesUntilDose % 60}m`
+          : 'tomorrow morning';
+
+        const responses: Record<string, string> = {
+          en: `Your next scheduled dose is ${nextDose.medicineName} (${nextDose.dose}) at ${timeFormatted} (${timeDiffDesc}). Doctor's note: ${nextDose.instructions || 'Take as prescribed with water.'}`,
+          ta: `உங்கள் அடுத்த மருந்து: ${nextDose.medicineName} (${nextDose.dose}), நேரம்: ${timeFormatted} (${timeDiffDesc}). குறிப்பு: ${nextDose.instructions || 'மருத்துவரின் அறிவுரைப்படி உட்கொள்ளவும்.'}`,
+          hi: `आपकी अगली खुराक ${nextDose.medicineName} (${nextDose.dose}) समय ${timeFormatted} (${timeDiffDesc}) पर निर्धारित है। निर्देश: ${nextDose.instructions || 'पानी के साथ लें।'}`,
+          te: `మీ తదుపరి మందుల మోతాదు ${nextDose.medicineName} (${nextDose.dose}) సమయం ${timeFormatted} (${timeDiffDesc}). సూచన: ${nextDose.instructions || 'డాక్టర్ సూచించినట్లు తీసుకోండి.'}`,
+          ml: `നിങ്ങളുടെ അടുത്ത ഡോസ് ${nextDose.medicineName} (${nextDose.dose}) സമയം ${timeFormatted} (${timeDiffDesc}) ആണ്. നിർദ്ദേശം: ${nextDose.instructions || 'വെള്ളത്തോടൊപ്പം കഴിക്കുക.'}`,
+          kn: `ನಿಮ್ಮ ಮುಂದಿನ ಔಷಧಿಯ ಡೋಸ್ ${nextDose.medicineName} (${nextDose.dose}) ಸಮಯ ${timeFormatted} (${timeDiffDesc}) ಆಗಿದೆ. ಸೂಚನೆ: ${nextDose.instructions || 'ವೈದ್ಯರ ಸಲಹೆಯಂತೆ ಸೇವಿಸಿ.'}`,
+        };
+
+        return {
+          source: 'VOICE_AI',
+          responseText: responses[langKey] || responses.en,
+          language: langKey,
+          isMedicalQuery: false,
+          destinationRoute: '/medicines',
+          suggestedAction: 'NAVIGATE',
+          medicationData: {
+            type: 'NEXT_DOSE',
+            title: `Next Dose: ${nextDose.medicineName} (${nextDose.dose})`,
+            details: `Scheduled at ${nextDose.scheduledTime} · ${timeDiffDesc}`,
+            medicineName: nextDose.medicineName,
+            dose: nextDose.dose,
+            scheduledTime: nextDose.scheduledTime,
+            instructions: nextDose.instructions,
+          },
+        };
+      } else {
+        const noMedsMsg: Record<string, string> = {
+          en: 'You do not have any active medication doses scheduled in your diary. Opening your medicines list now.',
+          ta: 'உங்களிடம் தற்போது தீவிர மருந்து அட்டவணை எதுவும் இல்லை. மருந்துகள் பக்கத்தைத் திறக்கிறேன்.',
+          hi: 'आपके पास वर्तमान में कोई निर्धारित दवा की खुराक नहीं है। दवाइयों का पृष्ठ खोल रहा हूँ।',
+          te: 'మీకు ప్రస్తుతానికి ఎలాంటి మందుల షెడ్యూల్ లేదు. మందుల పేజీని తెరుస్తున్నాను.',
+          ml: 'നിലവിൽ ഷെഡ്യൂൾ ചെയ്ത മരുന്നുകളൊന്നും ഇല്ല. മരുന്നുകളുടെ പേജ് തുറക്കുന്നു.',
+          kn: 'ಪ್ರಸ್ತುತ ಯಾವುದೇ ಔಷಧಿ ಡೋಸ್ ನಿಗದಿಯಾಗಿಲ್ಲ. ಔಷಧಿಗಳ ಪುಟವನ್ನು ತೆರೆಯಲಾಗುತ್ತಿದೆ.',
+        };
+
+        return {
+          source: 'VOICE_AI',
+          responseText: noMedsMsg[langKey] || noMedsMsg.en,
+          language: langKey,
+          isMedicalQuery: false,
+          destinationRoute: '/medicines',
+          suggestedAction: 'NAVIGATE',
+        };
+      }
+    }
+
+    // 5.6 ADHERENCE LOOKUP ("Did I take my medicine?", "Have I taken my pills?")
+    const isDidITakeQuery =
+      /\b(?:did\s+i\s+take\s+(?:my\s+)?(?:medicine|pill|pills|medication|dose)|have\s+i\s+taken\s+(?:my\s+)?(?:medicine|pill|pills|medication)|taken\s+my\s+medicine|did\s+i\s+take\s+medicine)\b/i.test(
+        lower
+      ) ||
+      /(நான் மருந்து சாப்பிட்டேனா|क्या मैंने अपनी दवा ली|నేను నా మందులు వేసుకున్నానా|ഞാൻ മരുന്ന് കഴിച്ചോ|ನಾನು ಔಷಧಿ ತೆಗೆದುಕೊಂಡೆನಾ)/.test(
+        raw
+      );
+
+    if (isDidITakeQuery) {
+      const pid = request.patientId || 1;
+      const todayStatus = await medicationPushNotificationService.getTodaysAdherence(pid);
+
+      let summaryText = '';
+      if (todayStatus.dosesTakenCount > 0 && todayStatus.pendingDosesCount === 0) {
+        const responses: Record<string, string> = {
+          en: `Yes! You have taken all ${todayStatus.dosesTakenCount} of your scheduled medication doses for today (${todayStatus.adherencePercentage}% adherence). Excellent adherence!`,
+          ta: `ஆம்! இன்றைய அனைத்து (${todayStatus.dosesTakenCount}) மருந்து டோஸ்களையும் நீங்கள் உட்கொண்டுவிட்டீர்கள் (${todayStatus.adherencePercentage}% நிறைவு). மிகச் சிறந்தது!`,
+          hi: `हाँ! आपने आज की अपनी सभी ${todayStatus.dosesTakenCount} निर्धारित खुराकें ले ली हैं (${todayStatus.adherencePercentage}% पूर्ण)। बहुत अच्छा!`,
+          te: `అవును! మీరు ఈరోజు మీ అన్ని (${todayStatus.dosesTakenCount}) మందుల మోతాదులను తీసుకున్నారు (${todayStatus.adherencePercentage}% పూర్తి). చాలా బాగుంది!`,
+          ml: `അതെ! ഇന്നത്തെ എല്ലാ (${todayStatus.dosesTakenCount}) ഡോസ് മരുന്നുകളും നിങ്ങൾ കഴിച്ചു കഴിഞ്ഞു (${todayStatus.adherencePercentage}% പൂർത്തിയായി). വളരെ നല്ലത്!`,
+          kn: `ಹೌದು! ನೀವು ಇಂದಿನ ಎಲ್ಲಾ (${todayStatus.dosesTakenCount}) ಔಷಧಿ ಡೋಸ್‌ಗಳನ್ನು ಸೇವಿಸಿದ್ದೀರಿ (${todayStatus.adherencePercentage}% ಪೂರ್ಣಗೊಂಡಿದೆ). ಅತ್ಯುತ್ತಮ!`,
+        };
+        summaryText = responses[langKey] || responses.en;
+      } else if (todayStatus.dosesTakenCount > 0 && todayStatus.pendingDosesCount > 0) {
+        const responses: Record<string, string> = {
+          en: `According to your health records: You have taken ${todayStatus.dosesTakenCount} dose(s) today. You still have ${todayStatus.pendingDosesCount} pending dose(s) scheduled. Opening Medicines to review.`,
+          ta: `பதிவேட்டின்படி: இன்று ${todayStatus.dosesTakenCount} டோஸ் உட்கொண்டுள்ளீர்கள். இன்னும் ${todayStatus.pendingDosesCount} டோஸ் மீதமுள்ளது. மருந்துகள் பக்கத்தைத் திறக்கிறேன்.`,
+          hi: `रिकॉर्ड्स के अनुसार: आपने आज ${todayStatus.dosesTakenCount} खुराक ली है। अभी भी ${todayStatus.pendingDosesCount} खुराक बाकी है। दवा सूची खोल रहा हूँ।`,
+          te: `రికార్డుల ప్రకారం: మీరు ఈరోజు ${todayStatus.dosesTakenCount} మోతాదు తీసుకున్నారు. ఇంకా ${todayStatus.pendingDosesCount} మోతాదు(లు) తీసుకోవాల్సి ఉంది.`,
+          ml: `റെക്കോർഡുകൾ പ്രകാരം: നിങ്ങൾ ഇന്ന് ${todayStatus.dosesTakenCount} ഡോസ് കഴിച്ചു. ഇനിയും ${todayStatus.pendingDosesCount} ഡോസ് കഴിക്കാനുണ്ട്.`,
+          kn: `ದಾಖಲೆಗಳ ಪ್ರಕಾರ: ನೀವು ಇಂದು ${todayStatus.dosesTakenCount} ಡೋಸ್ ತೆಗೆದುಕೊಂಡಿದ್ದೀರಿ. ಇನ್ನೂ ${todayStatus.pendingDosesCount} ಡೋಸ್ ಬಾಕಿಯಿದೆ.`,
+        };
+        summaryText = responses[langKey] || responses.en;
+      } else {
+        const responses: Record<string, string> = {
+          en: `According to your records today, you have not marked any medication doses as taken yet. You have ${todayStatus.totalDosesScheduled} scheduled dose(s) today. Opening Medicines to mark as taken.`,
+          ta: `இன்றைய பதிவுகளின்படி, நீங்கள் எந்த மருந்தையும் உட்கொண்டதாக பதிவு செய்யவில்லை. இன்று ${todayStatus.totalDosesScheduled} டோஸ் உள்ளது. குறிக்க மருந்துகள் பக்கத்தைத் திறக்கிறேன்.`,
+          hi: `आज के रिकॉर्ड के अनुसार, आपने अभी तक कोई दवा नहीं ली है। आज आपकी ${todayStatus.totalDosesScheduled} खुराकें निर्धारित हैं। मार्क करने के लिए पेज खोल रहा हूँ।`,
+          te: `ఈరోజు రికార్డుల ప్రకారం, మీరు ఇంకా ఏ మందూ తీసుకోలేదు. ఈరోజు మీకు ${todayStatus.totalDosesScheduled} మోతాదులు ఉన్నాయి.`,
+          ml: `ഇന്നത്തെ രേഖകൾ പ്രകാരം, നിങ്ങൾ ഇതുവരെ മരുന്നുകളൊന്നും കഴിച്ചതായി അടയാളപ്പെടുത്തിയിട്ടില്ല. ഇന്ന് ${todayStatus.totalDosesScheduled} ഡോസ് ഉണ്ട്.`,
+          kn: `ಇಂದಿನ ದಾಖಲೆಗಳ ಪ್ರಕಾರ, ನೀವು ಇನ್ನೂ ಯಾವುದೇ ಔಷಧಿಯನ್ನು ತೆಗೆದುಕೊಂಡಿಲ್ಲ. ಇಂದು ${todayStatus.totalDosesScheduled} ಡೋಸ್ ನಿಗದಿಯಾಗಿದೆ.`,
+        };
+        summaryText = responses[langKey] || responses.en;
+      }
+
+      return {
+        source: 'VOICE_AI',
+        responseText: summaryText,
+        language: langKey,
+        isMedicalQuery: false,
+        destinationRoute: '/medicines',
+        suggestedAction: 'NAVIGATE',
+        medicationData: {
+          type: 'TODAY_ADHERENCE',
+          title: `Today's Adherence: ${todayStatus.dosesTakenCount}/${todayStatus.totalDosesScheduled} Taken (${todayStatus.adherencePercentage}%)`,
+          details: `${todayStatus.pendingDosesCount} pending dose(s)`,
+          adherenceRate: todayStatus.adherencePercentage,
+          doses: todayStatus.doses,
+        },
       };
     }
 
@@ -340,7 +472,7 @@ export class VoiceService {
 
     // 11. MEDICAL QUERIES & CLINICAL SYMPTOMS (e.g. "I have fever", "cough", "headache", "stomach pain")
     const isMedicalQuery =
-      /\b(fever|cough|headache|pain|stomach pain|vomit|vomiting|diarrhea|dizzy|dizziness|bleeding|sore throat|blood sugar|sugar|glucose|dose|disease|diagnosis|prescribe|symptom|not helping|medicine is not helping)\b/i.test(
+      /\b(fever|cough|headache|pain|stomach pain|vomit|vomiting|diarrhea|dizzy|dizziness|bleeding|sore throat|blood sugar|sugar|glucose|disease|diagnosis|prescribe|symptom|not helping|medicine is not helping)\b/i.test(
         lower
       ) ||
       /\b(what could cause|what disease do i have|can i take|how much dose|analyze my report|is my bp high|explain my report)\b/i.test(

@@ -16,6 +16,8 @@ import {
   restoreMedicalValues,
   validatePreservedMedicalValues,
 } from '../medicalSafety/medicalValueProtection';
+import { translateArbitraryTextOffline } from './generalTranslator';
+import { MULTILINGUAL_HEALTHCARE_VOCABULARY, HealthcareCategory } from '../../data/languages/multilingualHealthcareVocabulary';
 
 function normalize(text: string): string {
   return text
@@ -233,6 +235,30 @@ export function translateHealthcareText(
     };
   }
 
+  // 2b. Compositional rule translator (arbitrary sentences, doctor advice, patient statements)
+  const arbResult = translateArbitraryTextOffline(original, sourceLang, targetLang);
+  if (arbResult.translatedText && arbResult.translatedText.trim()) {
+    let finalTranslated = restoreProtectedTokens(arbResult.translatedText, tokens);
+    finalTranslated = restoreMedicalValues(finalTranslated, medValues);
+    const valCheck = validatePreservedMedicalValues(original, finalTranslated);
+    return {
+      originalLanguage: sourceLang,
+      originalText: original,
+      translatedLanguage: targetLang,
+      translatedText: finalTranslated,
+      translationConfidence: valCheck.isValid ? arbResult.confidence : 'MEDIUM',
+      translationStatus: valCheck.isValid ? 'TRANSLATED' : 'NEEDS_CONFIRMATION',
+      engine: arbResult.engine === 'phrase-library' ? 'local-phrase' : 'clinical-dictionary',
+      preservedTokens: tokens,
+      emergencyIntent: isEmergency ? intent.intent : undefined,
+      isEmergency,
+      isCritical,
+      isAppointment: /appointment|நாளை|రేపు|कल|ദിവസം|ಭೇಟಿ/i.test(original),
+      needsConfirmation: !valCheck.isValid || isCritical,
+      displayNotice: valCheck.isValid ? undefined : 'Translation needs confirmation.',
+    };
+  }
+
   // 3. Clinical Vocabulary / Pattern match (Offline)
   const norm = normalize(original);
   for (const [key, vocab] of Object.entries(MEDICAL_VOCAB_MAP)) {
@@ -241,7 +267,7 @@ export function translateHealthcareText(
       const targetTerm = vocab[target] || vocab.en;
 
       // Extract duration if present
-      const durationMatch = original.match(/(\d+)\s*(?:days?|weeks?|months?|hours?|நாட்கள்|நாட்களாக|రోజులు|दिन|ദിവസം|ದಿನ)/i);
+      const durationMatch = original.match(/(\d+|three|two|one|four|five|மூன்று|இரண்டு|ஒரு|మూడు|రెండు|ఒక|तीन|दो|एक|മൂന്ന്|രണ്ട്|മೂರು|ಎರಡು)\s*(?:days?|weeks?|months?|hours?|நாட்கள்|நாட்களாக|రోజులు|రోజులుగా|दिन|दिनों|ദിവസം|ದಿನ)/i);
       const numDays = durationMatch ? durationMatch[1] : null;
 
       let translatedText = '';
@@ -294,7 +320,60 @@ export function translateHealthcareText(
     }
   }
 
-  // 4. If completely unsupported locally:
+  // 3b. Search 35 categories in MULTILINGUAL_HEALTHCARE_VOCABULARY
+  const matchedCategories: { category: HealthcareCategory; englishTerm: string }[] = [];
+  for (const [catName, catData] of Object.entries(MULTILINGUAL_HEALTHCARE_VOCABULARY)) {
+    const langData = catData[sourceLang];
+    if (langData && langData.terms) {
+      for (const term of langData.terms) {
+        if (norm.includes(normalize(term))) {
+          const engData = catData['en-IN'];
+          const enTerm = engData?.terms?.[0] || catName.toLowerCase().replace(/_/g, ' ');
+          matchedCategories.push({ category: catName as HealthcareCategory, englishTerm: enTerm });
+          break;
+        }
+      }
+    }
+  }
+
+  if (matchedCategories.length > 0) {
+    const primaryCat = matchedCategories[0];
+    const targetData = MULTILINGUAL_HEALTHCARE_VOCABULARY[primaryCat.category]?.[targetLang];
+    const targetTerm = targetData?.terms?.[0] || primaryCat.englishTerm;
+
+    let composedText = '';
+    if (target === 'en') {
+      composedText = `Patient presents with ${targetTerm}.`;
+    } else if (target === 'ta') {
+      composedText = `நோயாளிக்கு ${targetTerm} பிரச்சனை உள்ளது.`;
+    } else if (target === 'te') {
+      composedText = `రోగికి ${targetTerm} సమస్య ఉంది.`;
+    } else if (target === 'hi') {
+      composedText = `रोगी को ${targetTerm} की समस्या है।`;
+    } else if (target === 'ml') {
+      composedText = `രോഗിക്ക് ${targetTerm} പ്രശ്നമുണ്ട്.`;
+    } else if (target === 'kn') {
+      composedText = `ರೋಗಿಗೆ ${targetTerm} ಸಮಸ್ಯೆ ಇದೆ.`;
+    }
+
+    composedText = restoreMedicalValues(composedText, medValues);
+    return {
+      originalLanguage: sourceLang,
+      originalText: original,
+      translatedLanguage: targetLang,
+      translatedText: composedText,
+      translationConfidence: 'MEDIUM',
+      translationStatus: 'TRANSLATED',
+      engine: 'clinical-dictionary',
+      preservedTokens: tokens,
+      isEmergency,
+      isCritical,
+      isAppointment: false,
+      needsConfirmation: isCritical,
+    };
+  }
+
+  // 4. If completely unsupported locally (e.g. out-of-vocabulary test input):
   // CRITICAL RULE: NEVER return original text and label it as translated!
   return {
     originalLanguage: sourceLang,
@@ -335,6 +414,8 @@ export async function translateHealthcareTextAsync(
   // If online, call server translation endpoint
   if (typeof navigator !== 'undefined' && navigator.onLine) {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
       const targetShort = toBridgeLang(targetLang);
       const res = await fetch('/api/translate', {
         method: 'POST',
@@ -344,7 +425,9 @@ export async function translateHealthcareTextAsync(
           language: targetShort,
           sourceLanguage: toBridgeLang(sourceLang),
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       if (res.ok) {
         const data = await res.json();
