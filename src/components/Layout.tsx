@@ -4,13 +4,15 @@ import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
 import {
   Home, Heart, Users, Mic, MoreHorizontal, X, Wifi, WifiOff,
-  Globe, LogOut, User, Settings, HelpCircle, BookOpen, LogIn, ChevronDown, PhoneCall
+  Globe, LogOut, User, Settings, HelpCircle, BookOpen, LogIn, ChevronDown, PhoneCall, FileText
 } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 import EmergencyOverlay from './EmergencyOverlay';
 import ConnectivityStatusIndicator from './ConnectivityStatusIndicator';
 import { ActiveCallModal } from './ActiveCallModal';
 import { MedoraSearchBar } from './MedoraSearchBar';
+import HeaderSyncStatus from './HeaderSyncStatus';
+import ExportPatientSummaryModal from './ExportPatientSummaryModal';
 
 const LANGUAGES = [
   { code: 'en', label: 'EN', name: 'English', native: 'English' },
@@ -47,6 +49,7 @@ export default function Layout({ children }: LayoutProps) {
   const [moreDrawerOpen, setMoreDrawerOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [emergencyOpen, setEmergencyOpen] = useState(false);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -98,16 +101,8 @@ export default function Layout({ children }: LayoutProps) {
 
           {/* Header Controls */}
           <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-            {/* Connectivity Pill */}
-            <div
-              className={`flex items-center gap-1 text-[10px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full ${
-                isOffline ? 'bg-white/15 text-white border border-white/30' : 'bg-white/20 text-white border border-white/30'
-              }`}
-              title={isOffline ? t('common.offline') : t('common.online')}
-            >
-              {isOffline ? <WifiOff size={11} /> : <Wifi size={11} />}
-              <span className="hidden sm:inline">{isOffline ? `🔴 ${t('common.offline')}` : `🟢 ${t('common.online')}`}</span>
-            </div>
+            {/* Real-time Background Sync Status Badge */}
+            <HeaderSyncStatus />
 
             {/* 2G Toggle */}
             <button
@@ -250,6 +245,18 @@ export default function Layout({ children }: LayoutProps) {
               >
                 <Mic size={16} className="text-emerald-700 animate-pulse" />
                 <span>🎤 Voice Navigation</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMoreDrawerOpen(false);
+                  setExportModalOpen(true);
+                }}
+                className="w-full text-left flex items-center gap-3 px-3.5 py-3 rounded-2xl text-xs font-bold transition-all text-teal-900 bg-teal-50/80 hover:bg-teal-100 border border-teal-200 cursor-pointer shadow-2xs"
+              >
+                <FileText size={16} className="text-teal-700" />
+                <span>📄 Export Medical Summary (PDF)</span>
               </button>
 
               <Link
@@ -419,6 +426,13 @@ export default function Layout({ children }: LayoutProps) {
           })}
         </div>
       </nav>
+
+      {/* Patient Summary PDF Export Modal */}
+      <ExportPatientSummaryModal
+        isOpen={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
+        initialPatientId={currentUser?.role === 'patient' && currentUser.id ? currentUser.id : undefined}
+      />
     </div>
   );
 }

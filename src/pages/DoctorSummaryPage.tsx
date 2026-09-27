@@ -5,6 +5,7 @@ import { db, Patient, MedicalRecord, HealthTest, UploadedDocument, DoctorSummary
 import Layout from '../components/Layout';
 import DemoDataBadge from '../components/DemoDataBadge';
 import { SmsPreviewModal } from '../components/SmsPreviewModal';
+import ExportPatientSummaryModal from '../components/ExportPatientSummaryModal';
 import { SmsSendPayload, SmsResponseData } from '../services/sms/smsStatus';
 import {
   FileText, Stethoscope, Upload, CheckCircle2, AlertTriangle, Printer,
@@ -39,6 +40,7 @@ export default function DoctorSummaryPage() {
   // Modals
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isSmsModalOpen, setIsSmsModalOpen] = useState(false);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [smsPayload, setSmsPayload] = useState<SmsSendPayload | null>(null);
   const [viewingDocument, setViewingDocument] = useState<UploadedDocument | MedicalRecord | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -425,6 +427,15 @@ Next Consultation / Follow-Up: ${followUpDate}
                 <span>Translate to Patient Language ({patient?.language?.toUpperCase() || 'TA'})</span>
               </>
             )}
+          </button>
+
+          <button
+            onClick={() => setIsPdfModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-black shadow-xs transition-all cursor-pointer"
+            title="Generate and download patient medical summary PDF"
+          >
+            <FileText className="w-4 h-4" />
+            <span>Export PDF Report</span>
           </button>
 
           <button
@@ -947,6 +958,16 @@ Next Consultation / Follow-Up: ${followUpDate}
               setToastMessage(`✓ SMS sent to ${patient?.name}: Status ${res.status}`);
               setTimeout(() => setToastMessage(null), 4000);
             }}
+          />
+        )}
+
+        {/* Patient Medical Summary PDF Export Modal */}
+        {patient && (
+          <ExportPatientSummaryModal
+            isOpen={isPdfModalOpen}
+            onClose={() => setIsPdfModalOpen(false)}
+            initialPatientId={patient.id}
+            initialPatient={patient}
           />
         )}
       </div>

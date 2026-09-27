@@ -5,6 +5,7 @@ import { useAppStore } from '../store/useAppStore';
 import { db, MedicalRecord } from '../db/db';
 import Layout from '../components/Layout';
 import DemoDataBadge from '../components/DemoDataBadge';
+import ExportPatientSummaryModal from '../components/ExportPatientSummaryModal';
 import {
   FileText,
   Plus,
@@ -80,6 +81,7 @@ export default function MedicalRecordsPage() {
   const [viewingRecord, setViewingRecord] = useState<MedicalRecord | null>(null);
   const [sharingRecord, setSharingRecord] = useState<MedicalRecord | null>(null);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
+  const [showExportPdfModal, setShowExportPdfModal] = useState(false);
 
   // Comprehensive Add Record Form State (Requirement 5)
   const [formType, setFormType] = useState<MedicalRecordType>('consultation');
@@ -287,6 +289,14 @@ export default function MedicalRecordsPage() {
 
           <div className="flex items-center gap-2">
             <DemoDataBadge />
+            <button
+              onClick={() => setShowExportPdfModal(true)}
+              className="bg-teal-600 hover:bg-teal-700 text-white text-xs px-3.5 py-2.5 rounded-xl font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer active:scale-95"
+              title="Export complete patient summary as printable PDF"
+            >
+              <FileText size={15} />
+              <span>Export PDF Summary</span>
+            </button>
             <button
               onClick={() => setShowAdd(true)}
               className="bg-[#2563EB] hover:bg-blue-700 text-white text-xs px-4 py-2.5 rounded-xl font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer active:scale-95"
@@ -797,6 +807,13 @@ export default function MedicalRecordsPage() {
             </div>
           </div>
         )}
+
+        {/* Patient Summary PDF Export Modal */}
+        <ExportPatientSummaryModal
+          isOpen={showExportPdfModal}
+          onClose={() => setShowExportPdfModal(false)}
+          initialPatientId={currentUser?.role === 'patient' && currentUser.id ? currentUser.id : 1}
+        />
       </div>
     </Layout>
   );

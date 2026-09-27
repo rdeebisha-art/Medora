@@ -6,6 +6,7 @@ import { db, Patient, DoctorSummary, Medicine, Doctor, Appointment } from '../db
 import Layout from '../components/Layout';
 import DemoDataBadge from '../components/DemoDataBadge';
 import { TwoWayDoctorChatModal } from '../components/TwoWayDoctorChatModal';
+import ExportPatientSummaryModal from '../components/ExportPatientSummaryModal';
 import { logAuditEvent } from '../services/auditLoggerService';
 import {
   Stethoscope, User, Calendar, Pill, FileText, AlertTriangle,
@@ -18,6 +19,7 @@ export default function DoctorPortalPage() {
   const navigate = useNavigate();
   const { currentUser, login, language, startDirectCall } = useAppStore();
   const [showChatModal, setShowChatModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -439,6 +441,16 @@ export default function DoctorPortalPage() {
                   <MessageSquare className="w-3.5 h-3.5 text-teal-600" />
                   <span>In-App Message Patient</span>
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowExportModal(true)}
+                  className="flex items-center gap-1.5 py-2 px-3.5 bg-indigo-50 hover:bg-indigo-100 active:scale-95 text-indigo-900 rounded-xl font-bold text-xs border border-indigo-200 transition-colors cursor-pointer"
+                  title="Export complete medical summary to PDF"
+                >
+                  <FileText className="w-3.5 h-3.5 text-indigo-700" />
+                  <span>Export Patient Summary (PDF)</span>
+                </button>
               </div>
             </div>
 
@@ -677,6 +689,16 @@ export default function DoctorPortalPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Patient Summary PDF Export Modal */}
+        {selected && (
+          <ExportPatientSummaryModal
+            isOpen={showExportModal}
+            onClose={() => setShowExportModal(false)}
+            initialPatientId={selected.id}
+            initialPatient={selected}
+          />
         )}
       </div>
     </Layout>

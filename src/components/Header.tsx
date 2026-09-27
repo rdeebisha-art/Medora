@@ -22,6 +22,7 @@ import { LanguageCode, FamilyMember, UserRole } from '../types';
 import { TRANSLATIONS } from '../i18n/translations';
 import { voiceService } from '../services/voiceService';
 import { MedoraSearchBar } from './MedoraSearchBar';
+import HeaderSyncStatus from './HeaderSyncStatus';
 
 interface HeaderProps {
   currentLang: LanguageCode;
@@ -368,8 +369,11 @@ export const Header: React.FC<HeaderProps> = ({
             </nav>
           )}
 
-          {/* Right Controls: Native Language Selector, Voice & Simple Mode */}
+          {/* Right Controls: Sync Status, Native Language Selector, Voice & Simple Mode */}
           <div className="flex items-center gap-2">
+            {/* Real-time Background Sync Status Indicator */}
+            <HeaderSyncStatus />
+
             {/* Native Language Selector Dropdown */}
             <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 rounded-2xl px-2.5 py-1 text-xs font-bold">
               <Globe className="w-3.5 h-3.5 text-teal-600 shrink-0" />

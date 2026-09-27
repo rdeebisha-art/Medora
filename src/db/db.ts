@@ -39,6 +39,10 @@ export interface MedicineAdherence {
   status: 'taken' | 'missed';
   recordedBy: string;
   dosagePrescribed?: string;
+  scheduledTime?: string; // e.g. "07:30" or "08:00 AM"
+  actualTakenTime?: string; // e.g. "08:45 AM"
+  delayMinutes?: number; // e.g. +75 (taken late) or -15 (taken early)
+  notes?: string;
 }
 
 export interface Consultation {
@@ -121,6 +125,8 @@ export interface Patient {
   language: string;
   familyId?: number;
   bloodGroup?: string;
+  healthId?: string;
+  relationship?: string;
   allergies?: string[];
   conditions?: string[];
   emergencyContact?: string;

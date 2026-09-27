@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Printer, Download, MessageSquare, AlertTriangle, Activity, Heart, Pill, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Printer, Download, MessageSquare, AlertTriangle, Activity, Heart, Pill, Sparkles, CheckCircle2, FileText } from 'lucide-react';
 import { HealthSummaryReport, LanguageCode } from '../types';
 import { TRANSLATIONS } from '../i18n/translations';
 import { DoctorHandoffChart } from './DoctorHandoffChart';
 import { smsService } from '../services/sms/smsService';
+import { PatientSummaryPdfService } from '../services/pdf/patientSummaryPdfService';
 
 interface DoctorHandoffSummaryProps {
   summary: HealthSummaryReport;
@@ -87,6 +88,45 @@ This is a health information and continuity report, not a diagnosis or prescript
     downloadAnchor.remove();
   };
 
+  const handleExportPdf = () => {
+    const p = summary.patientInfo;
+    const m = summary.medicalInfo;
+    PatientSummaryPdfService.downloadPatientSummaryPdf({
+      patient: {
+        id: 1001,
+        name: p.name,
+        age: p.age,
+        gender: p.gender,
+        bloodGroup: p.bloodGroup,
+        healthId: p.healthId,
+        village: 'Rampur Gram Panchayat',
+        conditions: m.existingConditions,
+        allergies: [],
+      } as any,
+      medicines: m.currentMedicines.map((med, idx) => ({
+        id: idx + 1,
+        patientId: 1001,
+        name: med.name,
+        dose: med.dosage,
+        frequency: med.frequency,
+        instructions: `Purpose: ${med.purpose}`,
+      })),
+      doctorSummary: {
+        id: 1,
+        patientId: 1001,
+        complaint: m.recentSymptoms.join(', '),
+        nextStep: summary.aiSummary.keyObservations.join('. '),
+        followUp: summary.testInfo.importantFollowUpItems.join('. ') || 'Follow-up in 2 weeks',
+        agentType: 'DOCTOR_CONFIRMED',
+        createdAt: new Date().toISOString(),
+      } as any,
+      authorizedBy: {
+        name: 'Attending Clinician (Verified OPD Handoff)',
+        role: 'Doctor / Medical Officer',
+      },
+    });
+  };
+
   const handleSms = async () => {
     const report = buildHospitalReport();
     try {
@@ -125,6 +165,15 @@ This is a health information and continuity report, not a diagnosis or prescript
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleExportPdf}
+            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-md transition-all cursor-pointer"
+            title="Download formatted medical continuity PDF report"
+          >
+            <FileText className="w-4 h-4" />
+            <span>Export PDF Report</span>
+          </button>
+
           <button
             onClick={handlePrint}
             className="px-4 py-2.5 bg-white hover:bg-slate-100 active:scale-95 text-slate-900 font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-sm transition-all"

@@ -818,3 +818,5 @@ export const AuditLogComponent: React.FC<AuditLogComponentProps> = ({
     </div>
   );
 };
+
+export default AuditLogComponent;

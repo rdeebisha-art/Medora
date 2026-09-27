@@ -1247,3 +1247,10 @@ export async function getDatabasePatientCount(): Promise<number> {
     return 0;
   }
 }
+
+/**
+ * Explicit alias matching requested naming convention
+ */
+export const seedDemoPatientsIdempotent = seedDemoPatients;
+
+export default seedDemoPatients;

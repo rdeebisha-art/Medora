@@ -10,6 +10,7 @@ import MedicineCard from '../components/MedicineCard';
 import DemoDataBadge from '../components/DemoDataBadge';
 import { HealthTrendsChart } from '../components/HealthTrendsChart';
 import { RecentHealthActivitySection } from '../components/RecentHealthActivitySection';
+import ExportPatientSummaryModal from '../components/ExportPatientSummaryModal';
 import {
   Activity,
   Droplets,
@@ -28,6 +29,7 @@ import {
   TrendingDown,
   Info,
   Clock,
+  FileText,
 } from 'lucide-react';
 
 export type VitalType = 'blood_sugar' | 'blood_pressure' | 'weight' | 'temperature' | 'pulse';
@@ -173,6 +175,7 @@ export default function MyHealthPage() {
   const [activeLogType, setActiveLogType] = useState<VitalType>('blood_sugar');
   const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
   const [historyType, setHistoryType] = useState<VitalType>('blood_sugar');
+  const [exportModalOpen, setExportModalOpen] = useState<boolean>(false);
 
   // Log Form State
   const [formValue, setFormValue] = useState<string>('');
@@ -399,6 +402,15 @@ export default function MyHealthPage() {
                   {patient.isChild && '👶 Child'}
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setExportModalOpen(true)}
+                className="bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-xs px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                title="Download patient medical summary as PDF"
+              >
+                <FileText size={14} className="text-teal-600" />
+                <span>Export PDF</span>
+              </button>
             </div>
           </div>
         )}
@@ -1059,6 +1071,16 @@ export default function MyHealthPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Patient Summary PDF Export Modal */}
+      {patient && (
+        <ExportPatientSummaryModal
+          isOpen={exportModalOpen}
+          onClose={() => setExportModalOpen(false)}
+          initialPatientId={patient.id}
+          initialPatient={patient}
+        />
       )}
     </Layout>
   );
