@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import i18n from '../i18n/config';
 import { seedDatabase } from '../db/db';
+import { seedDemoPatients } from '../services/patientSeederService';
+import { seedInitialAuditLogs } from '../services/auditLoggerService';
 
 export type Role = 'patient' | 'family' | 'doctor' | 'admin';
 export type VoiceNavLanguageOption = 'app' | 'auto' | 'en' | 'ta' | 'hi' | 'te' | 'ml' | 'kn';
@@ -228,8 +230,10 @@ export const useAppStore = create<AppState>((set) => ({
   setTranslationTargetLanguage: (lang) => set({ translationTargetLanguage: lang }),
 }));
 
-// Seed DB on app load
-seedDatabase().catch(console.error);
+// Seed DB, 20 unique demo patients, and initial audit logs idempotently on app load
+seedDatabase()
+  .then(() => Promise.all([seedDemoPatients(), seedInitialAuditLogs()]))
+  .catch(console.error);
 
 // Sync online/offline status
 if (typeof window !== 'undefined') {

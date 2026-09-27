@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PatientProfile, VillageFamily } from '../types';
+import { logPatientUpdate } from '../services/auditLoggerService';
 import { X, Save, UserCheck, Shield, AlertCircle } from 'lucide-react';
 
 interface AdminEditPatientModalProps {
@@ -95,6 +96,20 @@ export const AdminEditPatientModal: React.FC<AdminEditPatientModalProps> = ({
     });
 
     if (success) {
+      logPatientUpdate(
+        patient.patientId,
+        formData.name.trim(),
+        { userId: 'ADMIN-01', userName: 'Sister Lakshmi Devi (ASHA)', userRole: 'admin' },
+        `Admin updated villager demographic details for ${formData.name.trim()} (${patient.patientId}).`,
+        {
+          name: formData.name.trim(),
+          age: ageNum,
+          gender: formData.gender,
+          contactPhone: formData.contactPhone.trim(),
+          familyId: formData.familyId,
+        }
+      ).catch(console.error);
+
       onShowToast?.(`Demographic details for ${formData.name.trim()} (${patient.patientId}) updated successfully.`);
       onClose();
     } else {

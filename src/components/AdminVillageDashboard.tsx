@@ -3,6 +3,7 @@ import { useMedora } from '../context/MedoraContext';
 import { LanguageCode, PatientCategory, PatientProfile, VillageFamily } from '../types';
 import { AdminEditPatientModal } from './AdminEditPatientModal';
 import { AdminPasswordChangeModal } from './AdminPasswordChangeModal';
+import { AuditLogComponent } from './AuditLogComponent';
 import {
   Users,
   Home,
@@ -851,45 +852,8 @@ export const AdminVillageDashboard: React.FC<AdminVillageDashboardProps> = ({
             </button>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 space-y-4">
-            <div>
-              <h2 className="text-base font-black text-slate-900">Gram Panchayat Administrative Audit Log</h2>
-              <p className="text-xs text-slate-500">
-                Tamper-evident log of demographic additions, modifications, password updates, and archival events.
-              </p>
-            </div>
-
-            <div className="overflow-x-auto border border-slate-200 rounded-2xl">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
-                  <tr>
-                    <th className="px-4 py-3">Timestamp</th>
-                    <th className="px-4 py-3">Action</th>
-                    <th className="px-4 py-3">User & Role</th>
-                    <th className="px-4 py-3">Affected ID</th>
-                    <th className="px-4 py-3">Details</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {auditLogs.map((log) => (
-                    <tr key={log.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">{log.timestamp}</td>
-                      <td className="px-4 py-3 font-bold text-slate-900">{log.action}</td>
-                      <td className="px-4 py-3 text-slate-700">
-                        <span>{log.user}</span>
-                        <span className="text-[10px] text-slate-400 block uppercase font-bold">{log.role}</span>
-                      </td>
-                      <td className="px-4 py-3 font-mono text-[11px] text-emerald-700">
-                        {log.affectedPatientId || log.affectedFamilyId || '—'}
-                      </td>
-                      <td className="px-4 py-3 text-slate-600 max-w-md">
-                        {log.details || 'System routine check'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="pt-2">
+            <AuditLogComponent onSelectPatient={onSelectPatientFile} />
           </div>
         </div>
       )}

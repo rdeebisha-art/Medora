@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pill, Check, X, Clock, Tag, Printer } from 'lucide-react';
 import { db, Medicine } from '../db/db';
+import { logMedicineAdherence } from '../services/auditLoggerService';
 
 interface Props {
   medicine: Medicine;
@@ -19,9 +20,25 @@ export default function MedicineCard({ medicine, onUpdate, onOpenLabel }: Props)
     try {
       if (action === 'taken') {
         await db.medicines.update(medicine.id, { lastTaken: new Date().toISOString() });
+        await logMedicineAdherence(
+          medicine.patientId,
+          `Patient ${medicine.patientId}`,
+          medicine.name,
+          'taken',
+          { userId: `PAT-${medicine.patientId}`, userName: 'Patient', userRole: 'patient' },
+          medicine.dose
+        ).catch(console.error);
       } else if (action === 'missed') {
         const missed = (medicine.missedCount || 0) + 1;
         await db.medicines.update(medicine.id, { missedCount: missed });
+        await logMedicineAdherence(
+          medicine.patientId,
+          `Patient ${medicine.patientId}`,
+          medicine.name,
+          'missed',
+          { userId: `PAT-${medicine.patientId}`, userName: 'Patient', userRole: 'patient' },
+          medicine.dose
+        ).catch(console.error);
       }
       onUpdate?.();
     } finally {

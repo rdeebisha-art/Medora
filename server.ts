@@ -561,8 +561,14 @@ app.get('/api/sms/config', (_req: Request, res: Response) => {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const fromNumber = process.env.TWILIO_FROM_NUMBER;
+  const senderId = process.env.SMS_SENDER_ID || 'MEDORA';
   const isConfigured = Boolean(accountSid && authToken && fromNumber);
-  return res.json({ configured: isConfigured, provider: isConfigured ? 'Twilio' : 'None' });
+  return res.json({
+    configured: isConfigured,
+    provider: isConfigured ? 'Twilio' : 'None',
+    fromNumber: isConfigured ? fromNumber : undefined,
+    senderId,
+  });
 });
 
 // POST /api/sms/send

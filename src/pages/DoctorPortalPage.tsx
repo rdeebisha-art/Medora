@@ -6,6 +6,7 @@ import { db, Patient, DoctorSummary, Medicine, Doctor, Appointment } from '../db
 import Layout from '../components/Layout';
 import DemoDataBadge from '../components/DemoDataBadge';
 import { TwoWayDoctorChatModal } from '../components/TwoWayDoctorChatModal';
+import { logAuditEvent } from '../services/auditLoggerService';
 import {
   Stethoscope, User, Calendar, Pill, FileText, AlertTriangle,
   CheckCircle2, Plus, ArrowLeft, Printer, Phone, Clock,
@@ -136,6 +137,16 @@ export default function DoctorPortalPage() {
       }
     });
 
+    logAuditEvent({
+      action: `CLINICAL_CONSULTATION_SAVED: ${selected.name}`,
+      details: `Doctor ${docName} documented clinical assessment and advice for ${selected.name} (ID: ${selected.patientCode || selected.id}).`,
+      entityType: 'consultation',
+      recordId: selected.patientCode || selected.id,
+      userId: currentUser?.phone || 'DOC-01',
+      userName: docName,
+      userRole: 'doctor',
+    }).catch(console.error);
+
     setSaved(true);
     setActionMessage('Consultation notes & diagnosis saved to patient medical record.');
     setTimeout(() => {
@@ -168,6 +179,22 @@ export default function DoctorPortalPage() {
 
     const medId = await db.medicines.add(newMed);
     setMedicines(prev => [...prev, { ...newMed, id: medId }]);
+
+    logAuditEvent({
+      action: `PRESCRIPTION_ADDED: ${newMed.name} (${newMed.dose})`,
+      details: `Doctor ${docName} added prescription for ${selected.name} (ID: ${selected.patientCode || selected.id}): ${newMed.name} ${newMed.dose}, ${newMed.frequency}. Instructions: ${newMed.instructions}`,
+      entityType: 'medicine',
+      recordId: selected.patientCode || selected.id,
+      userId: currentUser?.phone || 'DOC-01',
+      userName: docName,
+      userRole: 'doctor',
+      changedFields: {
+        medicineName: newMed.name,
+        dose: newMed.dose,
+        frequency: newMed.frequency,
+        instructions: newMed.instructions,
+      },
+    }).catch(console.error);
 
     // Add notification for patient
     await db.notifications.add({

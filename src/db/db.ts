@@ -1,7 +1,116 @@
 import Dexie, { Table } from 'dexie';
 
+export interface User {
+  id?: number;
+  userId: string;
+  role: 'patient' | 'family' | 'doctor' | 'admin';
+  name: string;
+  phone: string;
+  passwordHash: string;
+  salt: string;
+  status: 'active' | 'pending_approval' | 'rejected' | 'deactivated';
+  patientId?: string | number;
+  familyId?: string | number;
+  doctorId?: string | number;
+  qualification?: string;
+  specialization?: string;
+  licenseNumber?: string;
+  village?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WeightRecord {
+  id?: number;
+  patientId: number | string;
+  weightKg: number;
+  recordedAt: string;
+  notes?: string;
+  source: 'patient' | 'doctor' | 'nurse' | 'health_worker';
+}
+
+export interface MedicineAdherence {
+  id?: number;
+  medicineId: number | string;
+  medicineName?: string;
+  patientId: number | string;
+  takenAt: string;
+  date: string;
+  status: 'taken' | 'missed';
+  recordedBy: string;
+  dosagePrescribed?: string;
+}
+
+export interface Consultation {
+  id?: number;
+  consultationId: string;
+  patientId: number | string;
+  patientName?: string;
+  familyId?: number | string;
+  doctorId: number | string;
+  doctorName?: string;
+  requestTime: string;
+  status: 'requested' | 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  reason?: string;
+  notes?: string;
+  symptoms?: string[];
+  callSessionId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PatientCorrectionRequest {
+  id?: number;
+  requestId: string;
+  patientId: number | string;
+  patientName: string;
+  requestedByUserId: string;
+  userRole: 'patient' | 'family';
+  fieldName: string;
+  currentValue?: string;
+  requestedChange: string;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewerDoctorId?: number | string;
+  reviewerDoctorName?: string;
+  reviewNotes?: string;
+  createdAt: string;
+  reviewedAt?: string;
+}
+
+export interface AuditLog {
+  id?: number;
+  logId: string;
+  recordId?: string | number;
+  entityType: 'patient' | 'doctor' | 'family' | 'user' | 'medicine' | 'correction_request' | 'consultation' | 'weight';
+  userId: string;
+  userName: string;
+  userRole: string;
+  action: string;
+  timestamp: string;
+  details: string;
+  changedFields?: Record<string, any>;
+}
+
+export interface PatientFamilyRelationship {
+  id?: number;
+  familyId: number | string;
+  patientId: number | string;
+  relationship: 'head' | 'spouse' | 'child' | 'parent' | 'sibling' | 'grandparent' | 'other';
+  authorizedAccess: boolean;
+}
+
+export interface DoctorPatientRelationship {
+  id?: number;
+  doctorId: number | string;
+  patientId: number | string;
+  primaryCare: boolean;
+  authorizedSince: string;
+}
+
 export interface Patient {
   id?: number;
+  patientCode?: string;
   name: string;
   age: number;
   gender: 'male' | 'female' | 'other';
@@ -23,7 +132,13 @@ export interface Patient {
   isNewMother?: boolean;
   motherPatientId?: number;
   dateOfBirth?: string;
+  weight?: number;
+  isDeleted?: boolean;
+  deletedAt?: string;
+  deletedBy?: string;
+  deleteReason?: string;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Family {
@@ -487,6 +602,12 @@ export class MedoraDB extends Dexie {
   callSessions!: Table<CallSessionRecord, number>;
   inAppMessages!: Table<InAppMessageRecord, number>;
   offlineOutboxMessages!: Table<OfflineOutboxItem, number>;
+  users!: Table<User, number>;
+  auditLogs!: Table<AuditLog, number>;
+  weightRecords!: Table<WeightRecord, number>;
+  medicineAdherence!: Table<MedicineAdherence, number>;
+  consultations!: Table<Consultation, number>;
+  correctionRequests!: Table<PatientCorrectionRequest, number>;
 
   constructor() {
     super('MedoraDB');
@@ -529,6 +650,14 @@ export class MedoraDB extends Dexie {
       callSessions: '++id, callId, callerId, receiverId, status, createdAt, emergency',
       inAppMessages: '++id, messageId, conversationId, senderId, receiverId, status, timestamp',
       offlineOutboxMessages: '++id, messageId, receiverId, status, timestamp',
+    });
+    this.version(6).stores({
+      users: '++id, userId, role, phone, status',
+      auditLogs: '++id, logId, entityType, userId, userRole, action, timestamp, recordId',
+      weightRecords: '++id, patientId, recordedAt, source',
+      medicineAdherence: '++id, medicineId, patientId, date, status',
+      consultations: '++id, consultationId, patientId, doctorId, status',
+      correctionRequests: '++id, requestId, patientId, status',
     });
   }
 }
