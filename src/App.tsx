@@ -3,7 +3,6 @@ import { useAppStore } from './store/useAppStore';
 import './i18n/config';
 
 // Pages
-import WelcomePage from './pages/WelcomePage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import MyHealthPage from './pages/MyHealthPage';
@@ -41,6 +40,8 @@ import LanguageBridgePage from './pages/LanguageBridgePage';
 import AppointmentsPage from './pages/AppointmentsPage';
 import CallHistoryPage from './pages/CallHistoryPage';
 import AgentSimulationPage from './pages/AgentSimulationPage';
+import BiomedicalWastePage from './pages/BiomedicalWastePage';
+import FullDemoScenarioPage from './pages/FullDemoScenarioPage';
 
 import MedicalHospitalBackground from './components/layout/MedicalHospitalBackground';
 import { ActiveCallModal } from './components/ActiveCallModal';
@@ -91,53 +92,76 @@ export default function App() {
         <ActiveCallModal callInfo={activeDirectCall} onClose={endDirectCall} />
       )}
       <Routes>
-      {/* Public routes */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="/welcome" element={<Navigate to="/dashboard" replace />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/emergency" element={<EmergencyPage />} />
-      <Route path="/faq" element={<FaqPage />} />
-      <Route path="/help" element={<HelpPage />} />
+        {/* Public routes */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/welcome" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/emergency" element={<EmergencyPage />} />
+        <Route path="/faq" element={<FaqPage />} />
+        <Route path="/help" element={<HelpPage />} />
 
-      {/* Protected routes */}
-      <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-      <Route path="/health" element={<ProtectedRoute><MyHealthPage /></ProtectedRoute>} />
-      <Route path="/family" element={<ProtectedRoute><FamilyPage /></ProtectedRoute>} />
-      <Route path="/medicines" element={<ProtectedRoute><MedicinesPage /></ProtectedRoute>} />
-      <Route path="/records" element={<ProtectedRoute><MedicalRecordsPage /></ProtectedRoute>} />
-      <Route path="/health-tests" element={<ProtectedRoute><HealthTestsPage /></ProtectedRoute>} />
-      <Route path="/ai" element={<ProtectedRoute><AiAssistantPage /></ProtectedRoute>} />
-      <Route path="/medical-ai" element={<ProtectedRoute><AiAssistantPage /></ProtectedRoute>} />
-      <Route path="/a2a-simulation" element={<ProtectedRoute><AgentSimulationPage /></ProtectedRoute>} />
-      <Route path="/language-bridge" element={<ProtectedRoute><LanguageBridgePage /></ProtectedRoute>} />
-      <Route path="/hospitals" element={<ProtectedRoute><HospitalsPage /></ProtectedRoute>} />
-      <Route path="/transport" element={<ProtectedRoute><TransportPage /></ProtectedRoute>} />
-      <Route path="/schemes" element={<ProtectedRoute><SchemesPage /></ProtectedRoute>} />
-      <Route path="/education" element={<ProtectedRoute><EducationPage /></ProtectedRoute>} />
-      <Route path="/sms" element={<ProtectedRoute><SmsPage /></ProtectedRoute>} />
-      <Route path="/ivr" element={<ProtectedRoute><IvrPage /></ProtectedRoute>} />
-      <Route path="/ussd" element={<ProtectedRoute><UssdPage /></ProtectedRoute>} />
-      <Route path="/village" element={<ProtectedRoute><VillagePage /></ProtectedRoute>} />
-      <Route path="/appointments" element={<ProtectedRoute><AppointmentsPage /></ProtectedRoute>} />
-      <Route path="/call-history" element={<ProtectedRoute><CallHistoryPage /></ProtectedRoute>} />
-      <Route path="/doctor-portal" element={<ProtectedRoute><DoctorPortalPage /></ProtectedRoute>} />
-      <Route path="/admin-portal" element={<ProtectedRoute><AdminPortalPage /></ProtectedRoute>} />
-      <Route path="/doctor-summary" element={<ProtectedRoute><DoctorSummaryPage /></ProtectedRoute>} />
-      <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
-      <Route path="/sync" element={<ProtectedRoute><SyncPage /></ProtectedRoute>} />
-      <Route path="/maternity" element={<ProtectedRoute><MaternityPage /></ProtectedRoute>} />
-      <Route path="/newborn" element={<ProtectedRoute><NewbornPage /></ProtectedRoute>} />
-      <Route path="/childcare" element={<ProtectedRoute><ChildcarePage /></ProtectedRoute>} />
-      <Route path="/elderly" element={<ProtectedRoute><ElderlyPage /></ProtectedRoute>} />
-      <Route path="/vaccination" element={<ProtectedRoute><VaccinationPage /></ProtectedRoute>} />
-      <Route path="/report-scanner" element={<ProtectedRoute><ReportScannerPage /></ProtectedRoute>} />
-      <Route path="/xray-viewer" element={<ProtectedRoute><XrayViewerPage /></ProtectedRoute>} />
-      <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+        {/* Protected Core Dashboard & Portals */}
+        <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+        <Route path="/patient" element={<Navigate to="/health" replace />} />
+        <Route path="/health" element={<ProtectedRoute><MyHealthPage /></ProtectedRoute>} />
+        <Route path="/family" element={<ProtectedRoute><FamilyPage /></ProtectedRoute>} />
+        <Route path="/medicines" element={<ProtectedRoute><MedicinesPage /></ProtectedRoute>} />
+        <Route path="/records" element={<ProtectedRoute><MedicalRecordsPage /></ProtectedRoute>} />
+        <Route path="/health-tests" element={<ProtectedRoute><HealthTestsPage /></ProtectedRoute>} />
+        <Route path="/ai" element={<ProtectedRoute><AiAssistantPage /></ProtectedRoute>} />
+        <Route path="/medical-ai" element={<ProtectedRoute><AiAssistantPage /></ProtectedRoute>} />
+        
+        {/* A2A & Simulation */}
+        <Route path="/a2a" element={<Navigate to="/a2a-simulation" replace />} />
+        <Route path="/a2a-simulation" element={<ProtectedRoute><AgentSimulationPage /></ProtectedRoute>} />
+        <Route path="/demo" element={<Navigate to="/demo-scenario" replace />} />
+        <Route path="/demo-scenario" element={<ProtectedRoute><FullDemoScenarioPage /></ProtectedRoute>} />
 
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/welcome" replace />} />
-    </Routes>
-  </MedicalHospitalBackground>
+        {/* Biomedical Waste Management (Hospital Module) */}
+        <Route path="/waste" element={<Navigate to="/biomedical-waste" replace />} />
+        <Route path="/biomedical-waste" element={<ProtectedRoute><BiomedicalWastePage /></ProtectedRoute>} />
+        <Route path="/smart-bin" element={<ProtectedRoute><BiomedicalWastePage /></ProtectedRoute>} />
+        <Route path="/passport" element={<ProtectedRoute><BiomedicalWastePage /></ProtectedRoute>} />
+        <Route path="/collection" element={<ProtectedRoute><BiomedicalWastePage /></ProtectedRoute>} />
+
+        {/* Clinical Care Areas */}
+        <Route path="/maternity" element={<ProtectedRoute><MaternityPage /></ProtectedRoute>} />
+        <Route path="/newborn" element={<ProtectedRoute><NewbornPage /></ProtectedRoute>} />
+        <Route path="/childcare" element={<ProtectedRoute><ChildcarePage /></ProtectedRoute>} />
+        <Route path="/children" element={<Navigate to="/childcare" replace />} />
+        <Route path="/elderly" element={<ProtectedRoute><ElderlyPage /></ProtectedRoute>} />
+        <Route path="/vaccination" element={<ProtectedRoute><VaccinationPage /></ProtectedRoute>} />
+        <Route path="/report-scanner" element={<ProtectedRoute><ReportScannerPage /></ProtectedRoute>} />
+        <Route path="/reports" element={<Navigate to="/report-scanner" replace />} />
+        <Route path="/xray-viewer" element={<ProtectedRoute><XrayViewerPage /></ProtectedRoute>} />
+
+        {/* Hospital & Doctor Portals */}
+        <Route path="/hospital" element={<Navigate to="/admin-portal" replace />} />
+        <Route path="/doctor" element={<Navigate to="/doctor-portal" replace />} />
+        <Route path="/doctor-portal" element={<ProtectedRoute><DoctorPortalPage /></ProtectedRoute>} />
+        <Route path="/admin-portal" element={<ProtectedRoute><AdminPortalPage /></ProtectedRoute>} />
+        <Route path="/doctor-summary" element={<ProtectedRoute><DoctorSummaryPage /></ProtectedRoute>} />
+
+        {/* Operations, Channels & Settings */}
+        <Route path="/language-bridge" element={<ProtectedRoute><LanguageBridgePage /></ProtectedRoute>} />
+        <Route path="/hospitals" element={<ProtectedRoute><HospitalsPage /></ProtectedRoute>} />
+        <Route path="/transport" element={<ProtectedRoute><TransportPage /></ProtectedRoute>} />
+        <Route path="/schemes" element={<ProtectedRoute><SchemesPage /></ProtectedRoute>} />
+        <Route path="/education" element={<ProtectedRoute><EducationPage /></ProtectedRoute>} />
+        <Route path="/sms" element={<ProtectedRoute><SmsPage /></ProtectedRoute>} />
+        <Route path="/ivr" element={<ProtectedRoute><IvrPage /></ProtectedRoute>} />
+        <Route path="/ussd" element={<ProtectedRoute><UssdPage /></ProtectedRoute>} />
+        <Route path="/village" element={<ProtectedRoute><VillagePage /></ProtectedRoute>} />
+        <Route path="/appointments" element={<ProtectedRoute><AppointmentsPage /></ProtectedRoute>} />
+        <Route path="/call-history" element={<ProtectedRoute><CallHistoryPage /></ProtectedRoute>} />
+        <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+        <Route path="/sync" element={<ProtectedRoute><SyncPage /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </MedicalHospitalBackground>
   );
 }

@@ -32,7 +32,8 @@ import {
   Landmark,
   Radio,
   Smartphone,
-  Check
+  Check,
+  Trash2
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -469,6 +470,108 @@ export default function DashboardPage() {
                 {currentUser?.name ? currentUser.name[0] : '👤'}
               </Link>
             </div>
+          </div>
+        </div>
+
+        {/* ========================================================= */}
+        {/* HACKATHON CORE PILLARS & ARCHITECTURE SHOWCASE           */}
+        {/* ========================================================= */}
+        <div className="bg-gradient-to-r from-slate-900 via-teal-950 to-blue-950 border-2 border-teal-500/40 rounded-3xl p-5 sm:p-6 shadow-xl text-white space-y-4 relative overflow-hidden">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="bg-teal-500/20 text-teal-300 font-bold px-2.5 py-0.5 rounded-full text-xs border border-teal-500/30 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-teal-400" />
+                  Integrated SIH 2026 Ecosystem
+                </span>
+                <span className="bg-blue-500/20 text-blue-300 font-bold px-2.5 py-0.5 rounded-full text-xs border border-blue-500/30">
+                  Online • 2G • Offline Sync
+                </span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                Rural Health Continuity & Smart Hospital Operations
+              </h2>
+              <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                One unified platform combining rural patient care, A2A AI agent coordination, offline/2G priority sync, and smart IoT biomedical waste tracking with digital passports.
+              </p>
+            </div>
+
+            {/* Quick CTAs */}
+            <div className="flex items-center gap-2 flex-wrap shrink-0">
+              <Link
+                to="/demo-scenario"
+                className="px-4 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-black rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-teal-500/20 transition-all hover:scale-102"
+              >
+                <span>🚀 Run 22-Step Demo</span>
+              </Link>
+              <Link
+                to="/biomedical-waste"
+                className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-teal-300 border border-teal-500/40 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Biomedical Waste</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* 3 Core Pillars Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <Link
+              to="/health"
+              className="p-3.5 bg-slate-950/70 hover:bg-slate-950 border border-slate-800 hover:border-teal-500/50 rounded-2xl transition-all group"
+            >
+              <div className="flex items-center gap-2 font-bold text-xs text-teal-300 mb-1">
+                <Heart className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform" />
+                PILLAR 1: RURAL HEALTHCARE
+              </div>
+              <p className="text-[11px] text-slate-400 leading-snug">
+                Maternal 28-wk tracking, child immunization, elderly chronic care, and offline emergency SOS.
+              </p>
+            </Link>
+
+            <Link
+              to="/a2a-simulation"
+              className="p-3.5 bg-slate-950/70 hover:bg-slate-950 border border-slate-800 hover:border-teal-500/50 rounded-2xl transition-all group"
+            >
+              <div className="flex items-center gap-2 font-bold text-xs text-blue-300 mb-1">
+                <Bot className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform" />
+                PILLAR 2: A2A AI OPERATIONS
+              </div>
+              <p className="text-[11px] text-slate-400 leading-snug">
+                Autonomous agent coordination between report parser, doctor brief synthesizer & waste agents.
+              </p>
+            </Link>
+
+            <Link
+              to="/biomedical-waste"
+              className="p-3.5 bg-slate-950/70 hover:bg-slate-950 border border-slate-800 hover:border-teal-500/50 rounded-2xl transition-all group"
+            >
+              <div className="flex items-center gap-2 font-bold text-xs text-emerald-300 mb-1">
+                <Trash2 className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+                PILLAR 3: SMART BIOMEDICAL WASTE
+              </div>
+              <p className="text-[11px] text-slate-400 leading-snug">
+                IoT smart bins, optical waste classifier, robot rover fleet & QR digital waste passport.
+              </p>
+            </Link>
+          </div>
+
+          {/* Architecture Pipeline Visualizer */}
+          <div className="bg-slate-950/90 rounded-2xl p-3 border border-slate-800/80 flex items-center justify-between overflow-x-auto text-[11px] gap-2 text-slate-400 whitespace-nowrap">
+            <span className="font-bold text-white">Ecosystem Flow:</span>
+            <span>Patient Portal</span>
+            <span className="text-teal-400">→</span>
+            <span>Report Scanner</span>
+            <span className="text-teal-400">→</span>
+            <span>A2A AI Coordinator</span>
+            <span className="text-teal-400">→</span>
+            <span>Doctor Dashboard</span>
+            <span className="text-teal-400">→</span>
+            <span className="text-emerald-300 font-semibold">Smart Bio-Bin</span>
+            <span className="text-teal-400">→</span>
+            <span className="text-purple-300 font-semibold">Robot Collection</span>
+            <span className="text-teal-400">→</span>
+            <span className="text-teal-300 font-semibold">Digital Passport (QR)</span>
           </div>
         </div>
 

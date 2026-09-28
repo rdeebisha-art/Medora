@@ -13,6 +13,7 @@ import { ActiveCallModal } from './ActiveCallModal';
 import { MedoraSearchBar } from './MedoraSearchBar';
 import HeaderSyncStatus from './HeaderSyncStatus';
 import ExportPatientSummaryModal from './ExportPatientSummaryModal';
+import { MedoraGlobalHeader } from './layout/MedoraGlobalHeader';
 
 const LANGUAGES = [
   { code: 'en', label: 'EN', name: 'English', native: 'English' },
@@ -77,110 +78,7 @@ export default function Layout({ children }: LayoutProps) {
     <div className={`min-h-screen flex flex-col bg-transparent text-[#0F172A] overflow-x-hidden ${is2GMode ? 'text-base' : ''} ${isSimpleMode ? 'text-lg' : ''}`}>
       <ConnectivityStatusIndicator />
 
-      <header className="bg-[#0F766E] text-white px-3 sm:px-4 py-2 sm:py-2.5 shadow-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
-          {/* Logo & Tagline */}
-          <Link to="/dashboard" className="flex items-center gap-2 group min-w-0 flex-shrink-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-gradient-to-br from-teal-400 to-teal-600 text-teal-950 font-black text-lg sm:text-xl flex items-center justify-center shadow-sm flex-shrink-0">
-              +
-            </div>
-            <div className="min-w-0">
-              <div className="text-base sm:text-lg font-black tracking-tight leading-none group-hover:text-teal-200 transition-colors truncate">
-                MEDORA
-              </div>
-              <div className="text-[10px] text-teal-200/90 font-medium mt-0.5 tracking-wide hidden md:block truncate">
-                {t('app.tagline')}
-              </div>
-            </div>
-          </Link>
-
-          {/* Central Universal Search Bar (Desktop & Tablet) */}
-          <div className="flex-1 max-w-md mx-2 hidden sm:block relative">
-            <MedoraSearchBar variant="header" />
-          </div>
-
-          {/* Header Controls */}
-          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-            {/* Real-time Background Sync Status Badge */}
-            <HeaderSyncStatus />
-
-            {/* 2G Toggle */}
-            <button
-              onClick={toggle2GMode}
-              className={`text-[10px] px-2 py-1 rounded-xl border font-bold transition-all min-h-[32px] sm:min-h-[36px] ${
-                is2GMode ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm' : 'bg-teal-900/60 border-teal-600/50 text-teal-200 hover:bg-teal-700'
-              }`}
-              title="Toggle Ultra Low-Bandwidth Mode"
-            >
-              2G {is2GMode ? 'ON' : 'OFF'}
-            </button>
-
-            {/* Voice Navigation Button */}
-            <button
-              type="button"
-              onClick={() => setVoiceNavOpen(true)}
-              className="flex items-center gap-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-2 sm:px-2.5 py-1 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer min-h-[32px] sm:min-h-[36px]"
-              title="Voice Navigation (Multilingual & Offline)"
-              aria-label="Voice Navigation"
-            >
-              <Mic size={14} className="animate-pulse text-emerald-200" />
-              <span className="hidden sm:inline">Voice Nav</span>
-            </button>
-
-            {/* Language Dropdown Button */}
-            <div className="relative">
-              <button
-                onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                className="flex items-center gap-1 bg-teal-900/80 hover:bg-teal-700 border border-teal-600/50 px-2 sm:px-2.5 py-1 rounded-xl text-xs font-bold text-teal-100 transition-colors min-h-[32px] sm:min-h-[36px]"
-              >
-                <Globe size={13} className="text-teal-300" />
-                <span>{LANGUAGES.find((l) => l.code === language)?.label || 'EN'}</span>
-                <ChevronDown size={11} className="opacity-70" />
-              </button>
-
-              {langDropdownOpen && (
-                <div className="absolute right-0 top-full mt-1.5 bg-white text-slate-800 rounded-2xl shadow-2xl z-50 min-w-[150px] overflow-hidden border border-slate-200">
-                  <div className="px-3 py-2 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    {t('common.interfaceLanguage')}
-                  </div>
-                  {LANGUAGES.map((l) => (
-                    <button
-                      key={l.code}
-                      onClick={() => {
-                        setLanguage(l.code);
-                        setLangDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-3.5 py-2.5 text-xs hover:bg-teal-50 flex items-center justify-between transition-colors min-h-10 ${
-                        language === l.code ? 'bg-teal-50 font-bold text-teal-800' : 'text-slate-700'
-                      }`}
-                    >
-                      <span>{l.native}</span>
-                      <span className="text-[10px] text-slate-400 font-normal">{l.name}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Notifications */}
-            <NotificationBell />
-
-            {/* Profile Avatar / More Toggle */}
-            <button
-              onClick={() => setMoreDrawerOpen(true)}
-              className="w-8 h-8 rounded-full bg-teal-700 hover:bg-teal-600 border border-teal-500/50 flex items-center justify-center text-xs font-bold text-teal-100 transition-colors min-h-[32px] min-w-[32px]"
-              title="More Menu"
-            >
-              {currentUser?.name ? currentUser.name[0].toUpperCase() : <User size={15} />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Search Bar Row (Mobile only - always visible on smaller screens) */}
-        <div className="sm:hidden mt-2 pt-1 border-t border-teal-600/30">
-          <MedoraSearchBar variant="mobile" />
-        </div>
-      </header>
+      <MedoraGlobalHeader />
 
       {/* Backdrop overlay for language dropdown */}
       {langDropdownOpen && <div className="fixed inset-0 z-30" onClick={() => setLangDropdownOpen(false)} />}

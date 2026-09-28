@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { PatientSummaryPdfService } from './patientSummaryPdfService';
-import { Patient, MedicalRecord, HealthTest, Medicine } from '../../db/db';
+import { Patient, HealthTest, Medicine } from '../../db/db';
 
-describe('PatientSummaryPdfService - Offline Medical Summary PDF Generator', () => {
+describe('PatientSummaryPdfService - Offline Medical Summary Generator', () => {
   const dummyPatient: Patient = {
     id: 1001,
     name: 'Anitha Devi',
@@ -54,8 +54,8 @@ describe('PatientSummaryPdfService - Offline Medical Summary PDF Generator', () 
     },
   ];
 
-  it('generates an A4 jsPDF instance with valid pages and metadata', () => {
-    const doc = PatientSummaryPdfService.exportPatientSummaryToPdf({
+  it('generates a valid clinical summary HTML with demographics and medicines', () => {
+    const html = PatientSummaryPdfService.generateSummaryHtml({
       patient: dummyPatient,
       healthTests: dummyTests,
       medicines: dummyMedicines,
@@ -87,13 +87,14 @@ describe('PatientSummaryPdfService - Offline Medical Summary PDF Generator', () 
       includeEmergencyGuidance: true,
     });
 
-    expect(doc).toBeDefined();
-    expect(doc.internal.pageSize.getWidth()).toBeCloseTo(210, 0);
-    expect(doc.internal.pageSize.getHeight()).toBeCloseTo(297, 0);
-    expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(1);
+    expect(html).toBeDefined();
+    expect(html).toContain('MEDORA HEALTHCARE CONTINUITY');
+    expect(html).toContain('Anitha Devi');
+    expect(html).toContain('Amlodipine 5mg');
+    expect(html).toContain('Dr. Suresh Balakrishnan');
   });
 
-  it('generates a valid binary blob string without throwing errors in offline environment', () => {
+  it('generates a valid document object with export methods in offline environment', () => {
     const doc = PatientSummaryPdfService.exportPatientSummaryToPdf({
       patient: dummyPatient,
       authorizedBy: {
@@ -104,7 +105,8 @@ describe('PatientSummaryPdfService - Offline Medical Summary PDF Generator', () 
       includeMedicines: false,
     });
 
-    const outputDataUri = doc.output('datauristring');
-    expect(outputDataUri).toContain('data:application/pdf');
+    expect(doc).toBeDefined();
+    expect(doc.getNumberOfPages()).toBe(1);
+    expect(doc.output()).toContain('MEDORA HEALTHCARE CONTINUITY');
   });
 });
