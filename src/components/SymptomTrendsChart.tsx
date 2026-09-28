@@ -104,7 +104,7 @@ export const SymptomTrendsChart: React.FC = () => {
   const { t } = useTranslation();
   const { currentUser } = useAppStore();
 
-  const [activeTab, setActiveTab] = useState<'frequency' | 'timeline' | 'distribution'>('frequency');
+  const [activeTab, setActiveTab] = useState<'timeline' | 'frequency' | 'distribution'>('timeline');
   const [timeRange, setTimeRange] = useState<'7d' | '14d' | '30d' | 'all'>('30d');
   const [symptomEntries, setSymptomEntries] = useState<SymptomRecordEntry[]>([]);
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
@@ -267,6 +267,39 @@ export const SymptomTrendsChart: React.FC = () => {
 
     const trendDirection = secondHalfAvg < firstHalfAvg ? 'improving' : secondHalfAvg > firstHalfAvg ? 'worsening' : 'stable';
 
+    // Compute episode recurrence interval for top symptom
+    const topDates = filteredEntries
+      .filter((e) => e.symptoms.includes(top))
+      .map((e) => new Date(e.date).getTime())
+      .sort((a, b) => a - b);
+    let avgIntervalDays: number | null = null;
+    if (topDates.length >= 2) {
+      let diffSum = 0;
+      for (let i = 1; i < topDates.length; i++) {
+        diffSum += (topDates[i] - topDates[i - 1]) / (1000 * 60 * 60 * 24);
+      }
+      avgIntervalDays = Math.round((diffSum / (topDates.length - 1)) * 10) / 10;
+    }
+
+    // Compute frequent symptom co-occurrences
+    const pairCounts: Record<string, number> = {};
+    filteredEntries.forEach((entry) => {
+      if (entry.symptoms.length > 1) {
+        for (let i = 0; i < entry.symptoms.length; i++) {
+          for (let j = i + 1; j < entry.symptoms.length; j++) {
+            const pair = [entry.symptoms[i], entry.symptoms[j]].sort().join(' + ');
+            pairCounts[pair] = (pairCounts[pair] || 0) + 1;
+          }
+        }
+      }
+    });
+    let topCoOccurrence: { pair: string; count: number } | null = null;
+    for (const [pair, count] of Object.entries(pairCounts)) {
+      if (!topCoOccurrence || count > topCoOccurrence.count) {
+        topCoOccurrence = { pair, count };
+      }
+    }
+
     return {
       topSymptom: top,
       avgSeverityScore: avgScore,
@@ -275,6 +308,8 @@ export const SymptomTrendsChart: React.FC = () => {
       trendDirection,
       hasCriticalAlert: hasCritical,
       totalLogged: filteredEntries.length,
+      avgIntervalDays,
+      topCoOccurrence,
     };
   }, [filteredEntries, frequencyData]);
 
@@ -576,74 +611,128 @@ export const SymptomTrendsChart: React.FC = () => {
           </div>
 
           {timelineData.length > 0 ? (
-            <div className="h-64 sm:h-72 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={timelineData} margin={{ top: 10, right: 10, left: -20, bottom: 10 }}>
-                  <defs>
-                    <linearGradient id="severityGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0F766E" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#0F766E" stopOpacity={0.0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fill: '#475569', fontSize: 11, fontWeight: 600 }}
-                  />
-                  <YAxis
-                    ticks={[1, 2, 3, 4]}
-                    tickFormatter={(val) =>
-                      val === 1 ? 'Mild' : val === 2 ? 'Mod' : val === 3 ? 'Sev' : 'Crit'
-                    }
-                    tick={{ fill: '#475569', fontSize: 10, fontWeight: 700 }}
-                    domain={[0.5, 4.5]}
-                  />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                          <div className="bg-white border border-slate-200 rounded-xl p-2.5 shadow-lg text-xs space-y-1">
-                            <div className="font-black text-slate-900">{data.rawDate}</div>
-                            <div className="flex items-center gap-1.5 font-bold">
-                              <span>Severity:</span>
-                              <span
-                                className="px-1.5 py-0.5 rounded text-[10px] font-black text-white"
-                                style={{
-                                  backgroundColor:
-                                    SEVERITY_COLORS[data.maxSeverity] || SEVERITY_COLORS.Moderate,
-                                }}
-                              >
-                                {data.maxSeverity} ({data.severityScore}/4)
-                              </span>
-                            </div>
-                            <div className="text-[11px] text-slate-600 pt-1 border-t border-slate-100">
-                              <span className="font-semibold">Symptoms:</span> {data.symptomsList}
-                            </div>
-                          </div>
-                        );
+            <div className="space-y-4">
+              <div className="h-64 sm:h-72 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={timelineData} margin={{ top: 10, right: 10, left: -20, bottom: 10 }}>
+                    <defs>
+                      <linearGradient id="severityGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#0F766E" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="#0F766E" stopOpacity={0.0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fill: '#475569', fontSize: 11, fontWeight: 600 }}
+                    />
+                    <YAxis
+                      ticks={[1, 2, 3, 4]}
+                      tickFormatter={(val) =>
+                        val === 1 ? 'Mild' : val === 2 ? 'Mod' : val === 3 ? 'Sev' : 'Crit'
                       }
-                      return null;
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="severityScore"
-                    stroke="#0F766E"
-                    strokeWidth={2.5}
-                    fillOpacity={1}
-                    fill="url(#severityGrad)"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="severityScore"
-                    stroke="#0F766E"
-                    strokeWidth={2.5}
-                    dot={{ r: 4, fill: '#0F766E', strokeWidth: 2, stroke: '#fff' }}
-                    activeDot={{ r: 6, fill: '#DC2626' }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+                      tick={{ fill: '#475569', fontSize: 10, fontWeight: 700 }}
+                      domain={[0.5, 4.5]}
+                    />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-white border border-slate-200 rounded-xl p-2.5 shadow-lg text-xs space-y-1">
+                              <div className="font-black text-slate-900">{data.rawDate}</div>
+                              <div className="flex items-center gap-1.5 font-bold">
+                                <span>Severity:</span>
+                                <span
+                                  className="px-1.5 py-0.5 rounded text-[10px] font-black text-white"
+                                  style={{
+                                    backgroundColor:
+                                      SEVERITY_COLORS[data.maxSeverity] || SEVERITY_COLORS.Moderate,
+                                  }}
+                                >
+                                  {data.maxSeverity} ({data.severityScore}/4)
+                                </span>
+                              </div>
+                              <div className="text-[11px] text-slate-600 pt-1 border-t border-slate-100">
+                                <span className="font-semibold">Symptoms:</span> {data.symptomsList}
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="severityScore"
+                      stroke="#0F766E"
+                      strokeWidth={2.5}
+                      fillOpacity={1}
+                      fill="url(#severityGrad)"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="severityScore"
+                      stroke="#0F766E"
+                      strokeWidth={2.5}
+                      dot={{ r: 4, fill: '#0F766E', strokeWidth: 2, stroke: '#fff' }}
+                      activeDot={{ r: 6, fill: '#DC2626' }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Identified Clinical Patterns Box */}
+              <div className="pt-3 border-t border-slate-200 space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-black text-slate-800">
+                  <Sparkles size={14} className="text-teal-600" />
+                  <span>Identified Symptom Patterns ({timeRange})</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                  <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Trajectory Pattern</span>
+                    <span className="font-black text-slate-900 flex items-center gap-1 mt-0.5">
+                      {insights.trendDirection === 'improving' ? '📉 Improving Trend' : insights.trendDirection === 'worsening' ? '📈 Escalating Pattern' : '➡️ Stable Fluctuation'}
+                    </span>
+                    <p className="text-[10px] text-slate-500 mt-1">
+                      {insights.trendDirection === 'improving'
+                        ? 'Recent entries show lower severity scores than earlier recorded episodes.'
+                        : insights.trendDirection === 'worsening'
+                        ? 'Recent recorded episodes reflect increased clinical severity.'
+                        : 'Symptom severity has remained consistent over recorded observations.'}
+                    </p>
+                  </div>
+
+                  <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Episode Recurrence</span>
+                    <span className="font-black text-slate-900 flex items-center gap-1 mt-0.5">
+                      {insights.avgIntervalDays
+                        ? `🔄 Recurrent every ~${insights.avgIntervalDays} days`
+                        : '🔄 Isolated Episodes'}
+                    </span>
+                    <p className="text-[10px] text-slate-500 mt-1">
+                      {insights.avgIntervalDays
+                        ? `Episodes of ${insights.topSymptom} exhibit an average recurrence interval of ${insights.avgIntervalDays} days.`
+                        : `Episodes of ${insights.topSymptom} appear as discrete flareups with intermittent recovery.`}
+                    </p>
+                  </div>
+
+                  <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Co-Occurrence & Trigger</span>
+                    <span className="font-black text-teal-800 flex items-center gap-1 mt-0.5">
+                      {insights.topCoOccurrence
+                        ? `🔗 ${insights.topCoOccurrence.pair}`
+                        : '💡 Preventive Hydration'}
+                    </span>
+                    <p className="text-[10px] text-slate-500 mt-1">
+                      {insights.topCoOccurrence
+                        ? `These symptoms occurred simultaneously in ${insights.topCoOccurrence.count} episodes, suggesting linked systemic triggers.`
+                        : 'Consistent rest and adherence to prescribed medications help stabilize periodic symptoms.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="h-48 flex items-center justify-center text-xs text-slate-500">

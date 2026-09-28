@@ -574,13 +574,166 @@ export class PatientSummaryPdfService {
   }
 
   /**
-   * Generates and downloads the PDF directly
+   * Generates and downloads the full patient summary PDF
    */
   static downloadPatientSummaryPdf(options: ExportSummaryOptions): void {
     const doc = this.exportPatientSummaryToPdf(options);
-    const sanitizedName = options.patient.name.replace(/\s+/g, '_');
-    const filename = `Medora_Patient_Summary_${sanitizedName}_P${options.patient.id || 1001}.pdf`;
+    const sanitizedName = (options.patient?.name || 'Patient').replace(/\s+/g, '_');
+    const filename = `Medora_Patient_Summary_${sanitizedName}_P${options.patient?.id || 1001}.pdf`;
     doc.save(filename);
+  }
+
+  /**
+   * Generates and downloads a dedicated single medical record / report PDF for offline sharing or doctor visits
+   */
+  static downloadSingleRecordPdf(options: {
+    record: MedicalRecord;
+    patient?: Patient | null;
+    authorizedBy?: { name: string; role: string };
+  }): void {
+    const { record, patient, authorizedBy } = options;
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 14;
+    const contentWidth = pageWidth - margin * 2;
+    let y = margin;
+
+    // Header band
+    doc.setFillColor(15, 118, 110);
+    doc.rect(margin, y, contentWidth, 22, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.text('MEDORA RURAL HEALTHCARE PLATFORM', margin + 4, y + 7);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.text('Official Clinical Medical Record & Consultation Document', margin + 4, y + 12.5);
+    doc.text('Kodaikanal Hill Region Healthcare Network • Offline Clinical Vault', margin + 4, y + 17);
+
+    y += 26;
+
+    // Patient & Record Metadata Box
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(margin, y, contentWidth, 30, 2, 2, 'FD');
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text(`Patient: ${patient?.name || 'Registered Patient'}`, margin + 4, y + 6);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text(`Patient ID: P-${patient?.id || record.patientId || '1001'}`, margin + 4, y + 11.5);
+    doc.text(`Age / Gender: ${patient?.age || '—'} Yrs / ${patient?.gender || '—'}`, margin + 4, y + 16.5);
+    doc.text(`Village: ${patient?.village || 'Kodaikanal Rural Area'}`, margin + 4, y + 21.5);
+    doc.text(`Contact: ${patient?.phone || '+91 98765 43210'}`, margin + 4, y + 26.5);
+
+    const col2X = margin + 85;
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Record Type: ${record.type?.toUpperCase()}`, col2X, y + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Document Date: ${record.date} ${record.time || ''}`, col2X, y + 11.5);
+    doc.text(`Attending Doctor: ${record.doctor || 'Dr. Suresh Balakrishnan'}`, col2X, y + 16.5);
+    doc.text(`Hospital/Facility: ${record.hospital || 'Kodaikanal Government Hospital'}`, col2X, y + 21.5);
+    doc.text(`Record ID: REC-${record.id || 'OFFLINE'}`, col2X, y + 26.5);
+
+    y += 35;
+
+    // Record Title & Subject
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(15, 118, 110);
+    const reportTitle = (record.data as any)?.reportName || record.title || `${record.type.toUpperCase()} Record`;
+    doc.text(reportTitle, margin, y);
+    doc.setDrawColor(15, 118, 110);
+    doc.line(margin, y + 1.5, pageWidth - margin, y + 1.5);
+    y += 7;
+
+    // Clinical Details & Notes
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(51, 65, 85);
+    doc.text('Clinical Description & Findings:', margin, y);
+    y += 5;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(15, 23, 42);
+
+    const descText = record.notes || (record.data as any)?.description || (record.data as any)?.summary || 'Recorded clinical consultation notes preserved in Medora offline database.';
+    const splitDesc = doc.splitTextToSize(descText, contentWidth);
+    doc.text(splitDesc, margin, y);
+    y += splitDesc.length * 4.5 + 4;
+
+    // Structured Data (Measurements / Values)
+    if (record.data && typeof record.data === 'object') {
+      const dataObj = record.data as Record<string, any>;
+      const keys = Object.keys(dataObj).filter(k => k !== 'fileData' && k !== 'attachedFileData');
+      if (keys.length > 0) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(51, 65, 85);
+        doc.text('Recorded Parameters & Values:', margin, y);
+        y += 5;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        keys.slice(0, 8).forEach(key => {
+          const val = typeof dataObj[key] === 'object' ? JSON.stringify(dataObj[key]) : String(dataObj[key]);
+          doc.text(`• ${key.replace(/([A-Z])/g, ' $1').toUpperCase()}: ${val}`, margin + 3, y);
+          y += 4;
+        });
+        y += 3;
+      }
+    }
+
+    // Doctor Visit & Offline Sharing Verification
+    y += 10;
+    doc.setFillColor(240, 253, 250);
+    doc.setDrawColor(20, 184, 166);
+    doc.roundedRect(margin, y, contentWidth, 22, 2, 2, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(15, 118, 110);
+    doc.text('OFFLINE CLINICAL VERIFICATION & DOCTOR VISIT USE', margin + 4, y + 6);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(51, 65, 85);
+    doc.text(
+      'This document is generated by Medora Offline Health Companion for direct presentation during Primary Health Centre (PHC)',
+      margin + 4,
+      y + 11
+    );
+    doc.text(
+      `consultations, emergency referrals, and clinical follow-ups. Authorized by: ${authorizedBy?.name || 'Attending Rural Clinician'} (${authorizedBy?.role || 'Clinician'}).`,
+      margin + 4,
+      y + 16
+    );
+
+    // Footer
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.5);
+    doc.setTextColor(148, 163, 184);
+    doc.text(
+      `Generated on ${new Date().toLocaleDateString('en-IN')} at ${new Date().toLocaleTimeString('en-IN')} • Medora Offline Vault`,
+      pageWidth / 2,
+      pageHeight - 8,
+      { align: 'center' }
+    );
+
+    const safeTitle = (reportTitle || 'Record').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30);
+    doc.save(`Medora_Record_${safeTitle}_${record.date}.pdf`);
   }
 }
 

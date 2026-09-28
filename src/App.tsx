@@ -42,6 +42,7 @@ import AppointmentsPage from './pages/AppointmentsPage';
 import CallHistoryPage from './pages/CallHistoryPage';
 import AgentSimulationPage from './pages/AgentSimulationPage';
 import MedicalWasteManagementPage from './modules/medicalWaste/pages/MedicalWasteManagementPage';
+import PillIdentifierPage from './pages/PillIdentifierPage';
 
 import MedicalHospitalBackground from './components/layout/MedicalHospitalBackground';
 import { ActiveCallModal } from './components/ActiveCallModal';
@@ -138,6 +139,7 @@ export default function App() {
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
       <Route path="/medical-waste" element={<ProtectedRoute><MedicalWasteManagementPage /></ProtectedRoute>} />
+      <Route path="/pill-identifier" element={<ProtectedRoute><PillIdentifierPage /></ProtectedRoute>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/welcome" replace />} />

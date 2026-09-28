@@ -219,6 +219,10 @@ export interface Medicine {
   doctor: string;
   instructions: string;
   status: 'active' | 'completed' | 'paused';
+  morning?: boolean;
+  afternoon?: boolean;
+  night?: boolean;
+  mealTiming?: string;
   lastTaken?: string;
   missedCount?: number;
 }

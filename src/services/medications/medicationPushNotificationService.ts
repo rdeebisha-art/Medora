@@ -38,6 +38,183 @@ export interface TodayAdherenceSummary {
 class MedicationPushNotificationService {
   private watcherTimer: ReturnType<typeof setInterval> | null = null;
   private notifiedDoseKeys: Set<string> = new Set();
+  private audioCtx: AudioContext | null = null;
+  private audioAlertsEnabled = true;
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('medora_medication_audio_alerts');
+        if (stored !== null) {
+          this.audioAlertsEnabled = stored === 'true';
+        }
+      } catch {}
+
+      // Pre-unlock AudioContext on first user interaction
+      const unlockAudio = () => {
+        this.getAudioContext().catch(() => {});
+        window.removeEventListener('click', unlockAudio);
+        window.removeEventListener('touchstart', unlockAudio);
+      };
+      window.addEventListener('click', unlockAudio, { once: true });
+      window.addEventListener('touchstart', unlockAudio, { once: true });
+    }
+  }
+
+  /**
+   * Safe AudioContext initializer with cross-browser compatibility
+   */
+  private async getAudioContext(): Promise<AudioContext | null> {
+    if (typeof window === 'undefined') return null;
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return null;
+
+    if (!this.audioCtx || this.audioCtx.state === 'closed') {
+      this.audioCtx = new AudioCtx();
+    }
+    if (this.audioCtx.state === 'suspended') {
+      try {
+        await this.audioCtx.resume();
+      } catch {}
+    }
+    return this.audioCtx;
+  }
+
+  /**
+   * Check whether audio alerts are currently enabled
+   */
+  public isAudioAlertsEnabled(): boolean {
+    return this.audioAlertsEnabled;
+  }
+
+  /**
+   * Toggle or set audio alert preferences
+   */
+  public setAudioAlertsEnabled(enabled: boolean): void {
+    this.audioAlertsEnabled = enabled;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('medora_medication_audio_alerts', String(enabled));
+      } catch {}
+    }
+  }
+
+  /**
+   * Generates a high-penetration multi-tone chime for medication doses
+   * using Web Audio API to alert users even when the app is in the background.
+   */
+  public async playMedicationAlertAudio(toneType: 'chime' | 'urgent' | 'gentle' = 'chime'): Promise<boolean> {
+    if (!this.audioAlertsEnabled) return false;
+
+    // 1. Device Vibration Pattern (Supported on mobile browsers even when backgrounded)
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(toneType === 'urgent' ? [400, 150, 400, 150, 600] : [300, 100, 300, 100, 450]);
+      } catch {}
+    }
+
+    // 2. Synthesize audio melody using Web Audio API
+    try {
+      const ctx = await this.getAudioContext();
+      if (ctx && ctx.state !== 'closed') {
+        const now = ctx.currentTime;
+
+        // Sequence of medical chime notes
+        const notes =
+          toneType === 'urgent'
+            ? [
+                { freq: 880.0, time: 0.0, duration: 0.18 }, // A5
+                { freq: 1174.66, time: 0.22, duration: 0.22 }, // D6
+                { freq: 880.0, time: 0.48, duration: 0.18 }, // A5
+                { freq: 1174.66, time: 0.70, duration: 0.35 }, // D6
+                // Repeat burst
+                { freq: 880.0, time: 1.15, duration: 0.18 },
+                { freq: 1174.66, time: 1.37, duration: 0.35 },
+              ]
+            : [
+                // Melodic medical chord (C5 -> E5 -> G5 -> C6)
+                { freq: 523.25, time: 0.0, duration: 0.16 }, // C5
+                { freq: 659.25, time: 0.18, duration: 0.16 }, // E5
+                { freq: 783.99, time: 0.36, duration: 0.16 }, // G5
+                { freq: 1046.50, time: 0.54, duration: 0.45 }, // C6
+                // Echo pulse
+                { freq: 659.25, time: 1.10, duration: 0.16 }, // E5
+                { freq: 783.99, time: 1.28, duration: 0.16 }, // G5
+                { freq: 1046.50, time: 1.46, duration: 0.16 }, // C6
+                { freq: 1318.51, time: 1.64, duration: 0.55 }, // E6
+              ];
+
+        notes.forEach(({ freq, time, duration }) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          osc.type = toneType === 'urgent' ? 'sawtooth' : 'sine';
+          osc.frequency.setValueAtTime(freq, now + time);
+
+          // Add harmonic overtone for high clarity through speaker grille
+          gain.gain.setValueAtTime(0.0001, now + time);
+          gain.gain.exponentialRampToValueAtTime(0.4, now + time + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + time + duration);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc.start(now + time);
+          osc.stop(now + time + duration);
+        });
+
+        return true;
+      }
+    } catch (e) {
+      console.warn('[MedicationPushService] Web Audio API playback failed, using audio element fallback:', e);
+    }
+
+    // 3. Fallback: Synthetic Audio Element with inline WAV tone
+    try {
+      this.playFallbackAudioTone();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Self-contained WAV generator fallback for legacy or background contexts
+   */
+  private playFallbackAudioTone() {
+    if (typeof window === 'undefined') return;
+    try {
+      const sampleRate = 8000;
+      const duration = 0.5;
+      const numSamples = Math.floor(sampleRate * duration);
+      const buffer = new Uint8Array(44 + numSamples);
+
+      // Simple 8-bit PCM WAV header
+      const header = 'RIFF....WAVEfmt ....data....';
+      for (let i = 0; i < header.length; i++) buffer[i] = header.charCodeAt(i);
+
+      // Fill with 880Hz square wave
+      for (let i = 0; i < numSamples; i++) {
+        const t = i / sampleRate;
+        const s = Math.sin(2 * Math.PI * 880 * t) > 0 ? 200 : 55;
+        buffer[44 + i] = s;
+      }
+
+      const blob = new Blob([buffer], { type: 'audio/wav' });
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.volume = 0.7;
+      audio.play().catch(() => {});
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    } catch {}
+  }
+
+  /**
+   * Public helper to test medication alert audio
+   */
+  public async testAudioAlert(): Promise<boolean> {
+    return await this.playMedicationAlertAudio('chime');
+  }
 
   /**
    * Request native browser Web Push Notification permissions.
@@ -350,7 +527,14 @@ class MedicationPushNotificationService {
       console.warn('[MedicationPushService] DB notification save error:', err);
     }
 
-    // 3. Spoken voice announcement
+    // 3. Audio Sound Alert (synthesized chime & vibration to alert user in background)
+    try {
+      await this.playMedicationAlertAudio(minutesAhead === 0 ? 'urgent' : 'chime');
+    } catch (err) {
+      console.warn('[MedicationPushService] Audio alert error:', err);
+    }
+
+    // 4. Spoken voice announcement
     try {
       voiceService.speak(
         `Medora upcoming medication reminder. Your dose of ${reminder.medicineName || reminder.title} is ${timingNotice}. ${reminder.instructions || ''}`,

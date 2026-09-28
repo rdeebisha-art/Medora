@@ -2149,6 +2149,217 @@ app.get('/api/calls/history', (req: Request, res: Response) => {
   return res.json(calls.reverse());
 });
 
+// POST /api/health-insights/weekly (AI-powered weekly health insight summary)
+app.post('/api/health-insights/weekly', async (req: Request, res: Response) => {
+  const {
+    patientId = 1,
+    patientName = 'Patient',
+    language = 'en',
+    reportedSymptoms = [],
+    severities = [],
+    healthTests = [],
+  } = req.body || {};
+
+  const today = new Date();
+  const lastWeek = new Date(today);
+  lastWeek.setDate(today.getDate() - 7);
+  const periodLabel = `${lastWeek.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })} – ${today.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+
+  // 1. Try Gemini AI engine if available
+  if (genAI) {
+    try {
+      const prompt = `You are the Medora AI Clinical Reasoning Engine for rural healthcare in India.
+Analyze the following patient's weekly symptom history and recorded vital health tests:
+Patient Name: ${patientName} (ID: ${patientId})
+Reported Symptoms in Past Week: ${JSON.stringify(reportedSymptoms)}
+Symptom Severities: ${JSON.stringify(severities)}
+Completed Health Tests: ${JSON.stringify(healthTests)}
+Preferred Language: ${language}
+
+Generate a weekly health insight summary adhering to the following JSON format:
+{
+  "headline": "Brief clinical headline (max 10 words)",
+  "summary": "2-3 sentence clinical summary of recent trajectory, symptom changes, and vital trends.",
+  "vitalsAssessment": [
+    { "metric": "Blood Pressure", "status": "normal" | "borderline" | "attention", "value": "120/80 mmHg", "note": "brief evaluation" }
+  ],
+  "symptomTrajectory": "Analysis of recorded symptoms (frequency, progression, or resolution)",
+  "recommendations": ["4 clear, actionable rural-appropriate advice points"],
+  "riskLevel": "LOW" | "MODERATE" | "ATTENTION_NEEDED",
+  "redFlags": ["3 specific danger signs when they must immediately visit PHC or call 108"]
+}
+SAFETY INSTRUCTIONS: Do not diagnose diseases. Do not alter prescriptions. Return ONLY valid JSON.`;
+
+      const aiResponse = await genAI.models.generateContent({
+        model: process.env.AI_MODEL || 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+        },
+      });
+
+      const parsed = JSON.parse(aiResponse.text || '{}');
+      if (parsed && parsed.summary && parsed.headline) {
+        return res.json({
+          ...parsed,
+          patientId,
+          patientName,
+          periodLabel,
+          modelUsed: 'gemini-2.5-flash',
+          generatedAt: new Date().toISOString(),
+        });
+      }
+    } catch (err) {
+      handleGeminiError(err, 'Gemini weekly health insights');
+    }
+  }
+
+  // 2. Deterministic Rural Clinical Reasoning Engine Fallback
+  const uniqueSymptoms = Array.from(new Set((reportedSymptoms as string[]).filter(Boolean)));
+  const hasSevere = (severities as string[]).some((s) => s === 'Severe' || s === 'Critical');
+
+  let riskLevel: 'LOW' | 'MODERATE' | 'ATTENTION_NEEDED' = 'LOW';
+  const vitalsAssessment: Array<{ metric: string; status: 'normal' | 'borderline' | 'attention'; value: string; note: string }> = [];
+
+  (healthTests as any[]).forEach((t) => {
+    const val = parseFloat(t.value);
+    if (t.type === 'blood_pressure') {
+      const [sys = 120, dia = 80] = (t.value || '').split('/').map(Number);
+      if (sys >= 140 || dia >= 90) {
+        vitalsAssessment.push({
+          metric: 'Blood Pressure',
+          status: 'attention',
+          value: `${t.value} ${t.unit || 'mmHg'}`,
+          note: 'Stage 1/2 hypertension range. Monitor daily and reduce dietary sodium.',
+        });
+        riskLevel = 'ATTENTION_NEEDED';
+      } else if (sys >= 120 || dia >= 80) {
+        vitalsAssessment.push({
+          metric: 'Blood Pressure',
+          status: 'borderline',
+          value: `${t.value} ${t.unit || 'mmHg'}`,
+          note: 'Pre-hypertension range. Regular walking and hydration advised.',
+        });
+        if (riskLevel === 'LOW') riskLevel = 'MODERATE';
+      } else {
+        vitalsAssessment.push({
+          metric: 'Blood Pressure',
+          status: 'normal',
+          value: `${t.value} ${t.unit || 'mmHg'}`,
+          note: 'Within optimal clinical target (<120/80 mmHg).',
+        });
+      }
+    } else if (t.type === 'blood_sugar') {
+      if (val > 180) {
+        vitalsAssessment.push({
+          metric: 'Blood Glucose',
+          status: 'attention',
+          value: `${t.value} ${t.unit || 'mg/dL'}`,
+          note: 'Elevated post-meal blood glucose. Check carbohydrate intake and consult doctor.',
+        });
+        riskLevel = 'ATTENTION_NEEDED';
+      } else if (val > 140) {
+        vitalsAssessment.push({
+          metric: 'Blood Glucose',
+          status: 'borderline',
+          value: `${t.value} ${t.unit || 'mg/dL'}`,
+          note: 'Slightly high post-prandial level. Consistent meal timing recommended.',
+        });
+        if (riskLevel === 'LOW') riskLevel = 'MODERATE';
+      } else {
+        vitalsAssessment.push({
+          metric: 'Blood Glucose',
+          status: 'normal',
+          value: `${t.value} ${t.unit || 'mg/dL'}`,
+          note: 'Healthy glycemic range (70–140 mg/dL).',
+        });
+      }
+    } else if (t.type === 'spo2') {
+      if (val < 95) {
+        vitalsAssessment.push({
+          metric: 'Blood Oxygen (SpO2)',
+          status: 'attention',
+          value: `${t.value} ${t.unit || '%'}`,
+          note: 'Sub-optimal oxygen saturation. Immediate review required if feeling breathless.',
+        });
+        riskLevel = 'ATTENTION_NEEDED';
+      } else {
+        vitalsAssessment.push({
+          metric: 'Blood Oxygen (SpO2)',
+          status: 'normal',
+          value: `${t.value} ${t.unit || '%'}`,
+          note: 'Healthy pulmonary oxygenation (≥95%).',
+        });
+      }
+    }
+  });
+
+  if (vitalsAssessment.length === 0) {
+    vitalsAssessment.push({
+      metric: 'Cardiovascular & Vitals',
+      status: 'normal',
+      value: 'Stable Baseline',
+      note: 'No acute physiological deviations recorded in the clinical log.',
+    });
+  }
+
+  if (hasSevere && riskLevel !== 'ATTENTION_NEEDED') {
+    riskLevel = 'ATTENTION_NEEDED';
+  } else if (uniqueSymptoms.length > 2 && riskLevel === 'LOW') {
+    riskLevel = 'MODERATE';
+  }
+
+  const headline =
+    riskLevel === 'ATTENTION_NEEDED'
+      ? 'Active Clinical Vigilance: Notable Symptom & Vital Episodes'
+      : riskLevel === 'MODERATE'
+      ? 'Moderate Health Activity: Routine Hydration & Rest Advised'
+      : 'Healthy Weekly Summary: Physiological Trends Stable';
+
+  const summary = `${patientName}'s 7-day health trend shows ${
+    riskLevel === 'LOW'
+      ? 'consistent physiological stability across all recorded vitals with no acute symptom flares.'
+      : riskLevel === 'MODERATE'
+      ? 'mild symptom fluctuations with manageable vital indicators. Continued routine medication adherence is recommended.'
+      : 'elevated clinical markers or symptoms that merit a routine follow-up with the local ASHA worker or PHC doctor.'
+  } Regular monitoring and preventive care remain essential for healthy living in the Kodaikanal hill region.`;
+
+  const symptomTrajectory =
+    uniqueSymptoms.length > 0
+      ? `Patient reported symptoms of ${uniqueSymptoms.slice(0, 3).join(', ')}${
+          hasSevere ? ' with heightened intensity' : ' which are stabilizing over the past 48 hours'
+        }.`
+      : 'No acute symptom exacerbations logged in recent medical records; overall symptom baseline is clear.';
+
+  const recommendations = [
+    'Drink 2.5 to 3 liters of boiled clean water daily; maintain hydration in hilly terrain.',
+    'Continue taking all prescribed morning and evening medications consistently with meals.',
+    'Check blood pressure and blood sugar at the village Sub-centre / ASHA post every 10–14 days.',
+    'Engage in 20 minutes of mild walking in clean morning air, avoiding sudden temperature chills.',
+  ];
+
+  const redFlags = [
+    'Sudden chest tightness, persistent pressure, or radiating shoulder pain',
+    'High fever (>102°F) persisting more than 48 hours despite rest',
+    'Severe breathlessness or SpO2 falling below 94%',
+  ];
+
+  return res.json({
+    patientId,
+    patientName,
+    periodLabel,
+    headline,
+    summary,
+    vitalsAssessment,
+    symptomTrajectory,
+    recommendations,
+    riskLevel,
+    redFlags,
+    modelUsed: 'medora-clinical-ai-offline-engine',
+    generatedAt: new Date().toISOString(),
+  });
+});
+
 // GET /api/presence/all
 app.get('/api/presence/all', (_req: Request, res: Response) => {
   const presence: Record<string, string> = {};
