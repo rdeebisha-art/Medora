@@ -225,6 +225,18 @@ export interface Medicine {
   mealTiming?: string;
   lastTaken?: string;
   missedCount?: number;
+  // Supply & Refill Management Fields:
+  currentSupply?: number;
+  initialSupply?: number;
+  supplyUnit?: string;
+  refillThreshold?: number;
+  dailyDoseCount?: number;
+  clinicName?: string;
+  clinicPhone?: string;
+  healthWorkerName?: string;
+  healthWorkerPhone?: string;
+  lastRefillRequestDate?: string;
+  lastRefillDate?: string;
 }
 
 export type MedicalRecordType =
@@ -1084,27 +1096,42 @@ export async function seedDatabase() {
       patientId: Number(p1), name: 'Folic Acid 5mg', dose: '1 tablet', frequency: 'Once daily',
       times: ['08:00'], startDate: '2024-01-01', endDate: '2024-12-31',
       doctor: 'Dr. Kavitha Rao', instructions: 'Take with water after breakfast', status: 'active',
+      currentSupply: 4, initialSupply: 30, supplyUnit: 'tablets', refillThreshold: 7, dailyDoseCount: 1,
+      clinicName: 'Kodaikanal Primary Health Centre (PHC)', clinicPhone: '+919800002222',
+      healthWorkerName: 'ASHA Worker Anjali Sharma', healthWorkerPhone: '+919876543210',
     },
     {
       patientId: Number(p1), name: 'Ferrous Sulphate 200mg', dose: '1 tablet', frequency: 'Twice daily',
       times: ['08:00', '20:00'], startDate: '2024-01-01', endDate: '2024-12-31',
       doctor: 'Dr. Kavitha Rao', instructions: 'Take after meals, avoid with tea/coffee', status: 'active',
+      currentSupply: 28, initialSupply: 60, supplyUnit: 'tablets', refillThreshold: 10, dailyDoseCount: 2,
+      clinicName: 'Kodaikanal Primary Health Centre (PHC)', clinicPhone: '+919800002222',
+      healthWorkerName: 'ASHA Worker Anjali Sharma', healthWorkerPhone: '+919876543210',
     },
     // Medicines for Ramesh Patel
     {
       patientId: Number(p2), name: 'Metformin 500mg', dose: '1 tablet', frequency: 'Twice daily',
       times: ['07:30', '19:30'], startDate: '2023-06-01', endDate: '2025-06-01',
       doctor: 'Dr. Arjun Mehta', instructions: 'Take with food', status: 'active',
+      currentSupply: 6, initialSupply: 60, supplyUnit: 'tablets', refillThreshold: 10, dailyDoseCount: 2,
+      clinicName: 'Kodaikanal Primary Health Centre (PHC)', clinicPhone: '+919800001111',
+      healthWorkerName: 'Health Worker Sunita Devi', healthWorkerPhone: '+919876543211',
     },
     {
       patientId: Number(p2), name: 'Amlodipine 5mg', dose: '1 tablet', frequency: 'Once daily',
       times: ['08:00'], startDate: '2023-06-01', endDate: '2025-06-01',
       doctor: 'Dr. Arjun Mehta', instructions: 'Take in the morning', status: 'active',
+      currentSupply: 2, initialSupply: 30, supplyUnit: 'tablets', refillThreshold: 5, dailyDoseCount: 1,
+      clinicName: 'Kodaikanal Primary Health Centre (PHC)', clinicPhone: '+919800001111',
+      healthWorkerName: 'Health Worker Sunita Devi', healthWorkerPhone: '+919876543211',
     },
     {
       patientId: Number(p2), name: 'Aspirin 75mg', dose: '1 tablet', frequency: 'Once daily',
       times: ['09:00'], startDate: '2023-06-01', endDate: '2025-06-01',
       doctor: 'Dr. Arjun Mehta', instructions: 'Take after breakfast', status: 'active',
+      currentSupply: 24, initialSupply: 30, supplyUnit: 'tablets', refillThreshold: 5, dailyDoseCount: 1,
+      clinicName: 'Kodaikanal Primary Health Centre (PHC)', clinicPhone: '+919800001111',
+      healthWorkerName: 'Health Worker Sunita Devi', healthWorkerPhone: '+919876543211',
     },
   ]);
 
