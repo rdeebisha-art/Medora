@@ -18,8 +18,11 @@ import {
   Thermometer,
   RotateCcw,
   Save,
-  Info
+  Info,
+  Mic,
 } from 'lucide-react';
+import { HandsFreeVoiceTriage } from './HandsFreeVoiceTriage';
+import { ParsedVoiceTriage } from '../services/voice/speechTriageParser';
 
 export type TriageUrgency = 'EMERGENCY_RED' | 'DOCTOR_AMBER' | 'HEALTH_WORKER_GREEN' | 'HOME_CARE_BLUE';
 
@@ -152,6 +155,99 @@ export const TriageAssessmentModal: React.FC<TriageAssessmentModalProps> = ({
     setSelectedSymptoms((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
+  };
+
+  const handleVoiceTriage = (result: ParsedVoiceTriage) => {
+    const newSymptoms: string[] = [];
+    const newRedFlags: string[] = [];
+
+    result.detectedSymptoms.forEach((sym) => {
+      switch (sym) {
+        case 'Fever':
+          newSymptoms.push('fever_high');
+          setSelectedCategory('general');
+          break;
+        case 'Cough':
+          newSymptoms.push('productive_cough');
+          setSelectedCategory('respiratory');
+          break;
+        case 'Breathing difficulty':
+          newRedFlags.push('rf_breathing');
+          break;
+        case 'Chest pain':
+          newRedFlags.push('rf_chest');
+          break;
+        case 'Headache':
+          newSymptoms.push('severe_headache');
+          setSelectedCategory('head_pain');
+          break;
+        case 'Stomach pain':
+          newSymptoms.push('cramping_pain');
+          setSelectedCategory('digestive');
+          break;
+        case 'Vomiting':
+          newSymptoms.push('nausea_vomit');
+          setSelectedCategory('digestive');
+          break;
+        case 'Diarrhea':
+          newSymptoms.push('watery_diarrhea');
+          setSelectedCategory('digestive');
+          break;
+        case 'Dizziness':
+          newSymptoms.push('dizziness_standing');
+          setSelectedCategory('head_pain');
+          break;
+        case 'Fatigue':
+          newSymptoms.push('extreme_fatigue');
+          setSelectedCategory('general');
+          break;
+        case 'Body ache':
+          newSymptoms.push('neck_back_pain');
+          setSelectedCategory('head_pain');
+          break;
+        case 'Sore throat':
+          newSymptoms.push('sore_throat');
+          setSelectedCategory('respiratory');
+          break;
+        case 'Allergy':
+          newSymptoms.push('spreading_rash');
+          setSelectedCategory('skin_bites');
+          break;
+        case 'Bleeding':
+          newRedFlags.push('rf_bleed');
+          break;
+      }
+    });
+
+    if (newSymptoms.length > 0) {
+      setSelectedSymptoms((prev) => Array.from(new Set([...prev, ...newSymptoms])));
+    }
+    if (newRedFlags.length > 0) {
+      setSelectedRedFlags((prev) => Array.from(new Set([...prev, ...newRedFlags])));
+    }
+
+    if (result.detectedDuration) {
+      const dLower = result.detectedDuration.toLowerCase();
+      if (dLower.includes('today') || dLower.includes('morning')) {
+        setDuration('today');
+      } else if (dLower.includes('1') || dLower.includes('2') || dLower.includes('3') || dLower.includes('yesterday')) {
+        setDuration('1_to_3_days');
+      } else if (dLower.includes('4') || dLower.includes('5') || dLower.includes('6') || dLower.includes('7') || dLower.includes('week')) {
+        setDuration('4_to_7_days');
+      } else {
+        setDuration('more_than_week');
+      }
+    }
+
+    if (result.detectedSeverity) {
+      if (result.detectedSeverity === 'Severe' || result.detectedSeverity === 'Critical') {
+        setSeverity('severe');
+      } else if (result.detectedSeverity === 'Mild') {
+        setSeverity('mild');
+      } else {
+        setSeverity('moderate');
+      }
+    }
   };
 
   // Evaluate Triage Level
@@ -398,6 +494,19 @@ export const TriageAssessmentModal: React.FC<TriageAssessmentModalProps> = ({
 
         {/* Modal Content */}
         <div className="p-5 overflow-y-auto space-y-4 flex-1">
+          {/* Hands-Free Voice Triage Quick Input for Modal */}
+          {step <= 2 && (
+            <div className="mb-2">
+              <HandsFreeVoiceTriage
+                compact={false}
+                onTriageExtracted={handleVoiceTriage}
+                onEmergencyDetected={(reason) => {
+                  setSelectedRedFlags((prev) => Array.from(new Set([...prev, 'rf_breathing'])));
+                }}
+              />
+            </div>
+          )}
+
           {/* STEP 1: PATIENT PROFILE & SEVERITY CONTEXT */}
           {step === 1 && (
             <div className="space-y-4">

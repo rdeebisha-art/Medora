@@ -1,4 +1,31 @@
 import Dexie, { Table } from 'dexie';
+import type {
+  MedicalWasteItemRecord,
+  WasteCategoryRecord,
+  WasteScanRecord,
+  WasteAIPredictionRecord,
+  WasteDetectedFeatureRecord,
+  WasteManualReviewRecord,
+  WasteCollectionEventRecord,
+  WasteTransportEventRecord,
+  WasteSegregationEventRecord,
+  WasteCollectionLocationRecord,
+  WasteContainerRecord
+} from '../modules/medicalWaste/types/wasteTypes';
+
+export type {
+  MedicalWasteItemRecord,
+  WasteCategoryRecord,
+  WasteScanRecord,
+  WasteAIPredictionRecord,
+  WasteDetectedFeatureRecord,
+  WasteManualReviewRecord,
+  WasteCollectionEventRecord,
+  WasteTransportEventRecord,
+  WasteSegregationEventRecord,
+  WasteCollectionLocationRecord,
+  WasteContainerRecord
+};
 
 export interface User {
   id?: number;
@@ -86,7 +113,7 @@ export interface AuditLog {
   id?: number;
   logId: string;
   recordId?: string | number;
-  entityType: 'patient' | 'doctor' | 'family' | 'user' | 'medicine' | 'correction_request' | 'consultation' | 'weight';
+  entityType: 'patient' | 'doctor' | 'family' | 'user' | 'medicine' | 'correction_request' | 'consultation' | 'weight' | 'medical_waste' | string;
   userId: string;
   userName: string;
   userRole: string;
@@ -614,6 +641,17 @@ export class MedoraDB extends Dexie {
   medicineAdherence!: Table<MedicineAdherence, number>;
   consultations!: Table<Consultation, number>;
   correctionRequests!: Table<PatientCorrectionRequest, number>;
+  medicalWasteItems!: Table<MedicalWasteItemRecord, number>;
+  wasteCategories!: Table<WasteCategoryRecord, number>;
+  wasteScans!: Table<WasteScanRecord, number>;
+  wasteAIPredictions!: Table<WasteAIPredictionRecord, number>;
+  wasteDetectedFeatures!: Table<WasteDetectedFeatureRecord, number>;
+  wasteManualReviews!: Table<WasteManualReviewRecord, number>;
+  wasteCollectionEvents!: Table<WasteCollectionEventRecord, number>;
+  wasteTransportEvents!: Table<WasteTransportEventRecord, number>;
+  wasteSegregationEvents!: Table<WasteSegregationEventRecord, number>;
+  wasteCollectionLocations!: Table<WasteCollectionLocationRecord, number>;
+  wasteContainers!: Table<WasteContainerRecord, number>;
 
   constructor() {
     super('MedoraDB');
@@ -667,6 +705,19 @@ export class MedoraDB extends Dexie {
     });
     this.version(7).stores({
       patients: '++id, patientCode, phone, role, name, familyId, isPregnant, isElderly, isNewborn, isChild',
+    });
+    this.version(8).stores({
+      medicalWasteItems: '++id, wasteItemId, scanId, category, locationId, status, currentStream, syncStatus, createdAt',
+      wasteCategories: '++id, code, name, defaultStream, bagColor',
+      wasteScans: '++id, scanId, operatorId, locationId, status, syncStatus, timestamp',
+      wasteAIPredictions: '++id, scanId, wasteItemId, wasteCategory, recommendedStream, confidence, modelVersion, createdAt',
+      wasteDetectedFeatures: '++id, scanId, featureName, isPresent',
+      wasteManualReviews: '++id, reviewId, scanId, wasteItemId, reviewerId, decision, timestamp',
+      wasteCollectionEvents: '++id, eventId, wasteItemId, operatorId, locationId, status, syncStatus, timestamp',
+      wasteTransportEvents: '++id, manifestId, vehicleNumber, driverName, status',
+      wasteSegregationEvents: '++id, eventId, wasteItemId, scanId, stream, timestamp',
+      wasteCollectionLocations: '++id, locationId, name, facilityType, building',
+      wasteContainers: '++id, containerId, qrCode, wasteCategory, stream, locationId, status',
     });
   }
 }

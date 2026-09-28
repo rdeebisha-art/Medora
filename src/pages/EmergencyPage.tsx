@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/useAppStore';
 import { db, Patient, Family, FamilyAlertOutbox, EmergencyIncident } from '../db/db';
@@ -357,6 +357,13 @@ export default function EmergencyPage() {
   const [isAlerting, setIsAlerting] = useState(false);
   const [activeCall, setActiveCall] = useState<ActiveCallInfo | null>(null);
 
+  const [searchParams] = useSearchParams();
+  const voicePhrase = searchParams.get('phrase');
+  const voiceAction = searchParams.get('action');
+  const isVoiceTrigger = searchParams.get('trigger') === 'voice_trigger';
+  const hasTriggeredRef = useRef(false);
+  const [voiceTriggerBanner, setVoiceTriggerBanner] = useState<string | null>(null);
+
   // Load patient, family, and existing alerts from IndexedDB
   useEffect(() => {
     const load = async () => {
@@ -574,6 +581,32 @@ export default function EmergencyPage() {
     });
   };
 
+  // Automated Voice Trigger execution
+  useEffect(() => {
+    if (isVoiceTrigger && !hasTriggeredRef.current && currentPatient) {
+      hasTriggeredRef.current = true;
+      const phraseText = voicePhrase ? `"${voicePhrase}"` : 'Emergency Voice Trigger';
+      const actionText = voiceAction === 'call108'
+        ? 'Calling 108 Emergency Ambulance'
+        : voiceAction === 'doctor'
+        ? 'Calling On-Call Emergency Doctor'
+        : 'Dispatching Emergency Alert';
+
+      setVoiceTriggerBanner(`🚨 Automated Voice Trigger Activated (${phraseText}) — ${actionText}`);
+
+      // Log incident
+      createEmergencyIncident(`VOICE_TRIGGER_${voiceAction?.toUpperCase() || 'ALERT'}`, 'CRITICAL');
+
+      if (voiceAction === 'call108') {
+        handleCallAmbulance108();
+      } else if (voiceAction === 'doctor') {
+        handleEmergencyCallDoctor();
+      } else {
+        handleFamilyAlert();
+      }
+    }
+  }, [isVoiceTrigger, voicePhrase, voiceAction, currentPatient]);
+
   return (
     <div className="min-h-screen bg-slate-900 text-white pb-20">
       {/* Sticky High-Contrast Emergency Header */}
@@ -608,6 +641,33 @@ export default function EmergencyPage() {
       </div>
 
       <div className="px-4 py-4 max-w-4xl mx-auto space-y-4">
+        {/* Automated Voice Trigger Confirmation Banner */}
+        {voiceTriggerBanner && (
+          <div className="bg-red-950 border-2 border-red-500 rounded-2xl p-4 text-xs text-red-200 flex items-start justify-between gap-3 shadow-lg animate-pulse">
+            <div className="flex items-start gap-2.5">
+              <ShieldAlert className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+              <div>
+                <div className="font-black text-sm text-white">
+                  Automated Emergency Voice Trigger Initiated
+                </div>
+                <p className="mt-0.5 text-red-200 leading-relaxed font-semibold">
+                  {voiceTriggerBanner}
+                </p>
+                <div className="mt-1 text-[11px] text-red-300">
+                  Priority incident logged to emergency records and direct line connected.
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setVoiceTriggerBanner(null)}
+              className="text-red-300 hover:text-white font-bold p-1 cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* Live Telephony & Dispatch Notice */}
         <div className="bg-emerald-950/80 border border-emerald-600/60 rounded-2xl p-3.5 text-xs text-emerald-200">
           <div className="font-bold flex items-center gap-1.5 text-emerald-300">

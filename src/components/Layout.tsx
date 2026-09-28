@@ -260,6 +260,19 @@ export default function Layout({ children }: LayoutProps) {
               </button>
 
               <Link
+                to="/medical-waste"
+                onClick={() => setMoreDrawerOpen(false)}
+                className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl text-xs font-bold transition-all ${
+                  location.pathname === '/medical-waste'
+                    ? 'bg-teal-50 text-teal-800 border border-teal-200'
+                    : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <span className="text-base">☣️</span>
+                <span>Medical Waste Management</span>
+              </Link>
+
+              <Link
                 to="/call-history"
                 onClick={() => setMoreDrawerOpen(false)}
                 className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl text-xs font-bold transition-all ${

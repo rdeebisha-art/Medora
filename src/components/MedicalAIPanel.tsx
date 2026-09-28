@@ -14,25 +14,21 @@ import {
   Send,
   Loader2,
   CheckCircle2,
-  HelpCircle,
-  Clock,
   Sparkles,
   ArrowRight,
   ArrowLeft,
   Wifi,
   WifiOff,
-  User,
-  Heart,
-  Droplets,
-  Thermometer,
   ShieldAlert,
   RotateCcw,
   Save,
-  Plus,
   Paperclip,
   Image as ImageIcon,
+  Mic,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { HandsFreeVoiceTriage } from './HandsFreeVoiceTriage';
+import { ParsedVoiceTriage } from '../services/voice/speechTriageParser';
 
 interface MedicalAIPanelProps {
   onReturnToVoiceAI?: () => void;
@@ -204,6 +200,31 @@ export const MedicalAIPanel: React.FC<MedicalAIPanelProps> = ({
     setStatusMessage(null);
     setSaveSuccessMessage(null);
     setEmergencyAlert(null);
+  };
+
+  const handleVoiceTriageExtracted = (result: ParsedVoiceTriage) => {
+    if (result.chiefComplaintSummary) {
+      setChiefComplaint(result.chiefComplaintSummary);
+    }
+    if (result.detectedSymptoms.length > 0) {
+      setSelectedSymptoms((prev) => Array.from(new Set([...prev, ...result.detectedSymptoms])));
+    }
+    if (result.detectedDuration) {
+      setDuration(result.detectedDuration);
+    }
+    if (result.detectedSeverity) {
+      setSeverity(result.detectedSeverity);
+    }
+    if (result.isEmergency && result.emergencyReason) {
+      setEmergencyAlert(result.emergencyReason);
+    }
+    setSaveSuccessMessage(
+      `Spoken symptoms captured hands-free: ${
+        result.detectedSymptoms.length > 0
+          ? result.detectedSymptoms.join(', ')
+          : result.chiefComplaintSummary
+      }`
+    );
   };
 
   const handleAnalyze = async () => {
@@ -539,16 +560,29 @@ export const MedicalAIPanel: React.FC<MedicalAIPanelProps> = ({
           </div>
         </div>
 
+        {/* Hands-Free Voice Triage (Browser Web Speech API Integration) */}
+        <HandsFreeVoiceTriage
+          onTriageExtracted={handleVoiceTriageExtracted}
+          onEmergencyDetected={(reason) => setEmergencyAlert(reason)}
+        />
+
         {/* Section 2: Chief Complaint & Symptoms */}
         <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-800 block">
-            Chief Complaint <span className="text-red-500">*</span>
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <span>Chief Complaint</span>
+              <span className="text-red-500">*</span>
+            </label>
+            <span className="text-[11px] text-purple-700 font-bold flex items-center gap-1 bg-purple-100/70 px-2 py-0.5 rounded-md">
+              <Mic className="w-3 h-3" />
+              <span>Voice / Hands-Free Enabled</span>
+            </span>
+          </div>
           <textarea
             value={chiefComplaint}
             onChange={(e) => setChiefComplaint(e.target.value)}
             rows={2}
-            placeholder="Primary reason for evaluation (e.g. 'Patient has fever for 3 days with cough, throat irritation, and headache')..."
+            placeholder="Primary reason for evaluation (e.g. 'Patient has fever for 3 days with cough, throat irritation, and headache') — speak above or type here..."
             className="w-full bg-white border border-purple-200 rounded-xl p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-600"
           />
         </div>

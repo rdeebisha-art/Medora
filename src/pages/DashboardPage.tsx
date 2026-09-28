@@ -12,6 +12,7 @@ import MedoraHealthcareTeam from '../components/MedoraHealthcareTeam';
 import { RecentHealthActivitySection } from '../components/RecentHealthActivitySection';
 import { MedoraSearchBar } from '../components/MedoraSearchBar';
 import { MedicationAdherenceD3Chart } from '../components/MedicationAdherenceD3Chart';
+import { SymptomTrendsChart } from '../components/SymptomTrendsChart';
 import { TriageAssessmentModal } from '../components/TriageAssessmentModal';
 import {
   TriangleAlert as AlertTriangle,
@@ -725,6 +726,7 @@ export default function DashboardPage() {
             </button>
             {[
               { path: '/appointments', label: t('appointments.title', 'Appointments'), emoji: '📅', color: 'bg-white border-[#E2E8F0] text-[#0F766E]' },
+              { path: '/medical-waste', label: 'Medical Waste', emoji: '☣️', color: 'bg-white border-[#E2E8F0] text-teal-800' },
               { path: '/health-tests', label: t('dashboard.qaRecordTest'), emoji: '🧪', color: 'bg-white border-[#E2E8F0] text-[#0F766E]' },
               { path: '/records', label: t('dashboard.qaAddRecord'), emoji: '📋', color: 'bg-white border-[#E2E8F0] text-[#2563EB]' },
               { path: '/medicines', label: t('dashboard.qaAddMedicine'), emoji: '💊', color: 'bg-white border-[#E2E8F0] text-[#16A34A]' },
@@ -827,6 +829,9 @@ export default function DashboardPage() {
           {/* D3 Historical Medication Adherence Patterns Visual Component */}
           <MedicationAdherenceD3Chart patientId={currentUser?.role === 'patient' ? currentUser.id : undefined} />
 
+          {/* Recharts Symptom Frequency & Severity Trends Component */}
+          <SymptomTrendsChart />
+
           {/* Recent Health Activity Timeline */}
           <RecentHealthActivitySection />
         </div>
@@ -844,6 +849,7 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {[
+              { path: '/medical-waste', icon: <span className="text-xl">☣️</span>, iconBg: 'bg-[#F0FDFA]', title: 'Medical Waste MIS', desc: 'Smart collection, AI vision segregation & tracking (SIH PS26115)' },
               { path: '/a2a-simulation', icon: <Sparkles size={22} className="text-[#0F766E]" />, iconBg: 'bg-[#F0FDFA]', title: '🤖 Agent Simulation', desc: 'Multi-specialist clinical reasoning & safe diagnostic triage simulation' },
               { path: '/health', icon: <Heart size={22} className="text-[#0F766E]" />, iconBg: 'bg-[#F0FDFA]', title: t('dashboard.hfMyHealthTitle'), desc: t('dashboard.hfMyHealthDesc') },
               { path: '/family', icon: <Users size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: t('dashboard.hfFamilyTitle'), desc: t('dashboard.hfFamilyDesc') },

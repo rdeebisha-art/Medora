@@ -41,12 +41,14 @@ import LanguageBridgePage from './pages/LanguageBridgePage';
 import AppointmentsPage from './pages/AppointmentsPage';
 import CallHistoryPage from './pages/CallHistoryPage';
 import AgentSimulationPage from './pages/AgentSimulationPage';
+import MedicalWasteManagementPage from './modules/medicalWaste/pages/MedicalWasteManagementPage';
 
 import MedicalHospitalBackground from './components/layout/MedicalHospitalBackground';
 import { ActiveCallModal } from './components/ActiveCallModal';
 import { IncomingCallModal } from './components/IncomingCallModal';
 import OfflineToast from './components/OfflineToast';
 import VoiceNavigationModal from './components/VoiceNavigationModal';
+import { GlobalEmergencyVoiceListener } from './components/GlobalEmergencyVoiceListener';
 import { webrtcCallingService } from './services/webrtc/webrtcCallingService';
 import { inAppMessagingService } from './services/messaging/inAppMessagingService';
 import { localNotificationScheduler } from './services/notifications/localNotificationScheduler';
@@ -84,6 +86,7 @@ export default function App() {
     <MedicalHospitalBackground>
       <OfflineToast />
       <VoiceNavigationModal />
+      <GlobalEmergencyVoiceListener />
       {incomingCall && (
         <IncomingCallModal incomingCall={incomingCall} onClose={() => setIncomingCall(null)} />
       )}
@@ -134,6 +137,7 @@ export default function App() {
       <Route path="/xray-viewer" element={<ProtectedRoute><XrayViewerPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+      <Route path="/medical-waste" element={<ProtectedRoute><MedicalWasteManagementPage /></ProtectedRoute>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/welcome" replace />} />
