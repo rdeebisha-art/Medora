@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Pill, Check, Clock, Volume2, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Pill, Check, Clock, Volume2, Sparkles, CheckCircle2, BellRing } from 'lucide-react';
 import { voiceService } from '../services/voiceService';
+import { medicationPushNotificationService } from '../services/medications/medicationPushNotificationService';
 import { LanguageCode } from '../types';
 
 interface PillScheduleItem {
@@ -84,6 +85,15 @@ export const MedicineReminder: React.FC<MedicineReminderProps> = ({ currentLang 
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => medicationPushNotificationService.playMedicationAlertAudio('chime')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-xs font-bold cursor-pointer transition-colors shadow-2xs"
+            title="Test the multi-tone medical reminder audio chime"
+          >
+            <BellRing size={14} className="text-teal-700 animate-bounce" />
+            <span>Test Audio Alert</span>
+          </button>
           <div className="text-right">
             <span className="text-[10px] text-slate-400 font-bold uppercase block">
               Today's Adherence

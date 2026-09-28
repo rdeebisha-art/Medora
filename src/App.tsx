@@ -42,12 +42,15 @@ import CallHistoryPage from './pages/CallHistoryPage';
 import AgentSimulationPage from './pages/AgentSimulationPage';
 import BiomedicalWastePage from './pages/BiomedicalWastePage';
 import FullDemoScenarioPage from './pages/FullDemoScenarioPage';
+import MedicalWasteManagementPage from './modules/medicalWaste/pages/MedicalWasteManagementPage';
+import PillIdentifierPage from './pages/PillIdentifierPage';
 
 import MedicalHospitalBackground from './components/layout/MedicalHospitalBackground';
 import { ActiveCallModal } from './components/ActiveCallModal';
 import { IncomingCallModal } from './components/IncomingCallModal';
 import OfflineToast from './components/OfflineToast';
 import VoiceNavigationModal from './components/VoiceNavigationModal';
+import { GlobalEmergencyVoiceListener } from './components/GlobalEmergencyVoiceListener';
 import { webrtcCallingService } from './services/webrtc/webrtcCallingService';
 import { inAppMessagingService } from './services/messaging/inAppMessagingService';
 import { localNotificationScheduler } from './services/notifications/localNotificationScheduler';
@@ -85,6 +88,7 @@ export default function App() {
     <MedicalHospitalBackground>
       <OfflineToast />
       <VoiceNavigationModal />
+      <GlobalEmergencyVoiceListener />
       {incomingCall && (
         <IncomingCallModal incomingCall={incomingCall} onClose={() => setIncomingCall(null)} />
       )}
@@ -100,7 +104,7 @@ export default function App() {
         <Route path="/faq" element={<FaqPage />} />
         <Route path="/help" element={<HelpPage />} />
 
-        {/* Protected Core Dashboard & Portals */}
+        {/* Protected Core Dashboard & Patient Portals */}
         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
         <Route path="/patient" element={<Navigate to="/health" replace />} />
         <Route path="/health" element={<ProtectedRoute><MyHealthPage /></ProtectedRoute>} />
@@ -110,19 +114,21 @@ export default function App() {
         <Route path="/health-tests" element={<ProtectedRoute><HealthTestsPage /></ProtectedRoute>} />
         <Route path="/ai" element={<ProtectedRoute><AiAssistantPage /></ProtectedRoute>} />
         <Route path="/medical-ai" element={<ProtectedRoute><AiAssistantPage /></ProtectedRoute>} />
-        
+        <Route path="/pill-identifier" element={<ProtectedRoute><PillIdentifierPage /></ProtectedRoute>} />
+
         {/* A2A & Simulation */}
         <Route path="/a2a" element={<Navigate to="/a2a-simulation" replace />} />
         <Route path="/a2a-simulation" element={<ProtectedRoute><AgentSimulationPage /></ProtectedRoute>} />
         <Route path="/demo" element={<Navigate to="/demo-scenario" replace />} />
         <Route path="/demo-scenario" element={<ProtectedRoute><FullDemoScenarioPage /></ProtectedRoute>} />
 
-        {/* Biomedical Waste Management (Hospital Module) */}
+        {/* Biomedical Waste Management (Hospital & Operations Modules) */}
         <Route path="/waste" element={<Navigate to="/biomedical-waste" replace />} />
         <Route path="/biomedical-waste" element={<ProtectedRoute><BiomedicalWastePage /></ProtectedRoute>} />
         <Route path="/smart-bin" element={<ProtectedRoute><BiomedicalWastePage /></ProtectedRoute>} />
         <Route path="/passport" element={<ProtectedRoute><BiomedicalWastePage /></ProtectedRoute>} />
         <Route path="/collection" element={<ProtectedRoute><BiomedicalWastePage /></ProtectedRoute>} />
+        <Route path="/medical-waste" element={<ProtectedRoute><MedicalWasteManagementPage /></ProtectedRoute>} />
 
         {/* Clinical Care Areas */}
         <Route path="/maternity" element={<ProtectedRoute><MaternityPage /></ProtectedRoute>} />

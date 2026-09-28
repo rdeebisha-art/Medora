@@ -671,7 +671,16 @@ class LocalNotificationSchedulerService {
       console.warn('[NotificationScheduler] Failed to add db.notification:', err);
     }
 
-    // 3. Audio Voice Announcement (Offline Web Speech API)
+    // 3. Medication Audio Chime Alert
+    if (reminder.type === 'medication') {
+      try {
+        import('../medications/medicationPushNotificationService').then(({ medicationPushNotificationService }) => {
+          medicationPushNotificationService.playMedicationAlertAudio('urgent');
+        }).catch(() => {});
+      } catch {}
+    }
+
+    // 4. Audio Voice Announcement (Offline Web Speech API)
     try {
       const voiceText =
         reminder.type === 'medication'

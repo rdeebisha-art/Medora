@@ -2,10 +2,11 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
-import { db, MedicalRecord } from '../db/db';
+import { db, MedicalRecord, Patient } from '../db/db';
 import Layout from '../components/Layout';
 import DemoDataBadge from '../components/DemoDataBadge';
 import ExportPatientSummaryModal from '../components/ExportPatientSummaryModal';
+import { PatientSummaryPdfService } from '../services/pdf/patientSummaryPdfService';
 import {
   FileText,
   Plus,
@@ -31,6 +32,8 @@ import {
   Image as ImageIcon,
   Clock,
   Filter,
+  Download,
+  Sparkles,
 } from 'lucide-react';
 
 export type MedicalRecordType =
@@ -82,6 +85,9 @@ export default function MedicalRecordsPage() {
   const [sharingRecord, setSharingRecord] = useState<MedicalRecord | null>(null);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
   const [showExportPdfModal, setShowExportPdfModal] = useState(false);
+  const [patientProfile, setPatientProfile] = useState<Patient | null>(null);
+  const [isExportingSummary, setIsExportingSummary] = useState(false);
+  const [exportFeedback, setExportFeedback] = useState<string | null>(null);
 
   // Comprehensive Add Record Form State (Requirement 5)
   const [formType, setFormType] = useState<MedicalRecordType>('consultation');
@@ -233,6 +239,110 @@ export default function MedicalRecordsPage() {
     }, 2500);
   };
 
+  // Load patient details for PDF export and doctor visits
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    const pid = currentUser.role === 'patient' && currentUser.id ? currentUser.id : 1;
+    db.patients.get(pid).then((p) => {
+      if (p) setPatientProfile(p);
+    }).catch(() => {});
+  }, [currentUser]);
+
+  const handleDirectExportPdf = async () => {
+    setIsExportingSummary(true);
+    try {
+      const pid = currentUser?.role === 'patient' && currentUser.id ? currentUser.id : 1;
+      const pat = patientProfile || (await db.patients.get(pid)) || ({
+        id: pid,
+        name: currentUser?.name || 'Ramesh Kumar',
+        age: 38,
+        gender: 'Male',
+        village: currentUser?.village || 'Kodaikanal Rural Area',
+        phone: currentUser?.phone || '+91 98765 43210',
+      } as unknown as Patient);
+
+      const [patMeds, patTests, patDocSummary] = await Promise.all([
+        db.medicines.where({ patientId: pid }).toArray().catch(() => []),
+        db.healthTests.where('patientId').equals(pid).toArray().catch(() => []),
+        db.doctorSummaries.where({ patientId: pid }).last().catch(() => null),
+      ]);
+
+      PatientSummaryPdfService.downloadPatientSummaryPdf({
+        patient: pat,
+        medicalRecords: records,
+        healthTests: patTests,
+        medicines: patMeds,
+        doctorSummary: patDocSummary || null,
+        authorizedBy: {
+          name: currentUser?.name || 'Attending Healthcare Provider',
+          role: currentUser?.role || 'patient',
+          id: currentUser?.id,
+        },
+        includeVitals: true,
+        includeMedicines: true,
+        includeDoctorNotes: true,
+        includeEmergencyGuidance: true,
+      });
+
+      setExportFeedback(`✓ Complete Health Summary PDF downloaded successfully for ${pat.name}!`);
+      setTimeout(() => setExportFeedback(null), 4500);
+    } catch (err) {
+      console.error('Failed to export PDF summary:', err);
+    } finally {
+      setIsExportingSummary(false);
+    }
+  };
+
+  const handleExportSingleRecordPdf = async (record: MedicalRecord) => {
+    try {
+      const pid = record.patientId || (currentUser?.role === 'patient' && currentUser.id ? currentUser.id : 1);
+      const pat = patientProfile || (await db.patients.get(pid));
+      PatientSummaryPdfService.downloadSingleRecordPdf({
+        record,
+        patient: pat || null,
+        authorizedBy: {
+          name: currentUser?.name || 'Attending Clinician',
+          role: currentUser?.role || 'patient',
+        },
+      });
+      setExportFeedback(`✓ Clinical document "${record.title || record.type}" exported as PDF!`);
+      setTimeout(() => setExportFeedback(null), 4000);
+    } catch (err) {
+      console.error('Failed to export single record PDF:', err);
+    }
+  };
+
+  const handleShareSummaryViaDevice = async () => {
+    const pid = currentUser?.role === 'patient' && currentUser.id ? currentUser.id : 1;
+    const pat = patientProfile || (await db.patients.get(pid));
+    const patName = pat?.name || currentUser?.name || 'Patient';
+    const textSummary = `MEDORA CLINICAL HEALTH SUMMARY\nPatient: ${patName} (ID: P-${pid})\nVillage: ${pat?.village || 'Kodaikanal'}\nPrescriptions: ${(await db.medicines.where({ patientId: pid, status: 'active' }).count().catch(() => 0))} active\nTotal Records: ${records.length}\nOfficial offline clinical summary for doctor visits.`;
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: `Medora Health Summary - ${patName}`,
+          text: textSummary,
+        });
+        setExportFeedback('✓ Shared health summary via device successfully!');
+        setTimeout(() => setExportFeedback(null), 3000);
+        return;
+      } catch {}
+    }
+
+    await db.smsOutbox.add({
+      toPhone: pat?.phone || '9800001111 (Doctor / Caregiver)',
+      message: textSummary,
+      type: 'medical_record',
+      language: language || 'en',
+      status: 'OFFLINE_OUTBOX' as any,
+      createdAt: new Date().toISOString(),
+      info: 'Health Summary queued in SMS Outbox for offline sharing.',
+    });
+    setExportFeedback('✓ Health Summary saved in SMS Outbox for offline sharing!');
+    setTimeout(() => setExportFeedback(null), 4000);
+  };
+
   // Filter records by search query and type
   const filteredRecords = records.filter((r) => {
     const rType = String(r.type);
@@ -304,6 +414,90 @@ export default function MedicalRecordsPage() {
               <Plus size={16} />
               <span>+ Add Record</span>
             </button>
+          </div>
+        </div>
+
+        {/* Export Feedback Toast */}
+        {exportFeedback && (
+          <div className="bg-emerald-50 border border-emerald-300 text-emerald-900 px-4 py-3 rounded-2xl text-xs font-bold flex items-center justify-between shadow-xs animate-fade-in">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+              <span>{exportFeedback}</span>
+            </div>
+            <button onClick={() => setExportFeedback(null)} className="text-emerald-700 hover:text-emerald-900 cursor-pointer">✕</button>
+          </div>
+        )}
+
+        {/* Offline Sharing & Doctor Visit Health Summary Hero Card */}
+        <div className="bg-gradient-to-r from-teal-50 via-cyan-50 to-blue-50 border-2 border-teal-200/80 rounded-3xl p-4 sm:p-5 shadow-sm space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-teal-600 text-white flex items-center justify-center text-xl shrink-0 shadow-sm">
+                📄
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-teal-700 text-white px-2 py-0.5 rounded-full">
+                    Official Patient Summary
+                  </span>
+                  <span className="text-[11px] text-teal-800 font-semibold">
+                    100% Offline Generation • Doctor Visit Ready
+                  </span>
+                </div>
+                <h2 className="text-sm sm:text-base font-black text-slate-900">
+                  Export Health Summary for Doctor Visits &amp; Offline Sharing
+                </h2>
+                <p className="text-xs text-slate-600 leading-relaxed max-w-xl">
+                  Compile all medical records, diagnoses, vital measurements, prescriptions, and physician notes into a standardized PDF document for Primary Health Centre (PHC) visits or offline sharing.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
+              <button
+                type="button"
+                onClick={handleDirectExportPdf}
+                disabled={isExportingSummary}
+                className="bg-teal-700 hover:bg-teal-800 disabled:opacity-60 text-white text-xs font-black px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <Download size={15} />
+                <span>{isExportingSummary ? 'Generating PDF...' : 'Download PDF Summary'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowExportPdfModal(true)}
+                className="bg-white hover:bg-slate-50 text-teal-800 border border-teal-300 text-xs font-bold px-3.5 py-2.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              >
+                <Printer size={14} />
+                <span>Preview &amp; Customize</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleShareSummaryViaDevice}
+                className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold px-3 py-2.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                title="Share health summary via device or SMS Outbox"
+              >
+                <Share2 size={14} />
+                <span className="hidden sm:inline">Share</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 pt-1 border-t border-teal-200/50 text-[11px] text-slate-500 flex-wrap">
+            <span className="flex items-center gap-1">
+              <CheckCircle2 size={13} className="text-teal-600" />
+              <span>Includes Prescriptions &amp; Adherence</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <CheckCircle2 size={13} className="text-teal-600" />
+              <span>Includes Recorded Vitals &amp; Lab Tests</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <CheckCircle2 size={13} className="text-teal-600" />
+              <span>Includes Doctor Sign-Off Block &amp; ABHA ID</span>
+            </span>
           </div>
         </div>
 
@@ -403,6 +597,14 @@ export default function MedicalRecordsPage() {
                     </div>
 
                     <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleExportSingleRecordPdf(r)}
+                        className="text-xs bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 px-2 py-1 rounded-lg font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                        title="Export this record as PDF for offline sharing or doctor visits"
+                      >
+                        <Download size={13} />
+                        <span>PDF</span>
+                      </button>
                       <button
                         onClick={() => setSharingRecord(r)}
                         className="text-slate-400 hover:text-blue-600 p-1"
@@ -740,15 +942,23 @@ export default function MedicalRecordsPage() {
 
               <div className="pt-2 flex gap-2">
                 <button
+                  onClick={() => handleExportSingleRecordPdf(viewingRecord)}
+                  className="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95 transition-all"
+                  title="Export this record as an official PDF document for doctor visit or offline sharing"
+                >
+                  <Download size={15} />
+                  <span>Export Record as PDF</span>
+                </button>
+                <button
                   onClick={() => window.print()}
-                  className="flex-1 border border-slate-200 hover:bg-slate-50 text-slate-700 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="border border-slate-200 hover:bg-slate-50 text-slate-700 px-3.5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Printer size={15} />
-                  <span>Print Record</span>
+                  <span>Print</span>
                 </button>
                 <button
                   onClick={() => setViewingRecord(null)}
-                  className="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer"
+                  className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-xl font-bold text-xs cursor-pointer"
                 >
                   Close
                 </button>

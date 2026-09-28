@@ -115,14 +115,24 @@ export default function AiAssistantPage() {
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsTriageOpen(true)}
-            className="w-full sm:w-auto bg-teal-700 hover:bg-teal-800 text-white font-black text-xs px-3.5 py-2 rounded-xl transition-colors shrink-0 shadow-xs cursor-pointer flex items-center justify-center gap-1.5 min-h-[38px]"
-          >
-            <ClipboardList className="w-3.5 h-3.5" />
-            <span>Start Triage Assessment</span>
-          </button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => handleSelectTab('medical')}
+              className="w-full sm:w-auto bg-purple-700 hover:bg-purple-800 text-white font-black text-xs px-3.5 py-2 rounded-xl transition-colors shrink-0 shadow-xs cursor-pointer flex items-center justify-center gap-1.5 min-h-[38px]"
+            >
+              <Mic className="w-3.5 h-3.5 text-purple-200" />
+              <span>Speak Symptoms (Hands-Free)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsTriageOpen(true)}
+              className="w-full sm:w-auto bg-teal-700 hover:bg-teal-800 text-white font-black text-xs px-3.5 py-2 rounded-xl transition-colors shrink-0 shadow-xs cursor-pointer flex items-center justify-center gap-1.5 min-h-[38px]"
+            >
+              <ClipboardList className="w-3.5 h-3.5" />
+              <span>Start Triage Checklist</span>
+            </button>
+          </div>
         </div>
 
         {/* Primary Toggle for the AI Systems */}

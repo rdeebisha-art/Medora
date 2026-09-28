@@ -1,12 +1,13 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
 import { db, Medicine } from '../db/db';
 import Layout from '../components/Layout';
 import MedicineCard from '../components/MedicineCard';
 import DemoDataBadge from '../components/DemoDataBadge';
 import PrintableMedicineLabelsModal from '../components/PrintableMedicineLabelsModal';
+import WeeklyMedicineCalendar from '../components/WeeklyMedicineCalendar';
 import {
   localNotificationScheduler,
   ScheduledReminder,
@@ -30,6 +31,7 @@ import {
   Calendar,
   Search,
   X,
+  Camera,
 } from 'lucide-react';
 
 type FilterType = 'all' | 'active' | 'completed';
@@ -41,6 +43,7 @@ export default function MedicinesPage() {
 
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [filter, setFilter] = useState<FilterType>('active');
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [refresh, setRefresh] = useState(0);
   const [showAdd, setShowAdd] = useState(false);
   const [isLabelsModalOpen, setIsLabelsModalOpen] = useState(false);
@@ -203,14 +206,14 @@ export default function MedicinesPage() {
 
   return (
     <Layout>
-      <div className="px-4 py-4 max-w-2xl mx-auto space-y-4">
+      <div className="px-4 py-4 max-w-4xl mx-auto space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-sm">
           <div>
             <h1 className="text-xl font-black text-[#16A34A]">{t('medicines.title', 'Prescribed Medicines')}</h1>
-            <p className="text-xs text-[#64748B]">Active prescriptions &amp; automatic dose reminders</p>
+            <p className="text-xs text-[#64748B]">Active prescriptions, weekly calendar schedule &amp; dose reminders</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             <DemoDataBadge />
             <button
               onClick={() => {
@@ -222,6 +225,13 @@ export default function MedicinesPage() {
               <Printer size={13} className="text-[#16A34A]" />
               <span>{t('medicines.printableLabels', 'Labels')}</span>
             </button>
+            <Link
+              to="/pill-identifier"
+              className="bg-teal-600 hover:bg-teal-700 text-white text-xs px-3.5 py-2 rounded-xl font-bold shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              <Camera size={14} />
+              <span>Pill Identifier</span>
+            </Link>
             <button
               onClick={() => setShowAdd(true)}
               className="bg-[#16A34A] hover:bg-green-700 text-white text-xs px-3.5 py-2 rounded-xl font-bold shadow-2xs transition-colors cursor-pointer flex items-center gap-1"
@@ -231,6 +241,50 @@ export default function MedicinesPage() {
             </button>
           </div>
         </div>
+
+        {/* View Mode Switcher: Calendar vs List */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-2xs">
+          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setViewMode('calendar')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                viewMode === 'calendar'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Calendar size={14} />
+              <span>Weekly Calendar</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                viewMode === 'list'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <span>📋 List View ({filteredMedicines.length})</span>
+            </button>
+          </div>
+
+          <span className="text-[11px] text-slate-500 font-medium hidden sm:inline pr-2">
+            {viewMode === 'calendar'
+              ? 'Visual 7-day schedule with morning, noon & night doses at a glance'
+              : 'Prescriptions directory with individual medication profiles'}
+          </span>
+        </div>
+
+        {/* Visual Weekly Calendar View */}
+        {viewMode === 'calendar' && (
+          <WeeklyMedicineCalendar
+            patientId={(currentUser?.role === 'patient' && currentUser.id) || 1}
+            medicines={medicines}
+            onRefresh={() => setRefresh((r) => r + 1)}
+          />
+        )}
 
         {/* Automated Push Notifications Status Card */}
         <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white rounded-3xl p-4 shadow-sm border border-emerald-700/40 space-y-3">

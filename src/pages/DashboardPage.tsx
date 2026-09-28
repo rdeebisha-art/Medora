@@ -12,7 +12,12 @@ import MedoraHealthcareTeam from '../components/MedoraHealthcareTeam';
 import { RecentHealthActivitySection } from '../components/RecentHealthActivitySection';
 import { MedoraSearchBar } from '../components/MedoraSearchBar';
 import { MedicationAdherenceD3Chart } from '../components/MedicationAdherenceD3Chart';
+import { SymptomTrendsChart } from '../components/SymptomTrendsChart';
 import { TriageAssessmentModal } from '../components/TriageAssessmentModal';
+import { WeeklyHealthInsightCard } from '../components/WeeklyHealthInsightCard';
+import { HealthGoalsSection } from '../components/HealthGoalsSection';
+import { DailyWellnessCheckin } from '../components/DailyWellnessCheckin';
+import { FloatingSosButton } from '../components/FloatingSosButton';
 import {
   TriangleAlert as AlertTriangle,
   Sparkles,
@@ -826,8 +831,30 @@ export default function DashboardPage() {
               <span>🩺</span>
               <span>Symptom Triage Tool</span>
             </button>
+            <a
+              href="#wellness-checkin"
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl border text-xs font-black whitespace-nowrap shadow-xs hover:shadow-md min-h-11 transition-all bg-emerald-50 border-emerald-300 text-emerald-950 shrink-0"
+            >
+              <span>✨</span>
+              <span>Wellness Check-in</span>
+            </a>
+            <a
+              href="#health-goals"
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl border text-xs font-black whitespace-nowrap shadow-xs hover:shadow-md min-h-11 transition-all bg-teal-50/80 border-teal-300 text-teal-950 shrink-0"
+            >
+              <span>🎯</span>
+              <span>Health Goals</span>
+            </a>
+            <Link
+              to="/pill-identifier"
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl border text-xs font-black whitespace-nowrap shadow-xs hover:shadow-md min-h-11 transition-all bg-cyan-50 border-cyan-300 text-cyan-950 shrink-0"
+            >
+              <span>💊</span>
+              <span>Pill Identifier</span>
+            </Link>
             {[
               { path: '/appointments', label: t('appointments.title', 'Appointments'), emoji: '📅', color: 'bg-white border-[#E2E8F0] text-[#0F766E]' },
+              { path: '/medical-waste', label: 'Medical Waste', emoji: '☣️', color: 'bg-white border-[#E2E8F0] text-teal-800' },
               { path: '/health-tests', label: t('dashboard.qaRecordTest'), emoji: '🧪', color: 'bg-white border-[#E2E8F0] text-[#0F766E]' },
               { path: '/records', label: t('dashboard.qaAddRecord'), emoji: '📋', color: 'bg-white border-[#E2E8F0] text-[#2563EB]' },
               { path: '/medicines', label: t('dashboard.qaAddMedicine'), emoji: '💊', color: 'bg-white border-[#E2E8F0] text-[#16A34A]' },
@@ -845,6 +872,25 @@ export default function DashboardPage() {
               </Link>
             ))}
           </div>
+        </div>
+
+        {/* ========================================================= */}
+        {/* WEEKLY AI HEALTH INSIGHT SUMMARY                          */}
+        {/* ========================================================= */}
+        <WeeklyHealthInsightCard />
+
+        {/* ========================================================= */}
+        {/* DAILY HEALTH GOALS & HABIT PROGRESS TRACKER               */}
+        {/* ========================================================= */}
+        <div id="health-goals" className="scroll-mt-6">
+          <HealthGoalsSection userId={currentUser?.id || 1} userName={currentUser?.name} />
+        </div>
+
+        {/* ========================================================= */}
+        {/* DAILY WELLNESS CHECK-IN & RECHARTS TRENDS VISUALIZATION   */}
+        {/* ========================================================= */}
+        <div id="wellness-checkin" className="scroll-mt-6">
+          <DailyWellnessCheckin userId={currentUser?.id || 1} userName={currentUser?.name} />
         </div>
 
         {/* ========================================================= */}
@@ -930,6 +976,9 @@ export default function DashboardPage() {
           {/* D3 Historical Medication Adherence Patterns Visual Component */}
           <MedicationAdherenceD3Chart patientId={currentUser?.role === 'patient' ? currentUser.id : undefined} />
 
+          {/* Recharts Symptom Frequency & Severity Trends Component */}
+          <SymptomTrendsChart />
+
           {/* Recent Health Activity Timeline */}
           <RecentHealthActivitySection />
         </div>
@@ -947,11 +996,13 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {[
+              { path: '/medical-waste', icon: <span className="text-xl">☣️</span>, iconBg: 'bg-[#F0FDFA]', title: 'Medical Waste MIS', desc: 'Smart collection, AI vision segregation & tracking (SIH PS26115)' },
               { path: '/a2a-simulation', icon: <Sparkles size={22} className="text-[#0F766E]" />, iconBg: 'bg-[#F0FDFA]', title: '🤖 Agent Simulation', desc: 'Multi-specialist clinical reasoning & safe diagnostic triage simulation' },
               { path: '/health', icon: <Heart size={22} className="text-[#0F766E]" />, iconBg: 'bg-[#F0FDFA]', title: t('dashboard.hfMyHealthTitle'), desc: t('dashboard.hfMyHealthDesc') },
               { path: '/family', icon: <Users size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: t('dashboard.hfFamilyTitle'), desc: t('dashboard.hfFamilyDesc') },
               { path: '/records', icon: <FileText size={22} className="text-[#2563EB]" />, iconBg: 'bg-[#EFF6FF]', title: t('dashboard.hfRecordsTitle'), desc: t('dashboard.hfRecordsDesc') },
               { path: '/medicines', icon: <Pill size={22} className="text-[#16A34A]" />, iconBg: 'bg-[#F0FDF4]', title: t('dashboard.hfMedicinesTitle'), desc: t('dashboard.hfMedicinesDesc') },
+              { path: '/pill-identifier', icon: <Camera size={22} className="text-[#0D9488]" />, iconBg: 'bg-[#F0FDFA]', title: 'Pill Identifier', desc: 'Device camera scan & local drug cross-reference with dosage and side effects' },
               { path: '/health-tests', icon: <Activity size={22} className="text-[#14B8A6]" />, iconBg: 'bg-[#F0FDFA]', title: t('dashboard.hfTestsTitle'), desc: t('dashboard.hfTestsDesc') },
               { path: '/records', icon: <Shield size={22} className="text-[#4F46E5]" />, iconBg: 'bg-[#EEF2FF]', title: t('dashboard.hfReportsTitle'), desc: t('dashboard.hfReportsDesc') },
               { path: '/report-scanner', icon: <Camera size={22} className="text-[#4F46E5]" />, iconBg: 'bg-[#EEF2FF]', title: t('dashboard.hfReportScannerTitle'), desc: t('dashboard.hfReportScannerDesc') },
@@ -1072,6 +1123,9 @@ export default function DashboardPage() {
           isOpen={isTriageOpen}
           onClose={() => setIsTriageOpen(false)}
         />
+
+        {/* Floating 3-Second Hold SOS Emergency Button */}
+        <FloatingSosButton />
       </div>
     </Layout>
   );

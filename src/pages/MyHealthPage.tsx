@@ -9,6 +9,7 @@ import CareGapAlert from '../components/CareGapAlert';
 import MedicineCard from '../components/MedicineCard';
 import DemoDataBadge from '../components/DemoDataBadge';
 import { HealthTrendsChart } from '../components/HealthTrendsChart';
+import { SymptomTrendsChart } from '../components/SymptomTrendsChart';
 import { RecentHealthActivitySection } from '../components/RecentHealthActivitySection';
 import ExportPatientSummaryModal from '../components/ExportPatientSummaryModal';
 import {
@@ -578,6 +579,9 @@ export default function MyHealthPage() {
 
         {/* Health Trends (30 Days with all 5 metrics) */}
         <HealthTrendsChart tests={allVitals} />
+
+        {/* Symptom Frequency & Severity Trends Component using Recharts */}
+        <SymptomTrendsChart />
 
         {/* Medicines */}
         {medicines.length > 0 && (

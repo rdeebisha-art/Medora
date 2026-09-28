@@ -1,4 +1,31 @@
 import Dexie, { Table } from 'dexie';
+import type {
+  MedicalWasteItemRecord,
+  WasteCategoryRecord,
+  WasteScanRecord,
+  WasteAIPredictionRecord,
+  WasteDetectedFeatureRecord,
+  WasteManualReviewRecord,
+  WasteCollectionEventRecord,
+  WasteTransportEventRecord,
+  WasteSegregationEventRecord,
+  WasteCollectionLocationRecord,
+  WasteContainerRecord
+} from '../modules/medicalWaste/types/wasteTypes';
+
+export type {
+  MedicalWasteItemRecord,
+  WasteCategoryRecord,
+  WasteScanRecord,
+  WasteAIPredictionRecord,
+  WasteDetectedFeatureRecord,
+  WasteManualReviewRecord,
+  WasteCollectionEventRecord,
+  WasteTransportEventRecord,
+  WasteSegregationEventRecord,
+  WasteCollectionLocationRecord,
+  WasteContainerRecord
+};
 
 export interface User {
   id?: number;
@@ -86,7 +113,7 @@ export interface AuditLog {
   id?: number;
   logId: string;
   recordId?: string | number;
-  entityType: 'patient' | 'doctor' | 'family' | 'user' | 'medicine' | 'correction_request' | 'consultation' | 'weight';
+  entityType: 'patient' | 'doctor' | 'family' | 'user' | 'medicine' | 'correction_request' | 'consultation' | 'weight' | 'medical_waste' | string;
   userId: string;
   userName: string;
   userRole: string;
@@ -192,8 +219,24 @@ export interface Medicine {
   doctor: string;
   instructions: string;
   status: 'active' | 'completed' | 'paused';
+  morning?: boolean;
+  afternoon?: boolean;
+  night?: boolean;
+  mealTiming?: string;
   lastTaken?: string;
   missedCount?: number;
+  // Supply & Refill Management Fields:
+  currentSupply?: number;
+  initialSupply?: number;
+  supplyUnit?: string;
+  refillThreshold?: number;
+  dailyDoseCount?: number;
+  clinicName?: string;
+  clinicPhone?: string;
+  healthWorkerName?: string;
+  healthWorkerPhone?: string;
+  lastRefillRequestDate?: string;
+  lastRefillDate?: string;
 }
 
 export type MedicalRecordType =
@@ -614,6 +657,17 @@ export class MedoraDB extends Dexie {
   medicineAdherence!: Table<MedicineAdherence, number>;
   consultations!: Table<Consultation, number>;
   correctionRequests!: Table<PatientCorrectionRequest, number>;
+  medicalWasteItems!: Table<MedicalWasteItemRecord, number>;
+  wasteCategories!: Table<WasteCategoryRecord, number>;
+  wasteScans!: Table<WasteScanRecord, number>;
+  wasteAIPredictions!: Table<WasteAIPredictionRecord, number>;
+  wasteDetectedFeatures!: Table<WasteDetectedFeatureRecord, number>;
+  wasteManualReviews!: Table<WasteManualReviewRecord, number>;
+  wasteCollectionEvents!: Table<WasteCollectionEventRecord, number>;
+  wasteTransportEvents!: Table<WasteTransportEventRecord, number>;
+  wasteSegregationEvents!: Table<WasteSegregationEventRecord, number>;
+  wasteCollectionLocations!: Table<WasteCollectionLocationRecord, number>;
+  wasteContainers!: Table<WasteContainerRecord, number>;
 
   constructor() {
     super('MedoraDB');
@@ -667,6 +721,19 @@ export class MedoraDB extends Dexie {
     });
     this.version(7).stores({
       patients: '++id, patientCode, phone, role, name, familyId, isPregnant, isElderly, isNewborn, isChild',
+    });
+    this.version(8).stores({
+      medicalWasteItems: '++id, wasteItemId, scanId, category, locationId, status, currentStream, syncStatus, createdAt',
+      wasteCategories: '++id, code, name, defaultStream, bagColor',
+      wasteScans: '++id, scanId, operatorId, locationId, status, syncStatus, timestamp',
+      wasteAIPredictions: '++id, scanId, wasteItemId, wasteCategory, recommendedStream, confidence, modelVersion, createdAt',
+      wasteDetectedFeatures: '++id, scanId, featureName, isPresent',
+      wasteManualReviews: '++id, reviewId, scanId, wasteItemId, reviewerId, decision, timestamp',
+      wasteCollectionEvents: '++id, eventId, wasteItemId, operatorId, locationId, status, syncStatus, timestamp',
+      wasteTransportEvents: '++id, manifestId, vehicleNumber, driverName, status',
+      wasteSegregationEvents: '++id, eventId, wasteItemId, scanId, stream, timestamp',
+      wasteCollectionLocations: '++id, locationId, name, facilityType, building',
+      wasteContainers: '++id, containerId, qrCode, wasteCategory, stream, locationId, status',
     });
   }
 }
@@ -1029,27 +1096,42 @@ export async function seedDatabase() {
       patientId: Number(p1), name: 'Folic Acid 5mg', dose: '1 tablet', frequency: 'Once daily',
       times: ['08:00'], startDate: '2024-01-01', endDate: '2024-12-31',
       doctor: 'Dr. Kavitha Rao', instructions: 'Take with water after breakfast', status: 'active',
+      currentSupply: 4, initialSupply: 30, supplyUnit: 'tablets', refillThreshold: 7, dailyDoseCount: 1,
+      clinicName: 'Kodaikanal Primary Health Centre (PHC)', clinicPhone: '+919800002222',
+      healthWorkerName: 'ASHA Worker Anjali Sharma', healthWorkerPhone: '+919876543210',
     },
     {
       patientId: Number(p1), name: 'Ferrous Sulphate 200mg', dose: '1 tablet', frequency: 'Twice daily',
       times: ['08:00', '20:00'], startDate: '2024-01-01', endDate: '2024-12-31',
       doctor: 'Dr. Kavitha Rao', instructions: 'Take after meals, avoid with tea/coffee', status: 'active',
+      currentSupply: 28, initialSupply: 60, supplyUnit: 'tablets', refillThreshold: 10, dailyDoseCount: 2,
+      clinicName: 'Kodaikanal Primary Health Centre (PHC)', clinicPhone: '+919800002222',
+      healthWorkerName: 'ASHA Worker Anjali Sharma', healthWorkerPhone: '+919876543210',
     },
     // Medicines for Ramesh Patel
     {
       patientId: Number(p2), name: 'Metformin 500mg', dose: '1 tablet', frequency: 'Twice daily',
       times: ['07:30', '19:30'], startDate: '2023-06-01', endDate: '2025-06-01',
       doctor: 'Dr. Arjun Mehta', instructions: 'Take with food', status: 'active',
+      currentSupply: 6, initialSupply: 60, supplyUnit: 'tablets', refillThreshold: 10, dailyDoseCount: 2,
+      clinicName: 'Kodaikanal Primary Health Centre (PHC)', clinicPhone: '+919800001111',
+      healthWorkerName: 'Health Worker Sunita Devi', healthWorkerPhone: '+919876543211',
     },
     {
       patientId: Number(p2), name: 'Amlodipine 5mg', dose: '1 tablet', frequency: 'Once daily',
       times: ['08:00'], startDate: '2023-06-01', endDate: '2025-06-01',
       doctor: 'Dr. Arjun Mehta', instructions: 'Take in the morning', status: 'active',
+      currentSupply: 2, initialSupply: 30, supplyUnit: 'tablets', refillThreshold: 5, dailyDoseCount: 1,
+      clinicName: 'Kodaikanal Primary Health Centre (PHC)', clinicPhone: '+919800001111',
+      healthWorkerName: 'Health Worker Sunita Devi', healthWorkerPhone: '+919876543211',
     },
     {
       patientId: Number(p2), name: 'Aspirin 75mg', dose: '1 tablet', frequency: 'Once daily',
       times: ['09:00'], startDate: '2023-06-01', endDate: '2025-06-01',
       doctor: 'Dr. Arjun Mehta', instructions: 'Take after breakfast', status: 'active',
+      currentSupply: 24, initialSupply: 30, supplyUnit: 'tablets', refillThreshold: 5, dailyDoseCount: 1,
+      clinicName: 'Kodaikanal Primary Health Centre (PHC)', clinicPhone: '+919800001111',
+      healthWorkerName: 'Health Worker Sunita Devi', healthWorkerPhone: '+919876543211',
     },
   ]);
 

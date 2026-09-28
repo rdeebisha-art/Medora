@@ -1,0 +1,53 @@
+{
+  "datasetName": "Medora Healthcare Waste Dataset (SIH 2026 PS26115)",
+  "datasetVersion": "ds-bmw-v1.4",
+  "createdDate": "2026-09-20",
+  "license": "CC-BY-4.0 Healthcare Research",
+  "splits": {
+    "train": {
+      "sampleCount": 110,
+      "description": "Training split with verified clinical ground truth and augmented views"
+    },
+    "validation": {
+      "sampleCount": 33,
+      "description": "Validation split for early stopping and loss convergence monitoring"
+    },
+    "test": {
+      "sampleCount": 21,
+      "description": "Held-out test split for strict generalization evaluation with zero leakage"
+    }
+  },
+  "classes": [
+    "syringe",
+    "needle",
+    "glove",
+    "mask",
+    "dressing",
+    "medicine_packaging",
+    "medicine_bottle",
+    "sharps_container",
+    "contaminated_waste",
+    "general_healthcare_waste",
+    "unknown"
+  ],
+  "visualFeatures": [
+    "needle",
+    "syringe",
+    "sharp_object",
+    "used_glove",
+    "used_mask",
+    "dressing",
+    "medicine_packaging",
+    "medicine_bottle",
+    "sharps_container",
+    "waste_bag",
+    "biohazard_symbol",
+    "warning_label",
+    "open_container",
+    "overflowing_container",
+    "damaged_container",
+    "visible_leakage_indicator"
+  ],
+  "zeroLeakageEnforced": true,
+  "annotationStandard": "Biomedical Waste Management Rules 2016 (Ministry of Environment, Forest and Climate Change, Govt. of India)"
+}

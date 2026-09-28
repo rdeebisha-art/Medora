@@ -155,27 +155,134 @@ export class PatientSummaryPdfService {
     return {
       output: () => html,
       save: (filename: string) => this.downloadPatientSummaryPdf(options, filename),
-      internal: { getNumberOfPages: () => 1 },
+      internal: {
+        getNumberOfPages: () => 1,
+        pageSize: {
+          getWidth: () => 210,
+          getHeight: () => 297,
+        },
+      },
       getNumberOfPages: () => 1
     };
   }
 
   public static downloadPatientSummaryPdf(options: ExportSummaryOptions, filename?: string): void {
     const html = this.generateSummaryHtml(options);
-    const fname = filename || `Medora_Clinical_Summary_${options.patient.name.replace(/\s+/g, '_')}.html`;
+    const sanitizedName = (options.patient?.name || 'Patient').replace(/\s+/g, '_');
+    const fname = filename || `Medora_Patient_Summary_${sanitizedName}_P${options.patient?.id || 1001}.html`;
 
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
 
     // Open print view in new window or trigger download
-    const printWindow = window.open('', '_blank');
+    const printWindow = typeof window !== 'undefined' ? window.open('', '_blank') : null;
     if (printWindow) {
       printWindow.document.write(html);
       printWindow.document.close();
       setTimeout(() => {
         printWindow.print();
       }, 500);
-    } else {
+    } else if (typeof document !== 'undefined') {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fname;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  /**
+   * Generates and downloads a dedicated single medical record / report HTML/PDF for offline sharing or doctor visits
+   */
+  public static downloadSingleRecordPdf(options: {
+    record: MedicalRecord;
+    patient?: Patient | null;
+    authorizedBy?: { name: string; role: string };
+  }): void {
+    const { record, patient, authorizedBy } = options;
+    const now = new Date().toLocaleString();
+    const reportTitle = (record.data as any)?.reportName || record.title || `${record.type.toUpperCase()} Record`;
+    const sanitizedTitle = (reportTitle || 'Record').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30);
+    const fname = `Medora_Record_${sanitizedTitle}_${record.date}.html`;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Medora Clinical Record - ${reportTitle}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 24px; color: #0f172a; line-height: 1.5; font-size: 13px; }
+    .header { border-bottom: 3px solid #0f766e; padding-bottom: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .brand { font-size: 18px; font-weight: 900; color: #0f766e; }
+    .meta { font-size: 11px; color: #64748b; }
+    .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+    .title { font-weight: 800; font-size: 14px; margin-bottom: 6px; color: #1e293b; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .alert { background: #f0fdfa; border: 1px solid #14b8a6; color: #0f766e; padding: 8px; border-radius: 6px; margin-top: 10px; font-size: 11px; }
+    .footer { margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 10px; color: #64748b; text-align: center; }
+    @media print { body { margin: 0; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="brand">MEDORA RURAL HEALTHCARE PLATFORM</div>
+      <div class="meta">Official Clinical Medical Record & Consultation Document • Kodaikanal Regional Network</div>
+    </div>
+    <div style="text-align: right;">
+      <div class="meta">Generated: ${now}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title">👤 Patient & Record Metadata</div>
+    <div class="grid">
+      <div>
+        <strong>Patient:</strong> ${patient?.name || 'Registered Patient'}<br>
+        <strong>Patient ID:</strong> P-${patient?.id || record.patientId || '1001'}<br>
+        <strong>Age / Gender:</strong> ${patient?.age || '—'} Yrs / ${patient?.gender || '—'}<br>
+        <strong>Village:</strong> ${patient?.village || 'Kodaikanal Rural Area'}
+      </div>
+      <div>
+        <strong>Record Type:</strong> ${record.type?.toUpperCase()}<br>
+        <strong>Document Date:</strong> ${record.date} ${record.time || ''}<br>
+        <strong>Attending Doctor:</strong> ${record.doctor || 'Dr. Suresh Balakrishnan'}<br>
+        <strong>Facility:</strong> ${record.hospital || 'Kodaikanal Government Hospital'}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title">📋 ${reportTitle}</div>
+    <p><strong>Clinical Findings / Notes:</strong></p>
+    <p>${record.notes || (record.data as any)?.description || (record.data as any)?.summary || 'Recorded clinical consultation notes preserved in Medora offline database.'}</p>
+  </div>
+
+  <div class="alert">
+    <strong>OFFLINE CLINICAL VERIFICATION:</strong> Authorized by: ${authorizedBy?.name || 'Attending Rural Clinician'} (${authorizedBy?.role || 'Clinician'}).
+  </div>
+
+  <div class="footer">
+    Generated on ${now} • Medora Offline Vault
+  </div>
+</body>
+</html>
+    `.trim();
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+
+    const printWindow = typeof window !== 'undefined' ? window.open('', '_blank') : null;
+    if (printWindow) {
+      printWindow.document.write(html);
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    } else if (typeof document !== 'undefined') {
       const link = document.createElement('a');
       link.href = url;
       link.download = fname;
